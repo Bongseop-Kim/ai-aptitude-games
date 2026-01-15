@@ -1,112 +1,202 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, View } from "react-native";
 
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
 
-export default function TabTwoScreen() {
+export default function TypographyDemo() {
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
+    <ScrollView style={styles.container}>
+      <ThemedView style={styles.section}>
+        <ThemedText type="title1" style={styles.sectionTitle}>
+          타이포그래피 시스템
+        </ThemedText>
+        <ThemedText type="body2" style={styles.sectionDescription}>
+          앱에서 사용하는 모든 텍스트 스타일을 확인할 수 있습니다
         </ThemedText>
       </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+
+      {/* Headline */}
+      <ThemedView style={styles.section}>
+        <ThemedText type="title2">Headline</ThemedText>
+        <View style={styles.exampleRow}>
+          <ThemedText type="captionS" style={styles.label}>
+            Headline L
+          </ThemedText>
+          <ThemedText type="headlineL">큰 헤드라인 36px</ThemedText>
+        </View>
+        <View style={styles.exampleRow}>
+          <ThemedText type="captionS" style={styles.label}>
+            Headline M
+          </ThemedText>
+          <ThemedText type="headlineM">중간 헤드라인 32px</ThemedText>
+        </View>
+        <View style={styles.exampleRow}>
+          <ThemedText type="captionS" style={styles.label}>
+            Headline S
+          </ThemedText>
+          <ThemedText type="headlineS">작은 헤드라인 28px</ThemedText>
+        </View>
+      </ThemedView>
+
+      {/* Title */}
+      <ThemedView style={styles.section}>
+        <ThemedText type="title2">Title</ThemedText>
+        <View style={styles.exampleRow}>
+          <ThemedText type="captionS" style={styles.label}>
+            Title 1
+          </ThemedText>
+          <ThemedText type="title1">타이틀 1 - 24px</ThemedText>
+        </View>
+        <View style={styles.exampleRow}>
+          <ThemedText type="captionS" style={styles.label}>
+            Title 2
+          </ThemedText>
+          <ThemedText type="title2">타이틀 2 - 20px</ThemedText>
+        </View>
+        <View style={styles.exampleRow}>
+          <ThemedText type="captionS" style={styles.label}>
+            Title 3
+          </ThemedText>
+          <ThemedText type="title3">타이틀 3 - 18px</ThemedText>
+        </View>
+      </ThemedView>
+
+      {/* Label */}
+      <ThemedView style={styles.section}>
+        <ThemedText type="title2">Label</ThemedText>
+        <View style={styles.exampleRow}>
+          <ThemedText type="captionS" style={styles.label}>
+            Label L
+          </ThemedText>
+          <ThemedText type="labelL">라벨 라지 16px</ThemedText>
+        </View>
+        <View style={styles.exampleRow}>
+          <ThemedText type="captionS" style={styles.label}>
+            Label M
+          </ThemedText>
+          <ThemedText type="labelM">라벨 미디엄 14px</ThemedText>
+        </View>
+        <View style={styles.exampleRow}>
+          <ThemedText type="captionS" style={styles.label}>
+            Label S
+          </ThemedText>
+          <ThemedText type="labelS">라벨 스몰 12px</ThemedText>
+        </View>
+      </ThemedView>
+
+      {/* Body */}
+      <ThemedView style={styles.section}>
+        <ThemedText type="title2">Body</ThemedText>
+        <View style={styles.exampleRow}>
+          <ThemedText type="captionS" style={styles.label}>
+            Body 1
+          </ThemedText>
+          <ThemedText type="body1">
+            본문 텍스트 1 - 16px. 일반적인 본문에 사용됩니다. 긴 텍스트를 표시할
+            때 적합한 스타일입니다.
+          </ThemedText>
+        </View>
+        <View style={styles.exampleRow}>
+          <ThemedText type="captionS" style={styles.label}>
+            Body 2
+          </ThemedText>
+          <ThemedText type="body2">
+            본문 텍스트 2 - 14px. 약간 작은 본문에 사용됩니다. 부가 설명이나
+            보조 정보를 표시할 때 좋습니다.
+          </ThemedText>
+        </View>
+      </ThemedView>
+
+      {/* Button */}
+      <ThemedView style={styles.section}>
+        <ThemedText type="title2">Button</ThemedText>
+        <View style={styles.exampleRow}>
+          <ThemedText type="captionS" style={styles.label}>
+            Button 1
+          </ThemedText>
+          <View style={styles.buttonExample}>
+            <ThemedText type="button1">버튼 텍스트 1</ThemedText>
+          </View>
+        </View>
+        <View style={styles.exampleRow}>
+          <ThemedText type="captionS" style={styles.label}>
+            Button 2
+          </ThemedText>
+          <View style={styles.buttonExample}>
+            <ThemedText type="button2">버튼 텍스트 2</ThemedText>
+          </View>
+        </View>
+        <View style={styles.exampleRow}>
+          <ThemedText type="captionS" style={styles.label}>
+            Button 3
+          </ThemedText>
+          <View style={styles.buttonExample}>
+            <ThemedText type="button3">버튼 텍스트 3</ThemedText>
+          </View>
+        </View>
+      </ThemedView>
+
+      {/* Caption */}
+      <ThemedView style={styles.section}>
+        <ThemedText type="title2">Caption</ThemedText>
+        <View style={styles.exampleRow}>
+          <ThemedText type="captionS" style={styles.label}>
+            Caption L
+          </ThemedText>
+          <ThemedText type="captionL">캡션 라지 16px</ThemedText>
+        </View>
+        <View style={styles.exampleRow}>
+          <ThemedText type="captionS" style={styles.label}>
+            Caption M
+          </ThemedText>
+          <ThemedText type="captionM">캡션 미디엄 14px</ThemedText>
+        </View>
+        <View style={styles.exampleRow}>
+          <ThemedText type="captionS" style={styles.label}>
+            Caption S
+          </ThemedText>
+          <ThemedText type="captionS">캡션 스몰 12px</ThemedText>
+        </View>
+      </ThemedView>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: {
+    flex: 1,
   },
-  titleContainer: {
-    flexDirection: 'row',
+  section: {
+    padding: 20,
+    gap: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(128, 128, 128, 0.2)",
+  },
+  sectionTitle: {
+    marginBottom: 4,
+  },
+  sectionDescription: {
+    opacity: 0.7,
+  },
+  exampleRow: {
     gap: 8,
+  },
+  label: {
+    opacity: 0.5,
+    textTransform: "uppercase",
+  },
+  buttonExample: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: "rgba(10, 126, 164, 0.1)",
+  },
+  footer: {
+    padding: 20,
+    alignItems: "center",
+  },
+  footerText: {
+    opacity: 0.6,
   },
 });
