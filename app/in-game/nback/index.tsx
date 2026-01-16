@@ -41,12 +41,8 @@ export default function NBackGameScreen() {
 
         <SegmentedPicker
           options={[
-            { label: "모집공고", value: "모집공고" },
-            { label: "특별공급", value: "특별공급" },
-            { label: "1순위 청약", value: "1순위 청약" },
-            { label: "2순위 청약", value: "2순위 청약" },
-            { label: "당첨자 발표", value: "당첨자 발표" },
-            { label: "계약기간", value: "계약기간" },
+            { label: "다름", value: "0" },
+            { label: "같음", value: "1" },
           ]}
           value={selectedValue}
           onChange={setSelectedValue}

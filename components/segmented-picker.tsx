@@ -47,7 +47,6 @@ export function SegmentedPicker<T extends string>({
               option={option}
               isSelected={value === option.value}
               disabled={disabled}
-              colors={colors}
               onPress={() => handlePress(option.value)}
             />
           ))}

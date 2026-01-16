@@ -1,5 +1,5 @@
-import { getSemanticTokens } from "@/constants/theme";
-import { Pressable, StyleSheet } from "react-native";
+import { getAliasTokens } from "@/constants/theme";
+import { Pressable, StyleSheet, useColorScheme } from "react-native";
 import { ThemedText } from "./themed-text";
 
 export type Option<T extends string> = { label: string; value: T };
@@ -8,15 +8,16 @@ export function OptionButton<T extends string>({
   option,
   isSelected,
   disabled,
-  colors,
   onPress,
 }: {
   option: Option<T>;
   isSelected: boolean;
   disabled: boolean;
-  colors: ReturnType<typeof getSemanticTokens>;
   onPress: () => void;
 }) {
+  const colorScheme = useColorScheme();
+  const colors = getAliasTokens(colorScheme ?? "light");
+
   return (
     <Pressable
       onPress={onPress}
@@ -24,19 +25,17 @@ export function OptionButton<T extends string>({
       style={[
         styles.option,
         {
-          backgroundColor: colors.interactive.bgDefault,
+          backgroundColor: colors.surface.base,
           borderColor: isSelected
-            ? colors.interactive.borderDefault
-            : colors.field.borderMuted,
+            ? colors.brand.primary
+            : colors.surface.layer2,
         },
       ]}
     >
       <ThemedText
-        type="captionM"
+        type={isSelected ? "labelM" : "captionM"}
         style={{
-          color: isSelected
-            ? colors.interactive.textDefault
-            : colors.field.textMute,
+          color: isSelected ? colors.brand.primary : colors.text.secondary,
         }}
       >
         {option.label}
