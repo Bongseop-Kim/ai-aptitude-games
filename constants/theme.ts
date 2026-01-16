@@ -451,6 +451,13 @@ export const SemanticTokens = {
 } as const;
 
 export const Typography = {
+  // Display Styles
+  display: {
+    fontSize: 120,
+    lineHeight: 150, // 125%
+    fontWeight: "700" as const,
+    fontFamily: "Pretendard-Bold",
+  },
   // Headline Styles
   headlineL: {
     fontSize: 36,

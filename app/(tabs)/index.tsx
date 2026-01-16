@@ -2,7 +2,6 @@ import DifficultyStars from "@/components/difficulty-stars";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import GAMES from "@/constants/games";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import Game from "@/types/game";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
@@ -15,30 +14,21 @@ export default function HomeScreen() {
         data={GAMES}
         renderItem={({ item }) => <GameCard game={item} />}
         keyExtractor={(item) => item.id}
+        showsVerticalScrollIndicator={false}
       />
     </ThemedView>
   );
 }
 
 const GameCard = ({ game }: { game: Game }) => {
-  const colorScheme = useColorScheme();
   const router = useRouter();
 
-  const handleGamePress = (game: Game) => {
-    // TODO: 게임 화면으로 이동
-    alert(`${game.name} 시작!`);
-  };
-
-  const handleGameLongPress = (gameId: string) => {
-    router.push(`/modal?gameId=${gameId}`);
+  const handleGamePress = (gameId: string) => {
+    router.push(`/pre-game/${gameId}`);
   };
 
   return (
-    <Pressable
-      key={game.id}
-      onPress={() => handleGamePress(game)}
-      onLongPress={() => handleGameLongPress(game.id)}
-    >
+    <Pressable key={game.id} onPress={() => handleGamePress(game.id)}>
       <ThemedView style={styles.gameCardContent}>
         <ThemedView style={styles.gameNameContainer}>
           <Image source={game.image} style={styles.gameImage} />

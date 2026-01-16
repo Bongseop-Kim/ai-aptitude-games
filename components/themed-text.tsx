@@ -5,13 +5,7 @@ import { Text, type TextProps } from "react-native";
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
   darkColor?: string;
-  type?:
-    | TypographyKey
-    | "default"
-    | "title"
-    | "defaultSemiBold"
-    | "subtitle"
-    | "link";
+  type?: TypographyKey;
 };
 
 export function ThemedText({

@@ -14,7 +14,7 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor:
           AliasTokens[colorScheme ?? "light"].brand.primary,
-        headerShown: true,
+        headerShown: false,
         tabBarButton: HapticTab,
       }}
     >
@@ -22,7 +22,6 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "홈",
-          headerTitle: "AI 역량 게임",
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="house.fill" color={color} />
           ),
