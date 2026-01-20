@@ -1,3 +1,4 @@
+import { NBACK_GAME } from "@/app/in-game/nback/constants";
 import { Badge } from "@/components/badge";
 import { Countdown } from "@/components/countdown";
 import { FixedButtonView } from "@/components/fixed-button-view";
@@ -6,67 +7,75 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { TimerProgressBar } from "@/components/timer-progressbar";
 import { GAMES_MAP } from "@/constants/games";
-import NBACK_GAME from "@/constants/games/nback";
 import { Image } from "expo-image";
-import { useState } from "react";
 import { Dimensions, StyleSheet } from "react-native";
+import { useNBackGame } from "./useHook";
 
 export default function NBackGameScreen() {
   const game = GAMES_MAP["nback"];
+  const stimulusSec = NBACK_GAME.rules.stimulusSec;
 
-  const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const [showCountdown, setShowCountdown] = useState(true);
-  const [selectedValue, setSelectedValue] = useState<string | undefined>();
+  const {
+    currentStage,
+    currentShape,
+    handleAnswer,
+    handleCountdownComplete,
+    handleTimeUp,
+    headerText,
+    isPickerDisabled,
+    isTimerRunning,
+    remainingQuestions,
+    selectedValue,
+    showCountdown,
+  } = useNBackGame();
 
-  const handleCountdownComplete = () => {
-    setShowCountdown(false);
-    setIsTimerRunning(true);
-  };
+  // 현재 스테이지가 없으면 null 반환
+  if (!currentStage) {
+    return null;
+  }
 
-  const handleTimeUp = () => {
-    console.log("시간 종료!");
-    setIsTimerRunning(false);
-    // 게임 종료 로직 추가
-  };
+  const { copy } = currentStage;
 
   return (
     <FixedButtonView>
       <TimerProgressBar
-        duration={3}
+        duration={stimulusSec}
         isRunning={isTimerRunning}
         onComplete={handleTimeUp}
       />
-      <Badge
-        variant="success"
-        type="fill"
-        kind="text"
-        shape="speech"
-        tailPosition="top"
-      >
-        응답완료
-      </Badge>
 
       <ThemedView style={styles.contentContainer}>
-        <Badge variant="default" type="ghost" kind="text" style={styles.remainingBadge}>
-          남은 문항 20
+        <Badge
+          variant="default"
+          type="ghost"
+          kind="text"
+          style={styles.remainingBadge}
+        >
+          남은 문항 {remainingQuestions}
         </Badge>
 
         <ThemedText type="title1" style={styles.headerText}>
-          {NBACK_GAME[1].headerContent}
+          {headerText}
         </ThemedText>
 
-        <Image source={game.image} style={styles.gameImage} />
+        <Image
+          source={currentShape?.source ?? game.image}
+          style={styles.gameImage}
+        />
+
         <SegmentedPicker
-          options={[
-            { label: "다름", value: "0" },
-            { label: "같음", value: "1" },
-          ]}
-          value={selectedValue}
-          onChange={setSelectedValue} 
-          columns={3} // 3열 그리드
+          options={copy.options.map((opt) => ({
+            label: opt.label,
+            value: String(opt.value),
+          }))}
+          value={
+            selectedValue !== undefined ? String(selectedValue) : undefined
+          }
+          onChange={handleAnswer}
+          columns={3}
+          disabled={isPickerDisabled}
           style={styles.segmentedPicker}
         />
-     
       </ThemedView>
 
       <Countdown
@@ -81,26 +90,28 @@ export default function NBackGameScreen() {
 const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
-    justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 16,
-    gap: 24,
+    marginTop: 24,
   },
   remainingBadge: {
-    marginBottom: 8,
     alignSelf: "flex-end",
+    marginBottom: 16,
   },
   headerText: {
     textAlign: "center",
-    marginBottom: 8,
+    height: 80,
+    marginBottom: 24,
+    textAlignVertical: "center",
   },
   gameImage: {
     width: "100%",
     height: Dimensions.get("window").width - 32,
     borderRadius: 12,
-    marginVertical: 16,
+    marginBottom: 24,
   },
   segmentedPicker: {
-    marginTop: 8,
+    width: "100%",
+    minHeight: 120,
   },
 });

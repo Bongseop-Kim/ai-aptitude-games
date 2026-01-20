@@ -54,7 +54,6 @@ export default function PreGameScreen() {
           header="난이도"
           children={<DifficultyStars level={game.difficulty} size={18} />}
         />
-
         <ItemContainer
           header="측정 역량"
           children={
