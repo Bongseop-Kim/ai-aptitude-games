@@ -25,7 +25,14 @@ export default function PreGameScreen() {
   }
 
   const handleStart = () => {
-    router.push(`/in-game/${id}`);
+    switch (id) {
+      case "nback":
+        router.push("/games/nback/play");
+        break;
+
+      default:
+        router.push(`/games/${id}/play` as any);
+    }
   };
 
   const handlePractice = () => {
