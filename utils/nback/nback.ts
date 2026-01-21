@@ -1,4 +1,4 @@
-import { NbackTrial, StageSummary } from "@/app/in-game/nback/types";
+import { NbackTrial, StageSummary } from "@/types/nback/nback";
 
 export const pickRandomIndex = (maxExclusive: number) =>
     Math.floor(Math.random() * maxExclusive);

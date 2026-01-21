@@ -1,4 +1,3 @@
-import { NBACK_GAME } from "@/app/in-game/nback/constants";
 import { Badge } from "@/components/badge";
 import { Countdown } from "@/components/countdown";
 import { FixedButtonView } from "@/components/fixed-button-view";
@@ -8,10 +7,11 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { TimerProgressBar } from "@/components/timer-progressbar";
 import { Spacer } from "@/components/ui/spacer";
+import { NBACK_GAME } from "@/constants/nback/nback";
 import { Padding, WIDTH, getAliasTokens } from "@/constants/theme";
 import { useEffect, useState } from "react";
 import { StyleSheet, useColorScheme } from "react-native";
-import { useNBackGame } from "./useHook";
+import { useNBackGame } from "../../../hooks/nback/useNback";
 
 export default function NBackGameScreen() {
   const stimulusSec = NBACK_GAME.rules.stimulusSec;

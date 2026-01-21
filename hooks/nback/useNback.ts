@@ -1,5 +1,5 @@
-import { NBACK_GAME, SHAPE_POOL } from "@/app/in-game/nback/constants";
-import { NbackPhase, NbackTrial, StageSummary } from "@/app/in-game/nback/types";
+import { NBACK_GAME, SHAPE_POOL } from "@/constants/nback/nback";
+import { NbackPhase, NbackTrial, StageSummary } from "@/types/nback/nback";
 import {
   generateShapeSequence,
   getCurrentSequenceIndex,
@@ -8,7 +8,7 @@ import {
   getPreCount,
   getRemainingQuestions,
   summarizeStageTrials,
-} from "@/app/in-game/nback/util";
+} from "@/utils/nback/nback";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export const useNBackGame = () => {
