@@ -3,6 +3,8 @@
 // ============================================================================
 // 기본 색상 팔레트 - 디자인 시스템의 최하위 레이어
 
+import { Dimensions } from "react-native";
+
 export const PrimitiveColors = {
   // Red Scale
   red: {
@@ -643,6 +645,8 @@ export const BorderWidth = {
   m: 2,
   l: 3,
 } as const;
+
+export const WIDTH = Dimensions.get("window").width;
 
 // ============================================================================
 // TYPE DEFINITIONS

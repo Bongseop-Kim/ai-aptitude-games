@@ -7,8 +7,8 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { TimerProgressBar } from "@/components/timer-progressbar";
 import { Spacer } from "@/components/ui/spacer";
-import { Padding, getAliasTokens } from "@/constants/theme";
-import { Dimensions, StyleSheet, useColorScheme } from "react-native";
+import { Padding, WIDTH, getAliasTokens } from "@/constants/theme";
+import { StyleSheet, useColorScheme } from "react-native";
 import { useNBackGame } from "./useHook";
 
 export default function NBackGameScreen() {
@@ -63,8 +63,8 @@ export default function NBackGameScreen() {
         </ThemedText>
         <Spacer size="spacing32" />
         <SvgComponent
-          width={Dimensions.get("window").width / 2}
-          height={Dimensions.get("window").width / 2}
+          width={WIDTH / 2}
+          height={WIDTH / 2}
           color={colors.brand.tertiary}
         />
 
