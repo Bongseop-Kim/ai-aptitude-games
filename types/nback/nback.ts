@@ -51,3 +51,12 @@ export type StageSummary = {
 };
 
 
+export type saveNbackGameDataParams = {
+    summaryList: StageSummary[];
+    trialsList: NbackTrial[];
+    type: "practice" | "real";
+};
+
+export type UseNBackGameOptions = {
+    sessionType?: "practice" | "real";
+};

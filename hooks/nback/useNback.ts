@@ -1,5 +1,6 @@
 import { NBACK_GAME, SHAPE_POOL } from "@/constants/nback/nback";
-import { NbackPhase, NbackTrial, StageSummary } from "@/types/nback/nback";
+import { saveNbackGameData } from "@/db/services/nback";
+import { NbackPhase, NbackTrial, StageSummary, UseNBackGameOptions } from "@/types/nback/nback";
 import {
   generateShapeSequence,
   getCurrentSequenceIndex,
@@ -11,7 +12,10 @@ import {
 } from "@/utils/nback/nback";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-export const useNBackGame = () => {
+
+export const useNBackGame = ({
+  sessionType = "real",
+}: UseNBackGameOptions = {}) => {
   const interStimulusSec = NBACK_GAME.rules.interStimulusSec;
 
   const [stageIndex, setStageIndex] = useState<number>(0);
@@ -34,6 +38,7 @@ export const useNBackGame = () => {
   const sessionTrialsRef = useRef<NbackTrial[]>([]);
   const stageSummariesRef = useRef<StageSummary[]>([]);
   const savedStagesRef = useRef<Set<number>>(new Set());
+  const savedSessionRef = useRef(false);
 
   const currentStage = useMemo(
     () => NBACK_GAME.stages[stageIndex],
@@ -182,11 +187,22 @@ export const useNBackGame = () => {
         );
         setGamePhase("finished");
         setIsTimerRunning(false);
+        if (!savedSessionRef.current) {
+          savedSessionRef.current = true;
+          void saveNbackGameData({
+            summaryList: stageSummariesRef.current,
+            trialsList: sessionTrialsRef.current,
+            type: sessionType,
+          }).catch((error) => {
+            savedSessionRef.current = false;
+            console.error("Failed to save NBack game data", error);
+          });
+        }
         console.log("NBack session trials", sessionTrialsRef.current);
         console.log("NBack session summaries", stageSummariesRef.current);
       }
     },
-    [allowedOffsets, preCount, totalQuestions]
+    [allowedOffsets, preCount, sessionType, totalQuestions]
   );
 
   useEffect(() => {
