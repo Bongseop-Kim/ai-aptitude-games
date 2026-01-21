@@ -25,6 +25,7 @@ export const useNBackGame = () => {
   const [answerMarkerRatio, setAnswerMarkerRatio] = useState<number | null>(
     null
   );
+  const [finishedAccuracy, setFinishedAccuracy] = useState<number | null>(null);
 
   const restTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const shownAtRef = useRef<number | null>(null);
@@ -171,6 +172,14 @@ export const useNBackGame = () => {
         }
 
         console.log("게임 종료!");
+        const sessionTrials = sessionTrialsRef.current;
+        const correctCount = sessionTrials.filter(
+          (trial) => trial.isCorrect
+        ).length;
+        const totalCount = sessionTrials.length;
+        setFinishedAccuracy(
+          totalCount > 0 ? correctCount / totalCount : 0
+        );
         setGamePhase("finished");
         setIsTimerRunning(false);
         console.log("NBack session trials", sessionTrialsRef.current);
@@ -292,6 +301,7 @@ export const useNBackGame = () => {
     isPickerDisabled,
     isTimerRunning,
     answerMarkerRatio,
+    finishedAccuracy,
     remainingQuestions,
     selectedValue,
     showCountdown,

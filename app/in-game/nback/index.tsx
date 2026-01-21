@@ -3,11 +3,13 @@ import { Badge } from "@/components/badge";
 import { Countdown } from "@/components/countdown";
 import { FixedButtonView } from "@/components/fixed-button-view";
 import { SegmentedPicker } from "@/components/segmented-picker";
+import { ThemedModal } from "@/components/themed-modal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { TimerProgressBar } from "@/components/timer-progressbar";
 import { Spacer } from "@/components/ui/spacer";
 import { Padding, WIDTH, getAliasTokens } from "@/constants/theme";
+import { useEffect, useState } from "react";
 import { StyleSheet, useColorScheme } from "react-native";
 import { useNBackGame } from "./useHook";
 
@@ -26,10 +28,20 @@ export default function NBackGameScreen() {
     isPickerDisabled,
     isTimerRunning,
     answerMarkerRatio,
+    finishedAccuracy,
+    gamePhase,
     remainingQuestions,
     selectedValue,
     showCountdown,
   } = useNBackGame();
+
+  const [isFinishedModalVisible, setIsFinishedModalVisible] = useState(false);
+
+  useEffect(() => {
+    if (gamePhase === "finished") {
+      setIsFinishedModalVisible(true);
+    }
+  }, [gamePhase]);
 
   // 현재 스테이지가 없으면 null 반환
   if (!currentStage) {
@@ -38,6 +50,10 @@ export default function NBackGameScreen() {
 
   const { copy } = currentStage;
   const SvgComponent = currentShape?.svg;
+  const accuracyText =
+    finishedAccuracy !== null
+      ? `정답률 ${Math.round(finishedAccuracy * 100)}%`
+      : "정답률 집계중";
 
   return (
     <FixedButtonView>
@@ -101,6 +117,17 @@ export default function NBackGameScreen() {
         startCount={3}
         visible={showCountdown}
         onComplete={handleCountdownComplete}
+      />
+
+      <ThemedModal
+        visible={isFinishedModalVisible}
+        title="시험 종료"
+        description={`모든 스테이지를 완료했어요. ${accuracyText}`}
+        onRequestClose={() => setIsFinishedModalVisible(false)}
+        primaryAction={{
+          label: "확인",
+          onPress: () => setIsFinishedModalVisible(false),
+        }}
       />
     </FixedButtonView>
   );
