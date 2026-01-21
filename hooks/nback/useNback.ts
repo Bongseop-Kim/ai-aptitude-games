@@ -1,6 +1,11 @@
 import { NBACK_GAME, SHAPE_POOL } from "@/constants/nback/nback";
 import { saveNbackGameData } from "@/db/services/nback";
-import { NbackPhase, NbackTrial, StageSummary, UseNBackGameOptions } from "@/types/nback/nback";
+import {
+  NbackPhase,
+  NbackTrial,
+  StageSummary,
+  UseNBackGameOptions,
+} from "@/types/nback/nback";
 import {
   generateShapeSequence,
   getCurrentSequenceIndex,
@@ -10,12 +15,13 @@ import {
   getRemainingQuestions,
   summarizeStageTrials,
 } from "@/utils/nback/nback";
+import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-
 
 export const useNBackGame = ({
   sessionType = "real",
 }: UseNBackGameOptions = {}) => {
+  const router = useRouter();
   const interStimulusSec = NBACK_GAME.rules.interStimulusSec;
 
   const [stageIndex, setStageIndex] = useState<number>(0);
@@ -48,10 +54,7 @@ export const useNBackGame = ({
   const allowedOffsets = currentStage?.rules.allowedOffsets ?? [];
   const totalQuestions = currentStage?.rules.totalQuestions ?? 0;
 
-  const preCount = useMemo(
-    () => getPreCount(allowedOffsets),
-    [allowedOffsets]
-  );
+  const preCount = useMemo(() => getPreCount(allowedOffsets), [allowedOffsets]);
 
   const { shapeSequence, correctAnswers } = useMemo(() => {
     if (!currentStage) {
@@ -182,27 +185,30 @@ export const useNBackGame = ({
           (trial) => trial.isCorrect
         ).length;
         const totalCount = sessionTrials.length;
-        setFinishedAccuracy(
-          totalCount > 0 ? correctCount / totalCount : 0
-        );
+        setFinishedAccuracy(totalCount > 0 ? correctCount / totalCount : 0);
         setGamePhase("finished");
         setIsTimerRunning(false);
         if (!savedSessionRef.current) {
           savedSessionRef.current = true;
-          void saveNbackGameData({
-            summaryList: stageSummariesRef.current,
-            trialsList: sessionTrialsRef.current,
-            type: sessionType,
-          }).catch((error) => {
-            savedSessionRef.current = false;
-            console.error("Failed to save NBack game data", error);
-          });
+          void (async () => {
+            try {
+              const sessionId = await saveNbackGameData({
+                summaryList: stageSummariesRef.current,
+                trialsList: sessionTrialsRef.current,
+                type: sessionType,
+              });
+              router.replace(`/games/nback/result/${sessionId}`);
+            } catch (error) {
+              savedSessionRef.current = false;
+              console.error("Failed to save NBack game data", error);
+            }
+          })();
         }
         console.log("NBack session trials", sessionTrialsRef.current);
         console.log("NBack session summaries", stageSummariesRef.current);
       }
     },
-    [allowedOffsets, preCount, sessionType, totalQuestions]
+    [allowedOffsets, preCount, router, sessionType, totalQuestions]
   );
 
   useEffect(() => {
@@ -298,8 +304,7 @@ export const useNBackGame = ({
       setSelectedValue(numericValue);
       const shownAt = shownAtRef.current ?? Date.now();
       const elapsedMs = Math.max(0, Date.now() - shownAt);
-      const ratio =
-        elapsedMs / (NBACK_GAME.rules.stimulusSec * 1000 || 1);
+      const ratio = elapsedMs / (NBACK_GAME.rules.stimulusSec * 1000 || 1);
       setAnswerMarkerRatio(Math.min(1, Math.max(0, ratio)));
       finalizeCurrentTrial(numericValue);
     },
