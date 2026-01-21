@@ -25,6 +25,7 @@ export default function NBackGameScreen() {
     headerText,
     isPickerDisabled,
     isTimerRunning,
+    answerMarkerRatio,
     remainingQuestions,
     selectedValue,
     showCountdown,
@@ -44,6 +45,18 @@ export default function NBackGameScreen() {
         duration={stimulusSec}
         isRunning={isTimerRunning}
         onComplete={handleTimeUp}
+        markerRatio={answerMarkerRatio}
+        markerContent={
+          <Badge
+            variant="success"
+            type="fill"
+            kind="text"
+            shape="speech"
+            tailPosition="top"
+          >
+            응답완료
+          </Badge>
+        }
       />
 
       <ThemedView style={styles.contentContainer}>

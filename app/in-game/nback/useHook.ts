@@ -22,6 +22,9 @@ export const useNBackGame = () => {
   const [questionIndex, setQuestionIndex] = useState(0);
   const [preCountIndex, setPreCountIndex] = useState(0);
   const [isAnswerLocked, setIsAnswerLocked] = useState(false);
+  const [answerMarkerRatio, setAnswerMarkerRatio] = useState<number | null>(
+    null
+  );
 
   const restTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const shownAtRef = useRef<number | null>(null);
@@ -74,6 +77,7 @@ export const useNBackGame = () => {
     setGamePhase("preCount");
     setQuestionIndex(0);
     setPreCountIndex(0);
+    setAnswerMarkerRatio(null);
     setIsTimerRunning(true);
   }, []);
 
@@ -116,6 +120,7 @@ export const useNBackGame = () => {
     ) => {
       setSelectedValue(undefined);
       setIsAnswerLocked(false);
+      setAnswerMarkerRatio(null);
 
       if (currentQuestionIdx === 0 && currentPreCountIdx < preCount - 1) {
         setPreCountIndex((prev) => prev + 1);
@@ -213,6 +218,7 @@ export const useNBackGame = () => {
     currentTrialRef.current = null;
     setSelectedValue(undefined);
     setIsAnswerLocked(false);
+    setAnswerMarkerRatio(null);
   }, [stageIndex]);
 
   useEffect(() => {
@@ -265,6 +271,11 @@ export const useNBackGame = () => {
       if (!val || isAnswerLocked || gamePhase !== "playing") return;
       const numericValue = Number(val);
       setSelectedValue(numericValue);
+      const shownAt = shownAtRef.current ?? Date.now();
+      const elapsedMs = Math.max(0, Date.now() - shownAt);
+      const ratio =
+        elapsedMs / (NBACK_GAME.rules.stimulusSec * 1000 || 1);
+      setAnswerMarkerRatio(Math.min(1, Math.max(0, ratio)));
       finalizeCurrentTrial(numericValue);
     },
     [finalizeCurrentTrial, gamePhase, isAnswerLocked]
@@ -280,6 +291,7 @@ export const useNBackGame = () => {
     headerText,
     isPickerDisabled,
     isTimerRunning,
+    answerMarkerRatio,
     remainingQuestions,
     selectedValue,
     showCountdown,
