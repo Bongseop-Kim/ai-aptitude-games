@@ -6,13 +6,12 @@ import { SegmentedPicker } from "@/components/segmented-picker";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { TimerProgressBar } from "@/components/timer-progressbar";
-import { GAMES_MAP } from "@/constants/games";
-import { Image } from "expo-image";
+import { Spacer } from "@/components/ui/spacer";
+import { Padding } from "@/constants/theme";
 import { Dimensions, StyleSheet } from "react-native";
 import { useNBackGame } from "./useHook";
 
 export default function NBackGameScreen() {
-  const game = GAMES_MAP["nback"];
   const stimulusSec = NBACK_GAME.rules.stimulusSec;
 
   const {
@@ -35,6 +34,7 @@ export default function NBackGameScreen() {
   }
 
   const { copy } = currentStage;
+  const SvgComponent = currentShape?.svg;
 
   return (
     <FixedButtonView>
@@ -45,6 +45,7 @@ export default function NBackGameScreen() {
       />
 
       <ThemedView style={styles.contentContainer}>
+        <Spacer size="spacing48" />
         <Badge
           variant="default"
           type="ghost"
@@ -53,16 +54,18 @@ export default function NBackGameScreen() {
         >
           남은 문항 {remainingQuestions}
         </Badge>
+        <Spacer size="spacing8" />
 
         <ThemedText type="title1" style={styles.headerText}>
           {headerText}
         </ThemedText>
-
-        <Image
-          source={currentShape?.source ?? game.image}
-          style={styles.gameImage}
+        <Spacer size="spacing32" />
+        <SvgComponent
+          width={Dimensions.get("window").width / 2}
+          height={Dimensions.get("window").width / 2}
         />
 
+        <Spacer size="spacing40" />
         <SegmentedPicker
           options={copy.options.map((opt) => ({
             label: opt.label,
@@ -91,27 +94,18 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     alignItems: "center",
-    paddingHorizontal: 16,
-    marginTop: 24,
+
+    paddingHorizontal: Padding.m,
   },
   remainingBadge: {
     alignSelf: "flex-end",
-    marginBottom: 16,
   },
   headerText: {
     textAlign: "center",
     height: 80,
-    marginBottom: 24,
     textAlignVertical: "center",
-  },
-  gameImage: {
-    width: "100%",
-    height: Dimensions.get("window").width - 32,
-    borderRadius: 12,
-    marginBottom: 24,
   },
   segmentedPicker: {
     width: "100%",
-    minHeight: 120,
   },
 });
