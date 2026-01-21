@@ -1,5 +1,5 @@
 <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M0 120V0H40L0 120Z" fill="black"/>
-<path d="M80 0H40V120L80 0Z" fill="black"/>
-<path d="M80 0H120L80 120V0Z" fill="black"/>
+<path d="M0 120V0H40L0 120Z" fill="currentColor"/>
+<path d="M80 0H40V120L80 0Z" fill="currentColor"/>
+<path d="M80 0H120L80 120V0Z" fill="currentColor"/>
 </svg>

@@ -7,12 +7,14 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { TimerProgressBar } from "@/components/timer-progressbar";
 import { Spacer } from "@/components/ui/spacer";
-import { Padding } from "@/constants/theme";
-import { Dimensions, StyleSheet } from "react-native";
+import { Padding, getAliasTokens } from "@/constants/theme";
+import { Dimensions, StyleSheet, useColorScheme } from "react-native";
 import { useNBackGame } from "./useHook";
 
 export default function NBackGameScreen() {
   const stimulusSec = NBACK_GAME.rules.stimulusSec;
+  const colorScheme = useColorScheme();
+  const colors = getAliasTokens(colorScheme ?? "light");
 
   const {
     currentStage,
@@ -63,6 +65,7 @@ export default function NBackGameScreen() {
         <SvgComponent
           width={Dimensions.get("window").width / 2}
           height={Dimensions.get("window").width / 2}
+          color={colors.brand.tertiary}
         />
 
         <Spacer size="spacing40" />

@@ -1,6 +1,6 @@
 <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M0 60V2.47955e-05L60 1.52588e-05C60 33.1371 33.1371 60 0 60Z" fill="black"/>
-<path d="M60 60V1.52588e-05H120C120 33.1371 93.1371 60 60 60Z" fill="black"/>
-<path d="M60 120V60L120 60C120 93.1371 93.1371 120 60 120Z" fill="black"/>
-<path d="M0 120V60H60C60 93.1371 33.1371 120 0 120Z" fill="black"/>
+<path d="M0 60V2.47955e-05L60 1.52588e-05C60 33.1371 33.1371 60 0 60Z" fill="currentColor"/>
+<path d="M60 60V1.52588e-05H120C120 33.1371 93.1371 60 60 60Z" fill="currentColor"/>
+<path d="M60 120V60L120 60C120 93.1371 93.1371 120 60 120Z" fill="currentColor"/>
+<path d="M0 120V60H60C60 93.1371 33.1371 120 0 120Z" fill="currentColor"/>
 </svg>

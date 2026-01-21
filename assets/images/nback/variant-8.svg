@@ -1,4 +1,4 @@
 <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M60 0V60C60 93.1372 33.1372 120 0 120V60C0 26.8628 26.8628 0 60 0Z" fill="black"/>
-<path d="M120 60V0C86.8628 0 60 26.8628 60 60V120C93.1372 120 120 93.1372 120 60Z" fill="black"/>
+<path d="M60 0V60C60 93.1372 33.1372 120 0 120V60C0 26.8628 26.8628 0 60 0Z" fill="currentColor"/>
+<path d="M120 60V0C86.8628 0 60 26.8628 60 60V120C93.1372 120 120 93.1372 120 60Z" fill="currentColor"/>
 </svg>
