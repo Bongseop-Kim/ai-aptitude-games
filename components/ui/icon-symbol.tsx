@@ -24,6 +24,7 @@ const MAPPING = {
   "star.fill": "star",
   star: "star-border",
   gearshape: "settings",
+  "clock.arrow.circlepath": "history",
 } as IconMapping;
 
 /**

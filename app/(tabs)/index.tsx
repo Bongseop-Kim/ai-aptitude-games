@@ -2,6 +2,7 @@ import DifficultyStars from "@/components/difficulty-stars";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import GAMES from "@/constants/games";
+import { BorderRadius, Padding, Spacing } from "@/constants/theme";
 import Game from "@/types/game";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
@@ -48,21 +49,21 @@ const GameCard = ({ game }: { game: Game }) => {
 
 const styles = StyleSheet.create({
   gameCardContent: {
-    padding: 16,
+    padding: Padding.m,
   },
   gameImage: {
     width: 114,
     height: 114,
-    borderRadius: 12,
+    borderRadius: BorderRadius.s,
   },
   gameNameContainer: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 12,
+    gap: Spacing.spacing12,
     flex: 1,
   },
   gameInfo: {
     flex: 1,
-    gap: 4,
+    gap: Spacing.spacing4,
   },
 });

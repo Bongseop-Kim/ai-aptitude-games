@@ -19,22 +19,22 @@ export default function NBackResultScreen() {
   }, [id]);
 
   return (
-    <FixedButtonView buttonProps={{
-      onPress: () => {
-        router.back();
-      },
-      children: '한 번 더',
-    }}
+    <FixedButtonView
+      buttonProps={{
+        onPress: () => {
+          router.back();
+        },
+        children: "한 번 더",
+      }}
       secondaryButtonProps={{
         onPress: () => {
           router.push(`/games/nback/detail/${id}`);
         },
-        children: '기록 확인',
+        children: "기록 확인",
       }}
     >
       <Stack.Screen options={{ headerShown: false }} />
       <FeedbackLayout sessionFeedback={sessionFeedback} />
-
     </FixedButtonView>
   );
 }

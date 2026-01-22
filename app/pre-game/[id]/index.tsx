@@ -3,9 +3,10 @@ import { FixedButtonScroll } from "@/components/fixed-button-scroll";
 import { ImageCarousel } from "@/components/image-carousel";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { GAMES_MAP } from "@/constants/games";
-import { Link, useLocalSearchParams, useRouter } from "expo-router";
-import { StyleSheet } from "react-native";
+import { Link, Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { Pressable, StyleSheet } from "react-native";
 
 export default function PreGameScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -42,64 +43,88 @@ export default function PreGameScreen() {
     alert(`${game.name} 연습!`);
   };
 
+  const handleHistory = () => {
+    router.push("/games/nback/history");
+  };
+
   return (
-    <FixedButtonScroll
-      buttonProps={{
-        onPress: handleStart,
-        children: "시작하기",
-      }}
-      secondaryButtonProps={{
-        onPress: handlePractice,
-        children: "연습",
-      }}
-    >
-      <ImageCarousel images={game.images} />
+    <>
+      <Stack.Screen
+        options={{
+          headerRight: () => (
+            <ThemedView style={styles.headerRightContainer}>
+              <Pressable onPress={handleHistory}>
+                <IconSymbol
+                  name="clock.arrow.circlepath"
+                  size={24}
+                  color="black"
+                />
+              </Pressable>
+              <IconSymbol name="gearshape" size={24} color="black" />
+            </ThemedView>
+          ),
+        }}
+      />
+      <FixedButtonScroll
+        buttonProps={{
+          onPress: handleStart,
+          children: "시작하기",
+        }}
+        secondaryButtonProps={{
+          onPress: handlePractice,
+          children: "연습",
+        }}
+      >
+        <ImageCarousel images={game.images} />
 
-      <ThemedView style={styles.contentContainer}>
-        <ThemedText type="title1">{game.name}</ThemedText>
+        <ThemedView style={styles.contentContainer}>
+          <ThemedText type="title1">{game.name}</ThemedText>
 
-        <ItemContainer
-          header="난이도"
-          children={<DifficultyStars level={game.difficulty} size={18} />}
-        />
-        <ItemContainer
-          header="측정 역량"
-          children={
-            <ThemedText type="captionM">
-              {game.measuredSkills.join(", ")}
-            </ThemedText>
-          }
-        />
+          <ItemContainer
+            header="난이도"
+            children={<DifficultyStars level={game.difficulty} size={18} />}
+          />
+          <ItemContainer
+            header="측정 역량"
+            children={
+              <ThemedText type="captionM">
+                {game.measuredSkills.join(", ")}
+              </ThemedText>
+            }
+          />
 
-        <ItemContainer
-          header="진행 방법"
-          children={<ThemedText type="captionM">{game.description}</ThemedText>}
-        />
+          <ItemContainer
+            header="진행 방법"
+            children={
+              <ThemedText type="captionM">{game.description}</ThemedText>
+            }
+          />
 
-        <ItemContainer
-          header="라운드 수"
-          children={
-            <ThemedText type="captionM">{game.numberOfRounds}</ThemedText>
-          }
-        />
+          <ItemContainer
+            header="라운드 수"
+            children={
+              <ThemedText type="captionM">{game.numberOfRounds}</ThemedText>
+            }
+          />
 
-        <ItemContainer
-          header="문제 수"
-          children={
-            <ThemedText type="captionM">{game.numberOfQuestions}</ThemedText>
-          }
-        />
+          <ItemContainer
+            header="문제 수"
+            children={
+              <ThemedText type="captionM">{game.numberOfQuestions}</ThemedText>
+            }
+          />
 
-        <ItemContainer
-          header="응시시간"
-          children={
-            <ThemedText type="captionM">
-              {Math.floor(game.timeLimit / 60)}분
-            </ThemedText>
-          }
-        />
-      </ThemedView>
-    </FixedButtonScroll>
+          <ItemContainer
+            header="응시시간"
+            children={
+              <ThemedText type="captionM">
+                {Math.floor(game.timeLimit / 60)}분
+              </ThemedText>
+            }
+          />
+        </ThemedView>
+      </FixedButtonScroll>
+    </>
   );
 }
 
@@ -121,6 +146,12 @@ const ItemContainer = ({
 };
 
 const styles = StyleSheet.create({
+  headerRightContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginHorizontal: 8,
+  },
   contentContainer: {
     padding: 16,
     gap: 24,

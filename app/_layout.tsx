@@ -37,10 +37,7 @@ export default function RootLayout() {
 
   if (error) {
     return (
-      <AppInitError
-        error={error}
-        title="데이터베이스 초기화에 실패했습니다"
-      />
+      <AppInitError error={error} title="데이터베이스 초기화에 실패했습니다" />
     );
   }
 
@@ -83,6 +80,6 @@ export default function RootLayout() {
 
 const styles = StyleSheet.create({
   headerRight: {
-    marginLeft: 6,
+    marginHorizontal: 8,
   },
 });

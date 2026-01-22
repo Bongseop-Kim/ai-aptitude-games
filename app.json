@@ -10,7 +10,8 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.bongsub.aiaptitudegames"
+      "bundleIdentifier": "com.bongsub.aiaptitudegames",
+      "UIDesignRequiresCompatibility": true
     },
     "android": {
       "adaptiveIcon": {
