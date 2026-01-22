@@ -56,7 +56,8 @@
             "./assets/fonts/Pretendard-Thin.otf"
           ]
         }
-      ]
+      ],
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true,

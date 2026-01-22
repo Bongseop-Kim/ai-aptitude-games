@@ -3,6 +3,8 @@
 // ============================================================================
 // 기본 색상 팔레트 - 디자인 시스템의 최하위 레이어
 
+import { Dimensions } from "react-native";
+
 export const PrimitiveColors = {
   // Red Scale
   red: {
@@ -573,17 +575,97 @@ export const Typography = {
   },
 } as const;
 
-export type TypographyKey = keyof typeof Typography;
+export const Spacing = {
+  spacing4: 4,
+  spacing8: 8,
+  spacing12: 12,
+  spacing16: 16,
+  spacing20: 20,
+  spacing24: 24,
+  spacing28: 28,
+  spacing32: 32,
+  spacing36: 36,
+  spacing40: 40,
+  spacing44: 44,
+  spacing48: 48,
+  spacing52: 52,
+  spacing56: 56,
+  spacing60: 60,
+  spacing64: 64,
+  spacing68: 68,
+  spacing72: 72,
+  spacing76: 76,
+  spacing80: 80,
+  spacing84: 84,
+  spacing88: 88,
+  spacing92: 92,
+  spacing96: 96,
+  spacing100: 100,
+} as const;
+
+
+export const Margin = {
+  xs: 4,
+  s: 8,
+  m: 16,
+  l: 24,
+  xl: 40,
+  xxl: 80,
+} as const;
+
+export const Padding = {
+  xs: 4,
+  s: 8,
+  m: 16,
+  l: 24,
+  xl: 40,
+  xxl: 80,
+} as const;
+
+export const BorderRadius = {
+  none: 0,
+  xxs: 4,
+  xs: 8,
+  s: 12,
+  m: 20,
+  l: 24,
+  full: 999,
+} as const;
+
+export const Sizing = {
+  xs: 24,
+  s: 36,
+  m: 40,
+  l: 48
+} as const;
+
+export const BorderWidth = {
+  none: 0,
+  s: 1,
+  m: 2,
+  l: 3,
+} as const;
+
+export const WIDTH = Dimensions.get("window").width;
 
 // ============================================================================
 // TYPE DEFINITIONS
 // ============================================================================
+
+export type TypographyKey = keyof typeof Typography;
 
 export type ColorMode = "light" | "dark";
 
 export type PrimitiveColorKey = keyof typeof PrimitiveColors;
 export type AliasTokenKey = keyof typeof AliasTokens.light;
 export type SemanticTokenKey = keyof typeof SemanticTokens.light;
+
+export type SpacingToken = keyof typeof Spacing;
+export type MarginToken = keyof typeof Margin;
+export type PaddingToken = keyof typeof Padding;
+export type BorderRadiusToken = keyof typeof BorderRadius;
+export type SizingToken = keyof typeof Sizing;
+export type BorderWidthToken = keyof typeof BorderWidth;
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -606,14 +688,14 @@ export const getSemanticTokens = (mode: ColorMode) => SemanticTokens[mode];
 /**
  * 사용 예시:
  *
- * // Primitive 토큰 직접 사용
+ * Primitive 토큰 직접 사용
  * const primaryBlue = PrimitiveColors.blue[700];
  *
- * // Alias 토큰 사용
+ * Alias 토큰 사용
  * const aliasTokens = getAliasTokens(colorScheme);
  * const brandColor = aliasTokens.brand.primary;
  *
- * // Semantic 토큰 사용 (권장)
+ * Semantic 토큰 사용 (권장)
  * const semanticTokens = getSemanticTokens(colorScheme);
  * const buttonColor = semanticTokens.button.primaryBgDefault;
  */

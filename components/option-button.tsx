@@ -25,17 +25,26 @@ export function OptionButton<T extends string>({
       style={[
         styles.option,
         {
-          backgroundColor: colors.surface.base,
-          borderColor: isSelected
+          backgroundColor: disabled
+            ? colors.surface.muted
+            : colors.surface.base,
+          borderColor: disabled
+            ? colors.border.muted
+            : isSelected
             ? colors.brand.primary
             : colors.surface.layer2,
+          opacity: disabled ? 0.6 : 1,
         },
       ]}
     >
       <ThemedText
         type={isSelected ? "labelM" : "captionM"}
         style={{
-          color: isSelected ? colors.brand.primary : colors.text.secondary,
+          color: disabled
+            ? colors.text.disabled
+            : isSelected
+            ? colors.brand.primary
+            : colors.text.secondary,
         }}
       >
         {option.label}

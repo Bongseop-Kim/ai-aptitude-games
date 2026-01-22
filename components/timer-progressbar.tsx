@@ -1,5 +1,5 @@
 import { useThemeColor } from "@/hooks/use-theme-color";
-import { useEffect } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { StyleSheet, View, ViewStyle } from "react-native";
 import Animated, {
   Easing,
@@ -38,6 +38,14 @@ export type TimerProgressBarProps = {
    * 컨테이너 스타일
    */
   style?: ViewStyle;
+  /**
+   * 응답 마커 비율 (0~1)
+   */
+  markerRatio?: number | null;
+  /**
+   * 응답 마커 콘텐츠
+   */
+  markerContent?: ReactNode;
 };
 
 export function TimerProgressBar({
@@ -48,8 +56,12 @@ export function TimerProgressBar({
   color,
   backgroundColor,
   style,
+  markerRatio,
+  markerContent,
 }: TimerProgressBarProps) {
   const progress = useSharedValue(0);
+  const [containerWidth, setContainerWidth] = useState<number | null>(null);
+  const [markerWidth, setMarkerWidth] = useState<number | null>(null);
 
   // 테마 색상 가져오기
   const defaultProgressColor = useThemeColor({}, "brand.primary");
@@ -89,33 +101,88 @@ export function TimerProgressBar({
     };
   });
 
+  const clampedMarkerRatio =
+    markerRatio === null || markerRatio === undefined
+      ? null
+      : Math.min(1, Math.max(0, markerRatio));
+  const markerLeft =
+    clampedMarkerRatio !== null &&
+    containerWidth !== null &&
+    markerWidth !== null
+      ? Math.min(
+          Math.max(
+            clampedMarkerRatio * containerWidth - markerWidth / 2,
+            0
+          ),
+          Math.max(containerWidth - markerWidth, 0)
+        )
+      : null;
+
   return (
     <View
-      style={[
-        styles.container,
-        {
-          height,
-          backgroundColor: bgColor,
-        },
-        style,
-      ]}
+      style={[styles.wrapper, style]}
+      onLayout={(event) => {
+        const nextWidth = event.nativeEvent.layout.width;
+        setContainerWidth((prev) => (prev === nextWidth ? prev : nextWidth));
+      }}
     >
-      <Animated.View
+      <View
         style={[
+          styles.barContainer,
           {
             height,
-            backgroundColor: progressColor,
+            backgroundColor: bgColor,
           },
-          animatedStyle,
         ]}
-      />
+      >
+        <Animated.View
+          style={[
+            {
+              height,
+              backgroundColor: progressColor,
+            },
+            animatedStyle,
+          ]}
+        />
+      </View>
+      {markerContent && clampedMarkerRatio !== null && (
+        <View
+          pointerEvents="none"
+          style={[
+            styles.markerContainer,
+            {
+              left: markerLeft ?? 0,
+              top: height - 4,
+            },
+          ]}
+        >
+          <View
+            onLayout={(event) => {
+              const nextWidth = event.nativeEvent.layout.width;
+              setMarkerWidth((prev) => (prev === nextWidth ? prev : nextWidth));
+            }}
+          >
+            {markerContent}
+          </View>
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  wrapper: {
+    width: "100%",
+    position: "relative",
+    overflow: "visible",
+  },
+  barContainer: {
     width: "100%",
     overflow: "hidden",
+  },
+  markerContainer: {
+    position: "absolute",
+    alignItems: "center",
+    zIndex: 1,
   },
 });

@@ -1,7 +1,7 @@
 import { getSemanticTokens } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useMemo } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
 import { Option, OptionButton } from "./option-button";
 
 export type SegmentedPickerProps<T extends string> = {
@@ -10,7 +10,8 @@ export type SegmentedPickerProps<T extends string> = {
   onChange: (value: T) => void;
   columns?: number;
   disabled?: boolean;
-};
+  style?: StyleProp<ViewStyle>;
+  };
 
 export function SegmentedPicker<T extends string>({
   options,
@@ -18,6 +19,7 @@ export function SegmentedPicker<T extends string>({
   onChange,
   columns = 3,
   disabled = false,
+  style,
 }: SegmentedPickerProps<T>) {
   const colorScheme = useColorScheme();
   const colors = getSemanticTokens(colorScheme ?? "light");
@@ -38,7 +40,7 @@ export function SegmentedPicker<T extends string>({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       {rows.map((row, rowIndex) => (
         <View key={rowIndex} style={styles.row}>
           {row.map((option) => (

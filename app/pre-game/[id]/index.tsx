@@ -25,7 +25,15 @@ export default function PreGameScreen() {
   }
 
   const handleStart = () => {
-    router.push(`/in-game/${id}`);
+    switch (id) {
+      case "nback":
+        router.push("/games/nback/play");
+        // router.push("/games/nback/summary/1");
+        break;
+
+      default:
+        router.push(`/games/${id}/play` as any);
+    }
   };
 
   const handlePractice = () => {
@@ -54,7 +62,6 @@ export default function PreGameScreen() {
           header="난이도"
           children={<DifficultyStars level={game.difficulty} size={18} />}
         />
-
         <ItemContainer
           header="측정 역량"
           children={
