@@ -1,3 +1,4 @@
+import { AppInitError } from "@/components/app-init-error";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { SemanticTokens } from "@/constants/theme";
 import { db, dbName, expo } from "@/db/client";
@@ -35,7 +36,12 @@ export default function RootLayout() {
   }
 
   if (error) {
-    console.error("Migration Error:", error);
+    return (
+      <AppInitError
+        error={error}
+        title="데이터베이스 초기화에 실패했습니다"
+      />
+    );
   }
 
   return (
