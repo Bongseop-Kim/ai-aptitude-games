@@ -28,7 +28,7 @@
 
 ## 프로젝트 구조
 
-```
+```text
 ai-aptitude-games/
 ├── app/                    # Expo Router 파일 기반 라우팅
 │   ├── (tabs)/            # 탭 네비게이션

@@ -8,6 +8,25 @@ export const getPreCount = (allowedOffsets: number[]) => {
     return offsetsWithoutZero.length > 0 ? Math.max(...offsetsWithoutZero) : 1;
 };
 
+const isMultiNbackAnswer = (
+    shapeSequence: number[],
+    index: number,
+    answerOffset: number,
+    positiveOffsets: number[]
+) => {
+    const answerValue = shapeSequence[index - answerOffset];
+    for (let idx = 0; idx < positiveOffsets.length; idx += 1) {
+        const offset = positiveOffsets[idx];
+        if (offset === answerOffset) {
+            continue;
+        }
+        if (shapeSequence[index - offset] === answerValue) {
+            return true;
+        }
+    }
+    return false;
+};
+
 export const getCurrentSequenceIndex = ({
     questionIndex,
     preCountIndex,
@@ -56,6 +75,38 @@ export const getIsPickerDisabled = ({
     phase === "finished" ||
     isAnswerLocked;
 
+const pickShapeAvoidingTriple = (
+    shapeSequence: number[],
+    index: number,
+    shapePoolSize: number
+) => {
+    if (shapePoolSize <= 1) {
+        return 0;
+    }
+    if (index < 2) {
+        return pickRandomIndex(shapePoolSize);
+    }
+    const prev1 = shapeSequence[index - 1];
+    const prev2 = shapeSequence[index - 2];
+    if (prev1 !== prev2) {
+        return pickRandomIndex(shapePoolSize);
+    }
+    let pick = pickRandomIndex(shapePoolSize - 1);
+    if (pick >= prev1) {
+        pick += 1;
+    }
+    return pick;
+};
+
+const getAvoidTripleValue = (shapeSequence: number[], index: number) => {
+    if (index < 2) {
+        return -1;
+    }
+    const prev1 = shapeSequence[index - 1];
+    const prev2 = shapeSequence[index - 2];
+    return prev1 === prev2 ? prev1 : -1;
+};
+
 export const generateShapeSequence = (
     totalQuestions: number,
     allowedOffsets: number[],
@@ -67,40 +118,95 @@ export const generateShapeSequence = (
     const totalLength = preCount + totalQuestions;
     const shapeSequence = new Array<number>(totalLength);
     const correctAnswers = new Array<number>(totalQuestions);
+    const disallowedMarks = new Int32Array(shapePoolSize);
+    let mark = 1;
 
     for (let i = 0; i < preCount; i += 1) {
-        shapeSequence[i] = pickRandomIndex(shapePoolSize);
+        shapeSequence[i] = pickShapeAvoidingTriple(
+            shapeSequence,
+            i,
+            shapePoolSize
+        );
     }
 
     for (let q = 0; q < totalQuestions; q += 1) {
         const i = preCount + q;
-        const answer = allowedWithZero[pickRandomIndex(allowedWithZero.length)];
-        correctAnswers[q] = answer;
+        const avoidTripleValue = getAvoidTripleValue(shapeSequence, i);
+        const hasTripleGuard = avoidTripleValue !== -1;
+        const maxRetries = allowedWithZero.length * 2;
+        let answer = 0;
+        let accepted = false;
 
-        if (answer > 0) {
-            shapeSequence[i] = shapeSequence[i - answer];
-            continue;
-        }
-
-        const disallowed = new Set<number>();
-        for (let idx = 0; idx < positiveOffsets.length; idx += 1) {
-            const offset = positiveOffsets[idx];
-            disallowed.add(shapeSequence[i - offset]);
-        }
-
-        if (disallowed.size === 0 || disallowed.size >= shapePoolSize) {
-            shapeSequence[i] = pickRandomIndex(shapePoolSize);
-            continue;
-        }
-
-        const candidates = [];
-        for (let idx = 0; idx < shapePoolSize; idx += 1) {
-            if (!disallowed.has(idx)) {
-                candidates.push(idx);
+        for (let attempt = 0; attempt < maxRetries; attempt += 1) {
+            const picked = allowedWithZero[pickRandomIndex(allowedWithZero.length)];
+            if (picked === 0) {
+                answer = 0;
+                accepted = true;
+                break;
+            }
+            const candidate = shapeSequence[i - picked];
+            if (
+                (!hasTripleGuard || candidate !== avoidTripleValue) &&
+                !isMultiNbackAnswer(shapeSequence, i, picked, positiveOffsets)
+            ) {
+                answer = picked;
+                correctAnswers[q] = answer;
+                shapeSequence[i] = candidate;
+                accepted = true;
+                break;
             }
         }
 
-        shapeSequence[i] = candidates[pickRandomIndex(candidates.length)];
+        if (accepted && answer > 0) {
+            continue;
+        }
+
+        correctAnswers[q] = answer;
+
+        if (mark === 0) {
+            disallowedMarks.fill(0);
+            mark = 1;
+        } else {
+            mark += 1;
+        }
+
+        for (let idx = 0; idx < positiveOffsets.length; idx += 1) {
+            const offset = positiveOffsets[idx];
+            disallowedMarks[shapeSequence[i - offset]] = mark;
+        }
+
+        let pick = -1;
+        let eligible = 0;
+        for (let idx = 0; idx < shapePoolSize; idx += 1) {
+            if (idx === avoidTripleValue) {
+                continue;
+            }
+            if (disallowedMarks[idx] === mark) {
+                continue;
+            }
+            eligible += 1;
+            if (pick === -1 || Math.random() < 1 / eligible) {
+                pick = idx;
+            }
+        }
+
+        if (pick === -1) {
+            eligible = 0;
+            for (let idx = 0; idx < shapePoolSize; idx += 1) {
+                if (idx === avoidTripleValue) {
+                    continue;
+                }
+                eligible += 1;
+                if (pick === -1 || Math.random() < 1 / eligible) {
+                    pick = idx;
+                }
+            }
+        }
+
+        shapeSequence[i] =
+            pick === -1
+                ? pickShapeAvoidingTriple(shapeSequence, i, shapePoolSize)
+                : pick;
     }
 
     return { shapeSequence, correctAnswers };
