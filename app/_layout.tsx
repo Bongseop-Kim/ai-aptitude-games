@@ -25,7 +25,10 @@ export const unstable_settings = {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const { success, error } = useMigrations(db, migrations);
-  useDrizzleStudio(expo);
+
+  if (__DEV__ && useDrizzleStudio) {
+    useDrizzleStudio(expo);
+  }
 
   if (!success && !error) {
     return <ActivityIndicator size="large" style={{ flex: 1 }} />;
