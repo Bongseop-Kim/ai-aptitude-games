@@ -197,7 +197,7 @@ export const useNBackGame = ({
                 trialsList: sessionTrialsRef.current,
                 type: sessionType,
               });
-              router.replace(`/games/nback/result/${sessionId}`);
+              router.replace(`/games/nback/summary/${sessionId}`);
             } catch (error) {
               savedSessionRef.current = false;
               console.error("Failed to save NBack game data", error);
