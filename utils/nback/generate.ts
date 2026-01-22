@@ -4,8 +4,6 @@ import { SessionFeedback } from "@/types/nback/generate";
 import { StageSummary } from "@/types/nback/nback";
 import { Offset, Tier } from "@/types/nback/rule";
 import { PerformancePattern } from "@/types/nback/template";
-
-
 function pickOne(arr: string[]) {
     return arr[Math.floor(Math.random() * arr.length)];
 }
@@ -36,9 +34,13 @@ function getWeightedAccuracy(stages: StageSummary[]) {
 }
 
 function getWeightedAvgRtMs(stages: StageSummary[]) {
-    const total = stages.reduce((s, x) => s + x.totalQuestions, 0);
-    const weighted = stages.reduce((s, x) => s + (x.avgRtMs ?? 0) * x.totalQuestions, 0);
-    return total ? Math.round(weighted / total) : 0;
+    // null RT는 "응답 없음"이라 평균 계산에서 완전히 제외한다.
+    const total = stages.reduce((s, x) => (x.avgRtMs == null ? s : s + x.totalQuestions), 0);
+    const weighted = stages.reduce(
+        (s, x) => s + (x.avgRtMs == null ? 0 : x.avgRtMs * x.totalQuestions),
+        0
+    );
+    return total ? Math.round(weighted / total) : null;
 }
 
 function parseOffsetKey(k: string): Offset | undefined {
@@ -48,17 +50,21 @@ function parseOffsetKey(k: string): Offset | undefined {
 }
 
 function aggregatePerOffset(stages: StageSummary[]) {
-    const map = new Map<Offset, { total: number; correct: number; rtSum: number }>();
+    const map = new Map<Offset, { total: number; correct: number; rtSum: number; rtCount: number }>();
 
     for (const st of stages) {
         for (const [k, v] of Object.entries(st.perOffset ?? {})) {
             const off = parseOffsetKey(k);
             if (off === undefined || v == null) continue;
 
-            const cur = map.get(off) ?? { total: 0, correct: 0, rtSum: 0 };
+            const cur = map.get(off) ?? { total: 0, correct: 0, rtSum: 0, rtCount: 0 };
             cur.total += v.total;
             cur.correct += v.correct;
-            cur.rtSum += (v.avgRtMs ?? 0) * v.total; // total 가중
+            // null RT는 "응답 없음"이라 평균 계산에서 완전히 제외한다.
+            if (v.avgRtMs != null) {
+                cur.rtSum += v.avgRtMs * v.total; // total 가중
+                cur.rtCount += v.total;
+            }
             map.set(off, cur);
         }
     }
@@ -68,7 +74,7 @@ function aggregatePerOffset(stages: StageSummary[]) {
         total: v.total,
         correct: v.correct,
         accuracy: v.total ? v.correct / v.total : 0,
-        avgRtMs: v.total ? Math.round(v.rtSum / v.total) : 0,
+        avgRtMs: v.rtCount ? Math.round(v.rtSum / v.rtCount) : null,
     }));
 
     // total 큰 순 → 안정적으로 판단
@@ -133,7 +139,7 @@ export function generateSessionFeedback(stages: StageSummary[]): SessionFeedback
     const { total, correct, accuracy } = getWeightedAccuracy(stages);
     const avgRtMs = getWeightedAvgRtMs(stages);
     const overallTier = getTierByAccuracy(accuracy);
-    const hasNoResponse = avgRtMs === 0; // 무응답 케이스 감지
+    const hasNoResponse = avgRtMs == null;
 
     const perOffset = aggregatePerOffset(stages);
     const bestOffset = chooseBestOffset(perOffset);
@@ -149,7 +155,7 @@ export function generateSessionFeedback(stages: StageSummary[]): SessionFeedback
         total,
         correct,
         accuracyPct: toPct01(accuracy),
-        avgRtSec: msToSec1(avgRtMs),
+        avgRtSec: avgRtMs == null ? "" : msToSec1(avgRtMs),
     };
 
     // 무응답인 경우 noResponse 템플릿 사용, 아니면 generic 사용
