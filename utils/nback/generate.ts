@@ -53,7 +53,7 @@ function aggregatePerOffset(stages: StageSummary[]) {
     for (const st of stages) {
         for (const [k, v] of Object.entries(st.perOffset ?? {})) {
             const off = parseOffsetKey(k);
-            if (!off || !v) continue;
+            if (off === undefined || v == null) continue;
 
             const cur = map.get(off) ?? { total: 0, correct: 0, rtSum: 0 };
             cur.total += v.total;
