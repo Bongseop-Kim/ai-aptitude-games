@@ -299,7 +299,7 @@ export const useNBackGame = ({
 
   const handleAnswer = useCallback(
     (val?: string) => {
-      if (!val || isAnswerLocked || gamePhase !== "playing") return;
+      if (val === undefined || val === null || val === "" || isAnswerLocked || gamePhase !== "playing") return;
       const numericValue = Number(val);
       setSelectedValue(numericValue);
       const shownAt = shownAtRef.current ?? Date.now();
