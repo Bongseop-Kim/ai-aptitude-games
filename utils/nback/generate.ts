@@ -87,13 +87,12 @@ function chooseBestOffset(buckets: ReturnType<typeof aggregatePerOffset>) {
 function chooseWeakOffset(buckets: ReturnType<typeof aggregatePerOffset>) {
     const candidates = buckets.filter((b) => b.total >= RULES.minQuestionsPerBucket);
     if (!candidates.length) return undefined;
-    // 어려운 오프셋(3) 우선 노출: 존재하고 낮으면 그걸 선택
-    const off3 = candidates.find((c) => c.offset === RULES.hardOffset);
-    if (off3) return off3.offset;
-
-    // 아니면 가장 낮은 정확도
     candidates.sort((a, b) => a.accuracy - b.accuracy || b.total - a.total);
-    return candidates[0].offset;
+    const lowestAcc = candidates[0].accuracy;
+    const hardLowest = candidates.find(
+        (c) => c.offset === RULES.hardOffset && c.accuracy === lowestAcc
+    );
+    return (hardLowest ?? candidates[0]).offset;
 }
 
 function detectPerformancePattern(stages: StageSummary[]): PerformancePattern {
