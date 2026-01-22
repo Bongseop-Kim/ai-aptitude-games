@@ -11,7 +11,10 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.bongsub.aiaptitudegames",
-      "UIDesignRequiresCompatibility": true
+      "infoPlist": {
+        "UIDesignRequiresCompatibility": true,
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -63,6 +66,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "a00249ab-13c4-4a37-ad29-3bf408d2e3cc"
+      }
     }
   }
 }
