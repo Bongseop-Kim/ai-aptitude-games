@@ -1,12 +1,12 @@
 import DifficultyStars from "@/components/difficulty-stars";
 import { FixedButtonScroll } from "@/components/fixed-button-scroll";
+import HeaderIcon from "@/components/header-icon";
 import { ImageCarousel } from "@/components/image-carousel";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { GAMES_MAP } from "@/constants/games";
 import { Link, Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { Pressable, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 
 export default function PreGameScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -53,14 +53,8 @@ export default function PreGameScreen() {
         options={{
           headerRight: () => (
             <ThemedView style={styles.headerRightContainer}>
-              <Pressable onPress={handleHistory}>
-                <IconSymbol
-                  name="clock.arrow.circlepath"
-                  size={24}
-                  color="black"
-                />
-              </Pressable>
-              <IconSymbol name="gearshape" size={24} color="black" />
+              <HeaderIcon name="clock.arrow.circlepath" onPress={handleHistory} />
+              <HeaderIcon name="gearshape" onPress={() => console.log('gearshape')} />
             </ThemedView>
           ),
         }}
@@ -149,8 +143,6 @@ const styles = StyleSheet.create({
   headerRightContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginHorizontal: 8,
   },
   contentContainer: {
     padding: 16,

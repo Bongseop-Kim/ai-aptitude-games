@@ -33,11 +33,11 @@ export default function NBackHistoryScreen() {
 
   return (
     <ThemedView style={styles.flex1}>
+      <HeaderComponent />
       <FlatList
         data={historyList}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => <ListItemComponent item={item} />}
-        ListHeaderComponent={<HeaderComponent />}
         ListEmptyComponent={<EmptyStateComponent />}
       />
     </ThemedView>
