@@ -3,14 +3,15 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { HStack, VStack } from "@/components/ui/stack";
-import { BorderWidth, getAliasTokens, Padding } from "@/constants/theme";
+import { BorderWidth, Padding, getAliasTokens } from "@/constants/theme";
 import {
   getNbackHistoryHeaderData,
   getNbackHistoryList,
 } from "@/db/services/nback";
 import { NbackHistoryHeaderData, NbackHistoryItem } from "@/types/nback/nback";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { FlatList, StyleSheet, useColorScheme } from "react-native";
+import { FlatList, Pressable, StyleSheet, useColorScheme } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -61,19 +62,18 @@ const HeaderComponent = () => {
       spacing="spacing12"
       style={[
         styles.headerContainer,
-        { borderBottomColor: colors.border.base },
       ]}
     >
       <VStack>
         <HStack align="flex-end" spacing="spacing4">
           <ThemedText type="headlineL">
-            {data?.todayAvgAccuracy ?? 0}%
+            {data?.todayAvgAccuracy ? data.todayAvgAccuracy * 100 : 0}%
           </ThemedText>
           <TrendIconComponent trend={data?.trend ?? "same"} />
         </HStack>
         <ThemedText>오늘 평균 정확도</ThemedText>
       </VStack>
-      <HStack justify="space-between" spacing="spacing4">
+      <HStack justify="space-between" spacing="spacing4" style={[styles.headerSeparator, { borderBottomColor: colors.border.base }]}>
         <VStack style={styles.flex1}>
           <ThemedText type="title1">
             {data?.sevenDayAvgAccuracy ? data.sevenDayAvgAccuracy * 100 : 0}%
@@ -88,6 +88,12 @@ const HeaderComponent = () => {
           <ThemedText type="title1">{data?.totalPlays ?? 0}</ThemedText>
           <ThemedText type="body2">총 플레이</ThemedText>
         </VStack>
+      </HStack>
+
+      <HStack justify="flex-end">
+        <Badge variant="default" kind="number" type="ghost">
+          <ThemedText type="body2">최신순</ThemedText>
+        </Badge>
       </HStack>
     </VStack>
   );
@@ -186,41 +192,32 @@ const ListItemComponent = ({ item }: { item: NbackHistoryItem }) => {
       : 0;
 
   return (
-    <ThemedView style={[styles.itemContainer]}>
-      <HStack align="center" justify="space-between" spacing="spacing12">
-        <HStack align="center" spacing="spacing12" style={styles.flex1}>
-          <ThemedView>
-            <Badge variant="color" kind="text">
-              {item.type === "real" ? "실전" : "연습"}
-            </Badge>
-          </ThemedView>
-          <VStack spacing="spacing4" style={styles.flex1}>
-            <HStack align="center" spacing="spacing4">
-              <IconSymbol name="clock" size={14} color={colors.text.tertiary} />
-              <ThemedText type="body2" lightColor={colors.text.secondary}>
-                {formatTimeAgo(item.createdAt)}
+    <Pressable onPress={() => {
+      router.push(`/games/nback/detail/${item.id}`);
+    }}>
+      <ThemedView style={[styles.itemContainer]}>
+        <HStack align="center" justify="space-between" spacing="spacing12">
+          <HStack align="center" spacing="spacing12" style={styles.flex1}>
+            <ThemedView>
+              <Badge variant="color" kind="text">
+                {item.type === "real" ? "실전" : "연습"}
+              </Badge>
+            </ThemedView>
+            <VStack spacing="spacing4" style={styles.flex1}>
+              <ThemedText type="labelL">
+                {Math.round(accuracy)}%
               </ThemedText>
-            </HStack>
-            <HStack align="center" spacing="spacing4">
-              <IconSymbol
-                name="checkmark.circle"
-                size={14}
-                color={colors.text.tertiary}
-              />
-              <ThemedText type="body2">
-                {item.correctCount}/{item.totalQuestions}
+              <ThemedText type="captionM" lightColor={colors.text.tertiary}>
+                {item.totalQuestions}문제 중 {item.correctCount}문제 정답
               </ThemedText>
-            </HStack>
-          </VStack>
-        </HStack>
-        <VStack align="flex-end" spacing="spacing4">
-          <ThemedText type="title3">{Math.round(accuracy)}%</ThemedText>
-          <ThemedText type="captionM" lightColor={colors.text.tertiary}>
-            정확도
+            </VStack>
+          </HStack>
+          <ThemedText type="body2" lightColor={colors.text.secondary}>
+            {formatTimeAgo(item.createdAt)}
           </ThemedText>
-        </VStack>
-      </HStack>
-    </ThemedView>
+        </HStack>
+      </ThemedView>
+    </Pressable>
   );
 };
 
@@ -250,7 +247,10 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     padding: Padding.m,
+  },
+  headerSeparator: {
     borderBottomWidth: BorderWidth.s,
+    paddingBottom: Padding.m,
   },
   itemContainer: {
     paddingHorizontal: Padding.m,
