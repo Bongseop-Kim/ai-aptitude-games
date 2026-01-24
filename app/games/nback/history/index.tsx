@@ -62,7 +62,10 @@ const HeaderComponent = () => {
       <VStack>
         <HStack align="flex-end" spacing="spacing4">
           <ThemedText type="headlineL">
-            {data?.todayAvgAccuracy ? data.todayAvgAccuracy * 100 : 0}%
+            {data?.todayAvgAccuracy
+              ? (data.todayAvgAccuracy * 100).toFixed(1)
+              : 0}
+            %
           </ThemedText>
           <TrendIconComponent trend={data?.trend ?? "same"} />
         </HStack>
@@ -78,7 +81,10 @@ const HeaderComponent = () => {
       >
         <VStack style={styles.flex1}>
           <ThemedText type="title1">
-            {data?.sevenDayAvgAccuracy ? data.sevenDayAvgAccuracy * 100 : 0}%
+            {data?.sevenDayAvgAccuracy
+              ? (data.sevenDayAvgAccuracy * 100).toFixed(1)
+              : 0}
+            %
           </ThemedText>
           <ThemedText type="body2">7일 평균</ThemedText>
         </VStack>

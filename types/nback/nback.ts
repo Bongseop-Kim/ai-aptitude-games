@@ -80,3 +80,19 @@ export type NbackHistoryItem = {
   correctCount: number;
   totalQuestions: number;
 };
+
+export type NbackDetailTrial = {
+  trialIndex: number;
+  isCorrect: boolean;
+  rtMs: number | null;
+  shownShapeId: string;
+};
+
+export type NbackDetailStage = {
+  stageIndex: number;
+  offsetN: number;
+  accuracy: number;
+  correctCount: number;
+  totalQuestions: number;
+  trials: NbackDetailTrial[];
+};

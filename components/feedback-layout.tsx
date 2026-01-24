@@ -54,7 +54,7 @@ export function FeedbackLayout({
   const renderSummaryLine = (line: string, index: number) => {
     const parts = line.split(/\*\*([^*]+)\*\*/g);
     return (
-      <ThemedText key={index} type="body1">
+      <ThemedText key={index}>
         {parts.map((part, partIndex) =>
           partIndex % 2 === 1 ? (
             <ThemedText
@@ -89,13 +89,14 @@ export function FeedbackLayout({
       </VStack>
 
       {/* Summary Section */}
-      {sessionFeedback?.summaryLines && sessionFeedback.summaryLines.length > 0 && (
-        <VStack spacing="spacing12" style={styles.summaryBlock}>
-          {sessionFeedback.summaryLines.map((line, index) =>
-            renderSummaryLine(line, index)
-          )}
-        </VStack>
-      )}
+      {sessionFeedback?.summaryLines &&
+        sessionFeedback.summaryLines.length > 0 && (
+          <VStack spacing="spacing12" style={styles.summaryBlock}>
+            {sessionFeedback.summaryLines.map((line, index) =>
+              renderSummaryLine(line, index)
+            )}
+          </VStack>
+        )}
 
       {/* Highlights Section */}
       {sessionFeedback?.highlights && sessionFeedback.highlights.length > 0 && (

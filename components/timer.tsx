@@ -1,4 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
+import { TypographyKey } from "@/constants/theme";
 import { useThemeColor } from "@/hooks/use-theme-color";
 import { useEffect, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
@@ -27,24 +28,7 @@ export type TimerProps = {
   /**
    * 타이머 텍스트 타입
    */
-  textType?:
-    | "headlineL"
-    | "headlineM"
-    | "headlineS"
-    | "title1"
-    | "title2"
-    | "title3"
-    | "labelL"
-    | "labelM"
-    | "labelS"
-    | "body1"
-    | "body2"
-    | "button1"
-    | "button2"
-    | "button3"
-    | "captionL"
-    | "captionM"
-    | "captionS";
+  textType?: TypographyKey;
 };
 
 export function Timer({

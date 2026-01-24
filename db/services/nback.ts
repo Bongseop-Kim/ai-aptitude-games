@@ -3,6 +3,7 @@ import { sessions, stageOffsets, stages, trials } from "@/db/schema/nback";
 import {
   NbackHistoryHeaderData,
   NbackHistoryItem,
+  NbackDetailStage,
   StageSummary,
   saveNbackGameDataParams,
 } from "@/types/nback/nback";
@@ -315,6 +316,82 @@ export const getNbackHistoryList = async (
           : new Date(session.createdAt),
       correctCount: stats.correctCount,
       totalQuestions: stats.totalQuestions,
+    };
+  });
+};
+
+export const getNbackDetailStages = async (
+  sessionId: number
+): Promise<NbackDetailStage[]> => {
+  const stageRows = await db
+    .select({
+      id: stages.id,
+      stageIndex: stages.stageIndex,
+      accuracy: stages.accuracy,
+      correctCount: stages.correctCount,
+      totalQuestions: stages.totalQuestions,
+    })
+    .from(stages)
+    .where(eq(stages.sessionId, sessionId))
+    .orderBy(asc(stages.stageIndex));
+
+  if (stageRows.length === 0) {
+    return [];
+  }
+
+  const stageIds = stageRows.map((stage) => stage.id);
+
+  const offsetRows = await db
+    .select({
+      stageId: stageOffsets.stageId,
+      offsetN: stageOffsets.offsetN,
+    })
+    .from(stageOffsets)
+    .where(inArray(stageOffsets.stageId, stageIds))
+    .orderBy(asc(stageOffsets.stageId), asc(stageOffsets.offsetN));
+
+  const offsetByStageId = new Map<number, number>();
+  for (const offset of offsetRows) {
+    if (offset.stageId == null) continue;
+    if (!offsetByStageId.has(offset.stageId)) {
+      offsetByStageId.set(offset.stageId, offset.offsetN);
+    }
+  }
+
+  const trialRows = await db
+    .select({
+      stageId: trials.stageId,
+      trialIndex: trials.trialIndex,
+      isCorrect: trials.isCorrect,
+      rtMs: trials.rtMs,
+      shownShapeId: trials.shownShapeId,
+    })
+    .from(trials)
+    .where(inArray(trials.stageId, stageIds))
+    .orderBy(asc(trials.stageId), asc(trials.trialIndex));
+
+  const trialsByStageId = new Map<number, typeof trialRows>();
+  for (const trial of trialRows) {
+    if (trial.stageId == null) continue;
+    const existing = trialsByStageId.get(trial.stageId) || [];
+    existing.push(trial);
+    trialsByStageId.set(trial.stageId, existing);
+  }
+
+  return stageRows.map((stage) => {
+    const trials = trialsByStageId.get(stage.id) || [];
+    return {
+      stageIndex: stage.stageIndex,
+      offsetN: offsetByStageId.get(stage.id) ?? 0,
+      accuracy: stage.accuracy,
+      correctCount: stage.correctCount,
+      totalQuestions: stage.totalQuestions,
+      trials: trials.map((trial) => ({
+        trialIndex: trial.trialIndex,
+        isCorrect: trial.isCorrect,
+        rtMs: trial.rtMs ?? null,
+        shownShapeId: trial.shownShapeId,
+      })),
     };
   });
 };
