@@ -1,6 +1,7 @@
 import { Badge } from "@/components/badge";
 import { Countdown } from "@/components/countdown";
 import { FixedButtonView } from "@/components/fixed-button-view";
+import { GameExitGuard } from "@/components/game-exit-guard";
 import { SegmentedPicker } from "@/components/segmented-picker";
 import { ThemedModal } from "@/components/themed-modal";
 import { ThemedText } from "@/components/themed-text";
@@ -57,6 +58,7 @@ export default function NBackGameScreen() {
 
   return (
     <FixedButtonView>
+      <GameExitGuard />
       <TimerProgressBar
         duration={stimulusSec}
         isRunning={isTimerRunning}
