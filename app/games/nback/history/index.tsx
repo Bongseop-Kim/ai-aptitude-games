@@ -58,12 +58,7 @@ const HeaderComponent = () => {
   }, []);
 
   return (
-    <VStack
-      spacing="spacing12"
-      style={[
-        styles.headerContainer,
-      ]}
-    >
+    <VStack spacing="spacing12" style={[styles.headerContainer]}>
       <VStack>
         <HStack align="flex-end" spacing="spacing4">
           <ThemedText type="headlineL">
@@ -73,7 +68,14 @@ const HeaderComponent = () => {
         </HStack>
         <ThemedText>오늘 평균 정확도</ThemedText>
       </VStack>
-      <HStack justify="space-between" spacing="spacing4" style={[styles.headerSeparator, { borderBottomColor: colors.border.base }]}>
+      <HStack
+        justify="space-between"
+        spacing="spacing4"
+        style={[
+          styles.headerSeparator,
+          { borderBottomColor: colors.border.base },
+        ]}
+      >
         <VStack style={styles.flex1}>
           <ThemedText type="title1">
             {data?.sevenDayAvgAccuracy ? data.sevenDayAvgAccuracy * 100 : 0}%
@@ -192,9 +194,11 @@ const ListItemComponent = ({ item }: { item: NbackHistoryItem }) => {
       : 0;
 
   return (
-    <Pressable onPress={() => {
-      router.push(`/games/nback/detail/${item.id}`);
-    }}>
+    <Pressable
+      onPress={() => {
+        router.push(`/games/nback/detail/${item.id}`);
+      }}
+    >
       <ThemedView style={[styles.itemContainer]}>
         <HStack align="center" justify="space-between" spacing="spacing12">
           <HStack align="center" spacing="spacing12" style={styles.flex1}>
@@ -204,9 +208,7 @@ const ListItemComponent = ({ item }: { item: NbackHistoryItem }) => {
               </Badge>
             </ThemedView>
             <VStack spacing="spacing4" style={styles.flex1}>
-              <ThemedText type="labelL">
-                {Math.round(accuracy)}%
-              </ThemedText>
+              <ThemedText type="labelL">{Math.round(accuracy)}%</ThemedText>
               <ThemedText type="captionM" lightColor={colors.text.tertiary}>
                 {item.totalQuestions}문제 중 {item.correctCount}문제 정답
               </ThemedText>
