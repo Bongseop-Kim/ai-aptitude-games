@@ -90,7 +90,6 @@ export type NbackDetailTrial = {
 
 export type NbackDetailStage = {
   stageIndex: number;
-  offsetN: number;
   accuracy: number;
   correctCount: number;
   totalQuestions: number;

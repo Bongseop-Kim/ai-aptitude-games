@@ -96,9 +96,6 @@ export default function NBackDetailScreen() {
                   );
                 })}
               </HStack>
-              <HStack justify="flex-end" style={styles.chartSectionLabel}>
-                <ThemedText type="captionS">{stage.offsetN}-back</ThemedText>
-              </HStack>
             </VStack>
             <VStack
               spacing="spacing4"
@@ -123,7 +120,7 @@ export default function NBackDetailScreen() {
                   type="labelM"
                   style={[styles.metricEmphasis, { color: colors.text.link }]}
                 >
-                  {stage.accuracy.toFixed(0)}%
+                  {(stage.accuracy * 100).toFixed(1)}%
                 </ThemedText>
                 예요
               </ThemedText>
@@ -237,10 +234,5 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xs,
     alignItems: "center",
     justifyContent: "center",
-  },
-  chartSectionLabel: {
-    position: "absolute",
-    right: 16,
-    bottom: -8,
   },
 });

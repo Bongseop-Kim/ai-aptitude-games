@@ -341,23 +341,6 @@ export const getNbackDetailStages = async (
 
   const stageIds = stageRows.map((stage) => stage.id);
 
-  const offsetRows = await db
-    .select({
-      stageId: stageOffsets.stageId,
-      offsetN: stageOffsets.offsetN,
-    })
-    .from(stageOffsets)
-    .where(inArray(stageOffsets.stageId, stageIds))
-    .orderBy(asc(stageOffsets.stageId), asc(stageOffsets.offsetN));
-
-  const offsetByStageId = new Map<number, number>();
-  for (const offset of offsetRows) {
-    if (offset.stageId == null) continue;
-    if (!offsetByStageId.has(offset.stageId)) {
-      offsetByStageId.set(offset.stageId, offset.offsetN);
-    }
-  }
-
   const trialRows = await db
     .select({
       stageId: trials.stageId,
@@ -382,7 +365,6 @@ export const getNbackDetailStages = async (
     const trials = trialsByStageId.get(stage.id) || [];
     return {
       stageIndex: stage.stageIndex,
-      offsetN: offsetByStageId.get(stage.id) ?? 0,
       accuracy: stage.accuracy,
       correctCount: stage.correctCount,
       totalQuestions: stage.totalQuestions,
