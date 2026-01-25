@@ -29,18 +29,15 @@ export default function PreGameScreen() {
     switch (id) {
       case "nback":
         router.push("/games/nback/play");
-        // router.push("/games/nback/summary/1");
         break;
-
+      // TODO: 다른 게임 라우트 구현 시 case 추가
+      // case "rotation":
+      //   router.push("/games/rotation/play");
+      //   break;
       default:
-        router.push(`/games/${id}/play` as any);
+        console.warn(`[handleStart] 미구현 게임: ${id}`);
+        break;
     }
-  };
-
-  const handlePractice = () => {
-    router.back();
-    // TODO: 게임 연습 로직
-    alert(`${game.name} 연습!`);
   };
 
   const handleHistory = () => {
@@ -53,8 +50,10 @@ export default function PreGameScreen() {
         options={{
           headerRight: () => (
             <ThemedView style={styles.headerRightContainer}>
-              <HeaderIcon name="clock.arrow.circlepath" onPress={handleHistory} />
-              <HeaderIcon name="gearshape" onPress={() => console.log('gearshape')} />
+              <HeaderIcon
+                name="clock.arrow.circlepath"
+                onPress={handleHistory}
+              />
             </ThemedView>
           ),
         }}
@@ -63,10 +62,6 @@ export default function PreGameScreen() {
         buttonProps={{
           onPress: handleStart,
           children: "시작하기",
-        }}
-        secondaryButtonProps={{
-          onPress: handlePractice,
-          children: "연습",
         }}
       >
         <ImageCarousel images={game.images} />
