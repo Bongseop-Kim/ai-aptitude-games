@@ -80,48 +80,32 @@ export default function PreGameScreen() {
         <ThemedView style={styles.contentContainer}>
           <ThemedText type="title1">{game.name}</ThemedText>
 
-          <ItemContainer
-            header="난이도"
-            children={<DifficultyStars level={game.difficulty} size={18} />}
-          />
-          <ItemContainer
-            header="측정 역량"
-            children={
-              <ThemedText type="captionM">
-                {game.measuredSkills.join(", ")}
-              </ThemedText>
-            }
-          />
+          <ItemContainer header="난이도">
+            <DifficultyStars level={game.difficulty} size={18} />
+          </ItemContainer>
+          <ItemContainer header="측정 역량">
+            <ThemedText type="captionM">
+              {game.measuredSkills.join(", ")}
+            </ThemedText>
+          </ItemContainer>
 
-          <ItemContainer
-            header="진행 방법"
-            children={
-              <ThemedText type="captionM">{game.description}</ThemedText>
-            }
-          />
+          <ItemContainer header="진행 방법">
+            <ThemedText type="captionM">{game.description}</ThemedText>
+          </ItemContainer>
 
-          <ItemContainer
-            header="라운드 수"
-            children={
-              <ThemedText type="captionM">{game.numberOfRounds}</ThemedText>
-            }
-          />
+          <ItemContainer header="라운드 수">
+            <ThemedText type="captionM">{game.numberOfRounds}</ThemedText>
+          </ItemContainer>
 
-          <ItemContainer
-            header="문제 수"
-            children={
-              <ThemedText type="captionM">{game.numberOfQuestions}</ThemedText>
-            }
-          />
+          <ItemContainer header="문제 수">
+            <ThemedText type="captionM">{game.numberOfQuestions}</ThemedText>
+          </ItemContainer>
 
-          <ItemContainer
-            header="응시시간"
-            children={
-              <ThemedText type="captionM">
-                {Math.floor(game.timeLimit / 60)}분
-              </ThemedText>
-            }
-          />
+          <ItemContainer header="응시시간">
+            <ThemedText type="captionM">
+              {Math.floor(game.timeLimit / 60)}분
+            </ThemedText>
+          </ItemContainer>
         </ThemedView>
       </FixedButtonScroll>
     </>
