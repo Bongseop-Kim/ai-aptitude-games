@@ -7,6 +7,7 @@ import { Stack } from "expo-router";
 import { useCallback, useState } from "react";
 import {
     Alert,
+    Platform,
     StyleSheet
 } from "react-native";
 
@@ -38,13 +39,25 @@ export default function ImprovementScreen() {
 
         setIsSending(true);
         try {
-            await MailComposer.composeAsync({
+            const result = await MailComposer.composeAsync({
                 recipients: [IMPROVEMENT_RECIPIENT],
                 subject: trimmedSubject || "[개선 제안]",
                 body: trimmedBody || "",
             });
-            setSubject("");
-            setBody("");
+
+            const status = result?.status;
+
+            if (Platform.OS === "android") {
+                // Android does not provide reliable send/cancel info; status is often "sent" even on cancel.
+                // Preserve inputs so the user does not lose content when they cancelled.
+                // Optionally prompt to discard: we skip clearing to avoid data loss.
+            } else {
+                // iOS / web: clear inputs only when the user actually sent or saved the draft.
+                if (status === "sent" || status === "saved") {
+                    setSubject("");
+                    setBody("");
+                }
+            }
         } catch (e) {
             Alert.alert("알림", "메일 앱을 열지 못했습니다.");
         } finally {
