@@ -1,9 +1,11 @@
+import { sql } from "drizzle-orm";
 import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 // 1. 게임 세션 (전체적인 흐름 관리)
 export const sessions = sqliteTable("sessions", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   createdAt: integer("created_at", { mode: "timestamp" })
+    .default(sql`(strftime('%s','now'))`)
     .$defaultFn(() => new Date())
     .notNull(),
   totalDuration: integer("total_duration"), // 총 플레이 시간(초)
