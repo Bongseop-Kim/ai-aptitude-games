@@ -59,7 +59,7 @@ export default function RootLayout() {
                 options={{
                   headerLeft: undefined,
                   headerRight: () => (
-                    <HeaderIcon name="gearshape" onPress={() => console.log('gearshape')} />
+                    <HeaderIcon name="gearshape" onPress={() => router.push("/setting")} />
                   ),
                 }}
               />
