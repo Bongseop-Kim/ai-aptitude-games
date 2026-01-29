@@ -30,6 +30,8 @@ export type ThemeInputProps = Omit<TextInputProps, "style"> & {
 export function ThemeInput({
   variant = "default",
   label,
+  helperText,
+  errorText,
   disabled,
   containerStyle,
   inputStyle,
@@ -63,7 +65,14 @@ export function ThemeInput({
     return colors.textDefault;
   };
 
+  const getMessageColor = () => {
+    if (isDisabled) return colors.textDisabled;
+    if (errorText) return colors.borderError;
+    return colors.textMute;
+  };
+
   const isMultiline = rest.multiline === true;
+  const messageText = errorText ?? helperText;
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -98,6 +107,14 @@ export function ThemeInput({
         }}
         {...rest}
       />
+      {messageText ? (
+        <ThemedText
+          type="captionS"
+          style={[styles.message, { color: getMessageColor() }]}
+        >
+          {messageText}
+        </ThemedText>
+      ) : null}
     </View>
   );
 }
@@ -108,6 +125,9 @@ const styles = StyleSheet.create({
   },
   label: {
     marginBottom: 4,
+  },
+  message: {
+    marginTop: 4,
   },
   input: {
     fontSize: Typography.captionL.fontSize,
