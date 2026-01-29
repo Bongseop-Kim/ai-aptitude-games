@@ -3,18 +3,21 @@ import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Padding, SemanticTokens, Spacing } from "@/constants/theme";
 import { useThemeColor } from "@/hooks/use-theme-color";
+import * as Application from "expo-application";
 import Constants from "expo-constants";
 import { RelativePathString, Stack, router } from "expo-router";
 import { FlatList, Pressable, StyleSheet, View, useColorScheme } from "react-native";
 
 const appVersion =
-    Constants.nativeAppVersion ??
-    Constants.expoConfig?.version;
+    Application.nativeApplicationVersion ??
+    Constants.expoConfig?.version ??
+    "0.0.0";
 
 const buildNumber =
-    Constants.nativeBuildVersion ??
+    Application.nativeBuildVersion ??
     Constants.expoConfig?.ios?.buildNumber ??
-    Constants.expoConfig?.android?.versionCode;
+    Constants.expoConfig?.android?.versionCode ??
+    "0";
 
 export default function SettingScreen() {
     const separatorColor = useThemeColor({}, "border.base");
