@@ -41,7 +41,18 @@ export default function PreGameScreen() {
   };
 
   const handleHistory = () => {
-    router.push("/games/nback/history");
+    switch (id) {
+      case "nback":
+        router.push("/games/nback/history");
+        break;
+      // TODO: 다른 게임 히스토리 라우트 구현 시 case 추가
+      // case "rotation":
+      //   router.push("/games/rotation/history");
+      //   break;
+      default:
+        console.warn(`[handleHistory] 미구현 게임: ${id}`);
+        break;
+    }
   };
 
   return (
