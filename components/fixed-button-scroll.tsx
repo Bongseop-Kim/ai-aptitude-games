@@ -14,7 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 type FixedButtonScrollProps = {
   children: React.ReactNode;
   scrollViewProps?: Omit<KeyboardAwareScrollViewProps, "children">;
-} & FixedBottomButtonProps;
+} & Partial<FixedBottomButtonProps>;
 
 export function FixedButtonScroll({
   children,
@@ -43,13 +43,15 @@ export function FixedButtonScroll({
           {children}
         </KeyboardAwareScrollView>
 
-        <KeyboardStickyView offset={{ closed: 0, opened: 16 }}>
-          <FixedBottomButton
-            buttonProps={buttonProps}
-            secondaryButtonProps={secondaryButtonProps}
-            tertiaryButtonProps={tertiaryButtonProps}
-          />
-        </KeyboardStickyView>
+        {buttonProps && (
+          <KeyboardStickyView offset={{ closed: 0, opened: 16 }}>
+            <FixedBottomButton
+              buttonProps={buttonProps}
+              secondaryButtonProps={secondaryButtonProps}
+              tertiaryButtonProps={tertiaryButtonProps}
+            />
+          </KeyboardStickyView>
+        )}
       </SafeAreaView>
     </ThemedView>
   );

@@ -1,6 +1,5 @@
 import { AppInitError } from "@/components/app-init-error";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { SemanticTokens } from "@/constants/theme";
+import HeaderIcon from "@/components/header-icon";
 import { db, dbName, expo } from "@/db/client";
 import migrations from "@/db/migrations/migrations";
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -11,11 +10,11 @@ import {
 } from "@react-navigation/native";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
-import { Stack } from "expo-router";
+import { Stack, router } from "expo-router";
 import { SQLiteProvider } from "expo-sqlite";
 import { StatusBar } from "expo-status-bar";
 import { Suspense } from "react";
-import { ActivityIndicator, StyleSheet } from "react-native";
+import { ActivityIndicator } from "react-native";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import "react-native-reanimated";
 
@@ -37,10 +36,7 @@ export default function RootLayout() {
 
   if (error) {
     return (
-      <AppInitError
-        error={error}
-        title="데이터베이스 초기화에 실패했습니다"
-      />
+      <AppInitError error={error} title="데이터베이스 초기화에 실패했습니다" />
     );
   }
 
@@ -55,20 +51,15 @@ export default function RootLayout() {
               screenOptions={{
                 headerBackButtonDisplayMode: "minimal",
                 headerTitle: "",
+                headerLeft: () => <HeaderIcon name="chevron.left" onPress={router.back} />,
               }}
             >
               <Stack.Screen
                 name="(tabs)"
                 options={{
+                  headerLeft: undefined,
                   headerRight: () => (
-                    <IconSymbol
-                      size={24}
-                      name="gearshape"
-                      color={
-                        SemanticTokens[colorScheme ?? "light"].icon.default
-                      }
-                      style={styles.headerRight}
-                    />
+                    <HeaderIcon name="gearshape" onPress={() => router.push("/setting")} />
                   ),
                 }}
               />
@@ -80,9 +71,3 @@ export default function RootLayout() {
     </Suspense>
   );
 }
-
-const styles = StyleSheet.create({
-  headerRight: {
-    marginLeft: 6,
-  },
-});

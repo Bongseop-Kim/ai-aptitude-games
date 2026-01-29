@@ -1,6 +1,7 @@
 import { Badge } from "@/components/badge";
 import { Countdown } from "@/components/countdown";
 import { FixedButtonView } from "@/components/fixed-button-view";
+import { GameExitGuard } from "@/components/game-exit-guard";
 import { SegmentedPicker } from "@/components/segmented-picker";
 import { ThemedModal } from "@/components/themed-modal";
 import { ThemedText } from "@/components/themed-text";
@@ -57,6 +58,7 @@ export default function NBackGameScreen() {
 
   return (
     <FixedButtonView>
+      <GameExitGuard />
       <TimerProgressBar
         duration={stimulusSec}
         isRunning={isTimerRunning}
@@ -75,43 +77,45 @@ export default function NBackGameScreen() {
         }
       />
 
-      <ThemedView style={styles.contentContainer}>
-        <Spacer size="spacing48" />
-        <Badge
-          variant="default"
-          type="ghost"
-          kind="text"
-          style={styles.remainingBadge}
-        >
-          남은 문항 {remainingQuestions}
-        </Badge>
-        <Spacer size="spacing8" />
+      {gamePhase !== "countdown" && (
+        <ThemedView style={styles.contentContainer}>
+          <Spacer size="spacing48" />
+          <Badge
+            variant="default"
+            type="ghost"
+            kind="text"
+            style={styles.remainingBadge}
+          >
+            남은 문항 {remainingQuestions}
+          </Badge>
+          <Spacer size="spacing8" />
 
-        <ThemedText type="title1" style={styles.headerText}>
-          {headerText}
-        </ThemedText>
-        <Spacer size="spacing32" />
-        <SvgComponent
-          width={WIDTH / 2}
-          height={WIDTH / 2}
-          color={colors.brand.tertiary}
-        />
+          <ThemedText type="title1" style={styles.headerText}>
+            {headerText}
+          </ThemedText>
+          <Spacer size="spacing32" />
+          <SvgComponent
+            width={WIDTH / 2}
+            height={WIDTH / 2}
+            color={colors.brand.tertiary}
+          />
 
-        <Spacer size="spacing40" />
-        <SegmentedPicker
-          options={copy.options.map((opt) => ({
-            label: opt.label,
-            value: String(opt.value),
-          }))}
-          value={
-            selectedValue !== undefined ? String(selectedValue) : undefined
-          }
-          onChange={handleAnswer}
-          columns={3}
-          disabled={isPickerDisabled}
-          style={styles.segmentedPicker}
-        />
-      </ThemedView>
+          <Spacer size="spacing40" />
+          <SegmentedPicker
+            options={copy.options.map((opt) => ({
+              label: opt.label,
+              value: String(opt.value),
+            }))}
+            value={
+              selectedValue !== undefined ? String(selectedValue) : undefined
+            }
+            onChange={handleAnswer}
+            columns={3}
+            disabled={isPickerDisabled}
+            style={styles.segmentedPicker}
+          />
+        </ThemedView>
+      )}
 
       <Countdown
         startCount={3}
@@ -137,7 +141,6 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     alignItems: "center",
-
     paddingHorizontal: Padding.m,
   },
   remainingBadge: {

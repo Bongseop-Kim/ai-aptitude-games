@@ -9,14 +9,18 @@ const GAMES: Game[] = [
     measuredSkills: ["작업기억", "업데이트"],
     numberOfQuestions: 20,
     timeLimit: 180,
-    image: require("@/assets/images/android-icon-background.png"),
+    image: require("@/assets/images/nback/nback.png"),
     images: [
-      require("@/assets/images/android-icon-background.png"),
-      require("@/assets/images/react-logo.png"),
-      require("@/assets/images/partial-react-logo.png"),
+      require("@/assets/images/nback/tutorial-1.png"),
+      require("@/assets/images/nback/tutorial-2.png"),
+      require("@/assets/images/nback/tutorial-3.png"),
+      require("@/assets/images/nback/tutorial-4.png"),
     ],
     numberOfRounds: 2,
   },
+];
+
+const NOTYET_GAMES: Game[] = [
   {
     id: "rotation",
     name: "도형 회전 / 반전",
@@ -124,7 +128,7 @@ const GAMES: Game[] = [
     ],
     numberOfRounds: 3,
   },
-];
+]
 
 // 키-값 맵으로 변환 (O(1) 조회용)
 export const GAMES_MAP: Record<string, Game> = GAMES.reduce((acc, game) => {

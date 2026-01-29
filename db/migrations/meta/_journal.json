@@ -15,6 +15,20 @@
       "when": 1768984735243,
       "tag": "0001_adorable_mockingbird",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1769089353102,
+      "tag": "0002_acoustic_martin_li",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1769650496308,
+      "tag": "0003_add_not_null_to_fk_columns",
+      "breakpoints": true
     }
   ]
 }

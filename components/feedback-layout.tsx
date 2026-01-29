@@ -1,10 +1,16 @@
 import Flame from "@/assets/images/flame.svg";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { HStack, VStack } from "@/components/ui/stack";
 import { Padding, Spacing, getAliasTokens } from "@/constants/theme";
 import { SessionFeedback } from "@/types/nback/generate";
 import React, { useEffect } from "react";
-import { StyleSheet, View, useColorScheme, type StyleProp, type ViewStyle } from "react-native";
+import {
+  StyleSheet,
+  useColorScheme,
+  type StyleProp,
+  type ViewStyle,
+} from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -48,7 +54,7 @@ export function FeedbackLayout({
   const renderSummaryLine = (line: string, index: number) => {
     const parts = line.split(/\*\*([^*]+)\*\*/g);
     return (
-      <ThemedText key={index} type="body1">
+      <ThemedText key={index}>
         {parts.map((part, partIndex) =>
           partIndex % 2 === 1 ? (
             <ThemedText
@@ -69,66 +75,59 @@ export function FeedbackLayout({
   return (
     <ThemedView style={[styles.container, style]}>
       {/* Hero Section */}
-      <ThemedView style={styles.heroSection}>
-        <Animated.View style={animatedStyle}>
-          <Flame width={72} height={72} />
-        </Animated.View>
+      <VStack spacing="spacing20" align="center" style={styles.heroSection}>
+        <HStack justify="center">
+          <Animated.View style={animatedStyle}>
+            <Flame width={72} height={72} />
+          </Animated.View>
+        </HStack>
         {sessionFeedback?.headline && (
           <ThemedText type="headlineM" style={styles.headline}>
             {sessionFeedback.headline}
           </ThemedText>
         )}
-      </ThemedView>
+      </VStack>
 
       {/* Summary Section */}
-      {sessionFeedback?.summaryLines && sessionFeedback.summaryLines.length > 0 && (
-        <View style={styles.summaryBlock}>
-          <View style={styles.summaryList}>
+      {sessionFeedback?.summaryLines &&
+        sessionFeedback.summaryLines.length > 0 && (
+          <VStack spacing="spacing12" style={styles.summaryBlock}>
             {sessionFeedback.summaryLines.map((line, index) =>
               renderSummaryLine(line, index)
             )}
-          </View>
-        </View>
-      )}
+          </VStack>
+        )}
 
       {/* Highlights Section */}
       {sessionFeedback?.highlights && sessionFeedback.highlights.length > 0 && (
-        <View style={[styles.subSection, { borderTopColor: colors.border.muted }]}>
-          <ThemedText
-            type="labelM"
-            style={[styles.subSectionTitle, { color: colors.text.secondary }]}
-          >
+        <VStack
+          spacing="spacing8"
+          style={[styles.subSection, { borderTopColor: colors.border.muted }]}
+        >
+          <ThemedText type="labelM" style={{ color: colors.text.secondary }}>
             주요 포인트
           </ThemedText>
-          {sessionFeedback.highlights.map((highlight, index) => (
-            <ThemedText
-              key={index}
-              type="body2"
-              style={[
-                styles.subSectionText,
-                index === sessionFeedback.highlights.length - 1 &&
-                styles.subSectionTextLast,
-              ]}
-            >
-              {highlight}
-            </ThemedText>
-          ))}
-        </View>
+          <VStack spacing="spacing8">
+            {sessionFeedback.highlights.map((highlight, index) => (
+              <ThemedText key={index} type="body2">
+                {highlight}
+              </ThemedText>
+            ))}
+          </VStack>
+        </VStack>
       )}
 
       {/* Tip Section */}
       {sessionFeedback?.tip && (
-        <View style={[styles.subSection, { borderTopColor: colors.border.muted }]}>
-          <ThemedText
-            type="labelM"
-            style={[styles.subSectionTitle, { color: colors.text.secondary }]}
-          >
+        <VStack
+          spacing="spacing8"
+          style={[styles.subSection, { borderTopColor: colors.border.muted }]}
+        >
+          <ThemedText type="labelM" style={{ color: colors.text.secondary }}>
             💡 팁
           </ThemedText>
-          <ThemedText type="body2" style={styles.subSectionText}>
-            {sessionFeedback.tip}
-          </ThemedText>
-        </View>
+          <ThemedText type="body2">{sessionFeedback.tip}</ThemedText>
+        </VStack>
       )}
     </ThemedView>
   );
@@ -143,11 +142,9 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.spacing56,
   },
   heroSection: {
-    alignItems: "center",
     marginBottom: Spacing.spacing32,
   },
   headline: {
-    marginTop: Spacing.spacing20,
     textAlign: "center",
     paddingHorizontal: Spacing.spacing8,
   },
@@ -155,22 +152,10 @@ const styles = StyleSheet.create({
     width: "100%",
     marginBottom: Spacing.spacing32,
   },
-  summaryList: {
-    gap: Spacing.spacing12,
-  },
   subSection: {
     width: "100%",
     marginBottom: Spacing.spacing24,
     paddingTop: Spacing.spacing16,
     borderTopWidth: 1,
-  },
-  subSectionTitle: {
-    marginBottom: Spacing.spacing8,
-  },
-  subSectionText: {
-    marginBottom: Spacing.spacing8,
-  },
-  subSectionTextLast: {
-    marginBottom: 0,
   },
 });
