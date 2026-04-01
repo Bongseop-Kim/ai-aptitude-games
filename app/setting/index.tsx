@@ -1,12 +1,13 @@
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Padding, SemanticTokens, Spacing } from "@/constants/theme";
-import { useThemeColor } from "@/hooks/use-theme-color";
+import { ThemedText } from "@/shared/ui/themed-text";
+import { ThemedView } from "@/shared/ui/themed-view";
+import { IconSymbol } from "@/shared/ui/icon-symbol";
+import { Padding, SemanticTokens, Spacing } from "@/shared/config/theme";
+import { useColorScheme } from "@/shared/lib/use-color-scheme";
+import { useThemeColor } from "@/shared/lib/use-theme-color";
 import * as Application from "expo-application";
 import Constants from "expo-constants";
 import { RelativePathString, Stack, router } from "expo-router";
-import { FlatList, Pressable, StyleSheet, View, useColorScheme } from "react-native";
+import { FlatList, Pressable, StyleSheet, View } from "react-native";
 
 const appVersion =
     Application.nativeApplicationVersion ??

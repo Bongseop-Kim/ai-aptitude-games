@@ -1,7 +1,7 @@
-import { FixedButtonView } from "@/components/fixed-button-view";
-import { ThemeInput } from "@/components/theme-input";
-import { VStack } from "@/components/ui/stack";
-import { Padding } from "@/constants/theme";
+import { FixedButtonView } from "@/shared/ui/fixed-button-view";
+import { ThemeInput } from "@/shared/ui/theme-input";
+import { VStack } from "@/shared/ui/stack";
+import { Padding } from "@/shared/config/theme";
 import * as MailComposer from "expo-mail-composer";
 import { Stack } from "expo-router";
 import { useCallback, useState } from "react";
@@ -57,7 +57,7 @@ export default function IssueScreen() {
                     setBody("");
                 }
             }
-        } catch (e) {
+        } catch {
             Alert.alert("알림", "메일 앱을 열지 못했습니다.");
         } finally {
             setIsSending(false);
