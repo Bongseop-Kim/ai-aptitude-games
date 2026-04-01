@@ -3,7 +3,7 @@ import { ThemedText } from "./themed-text";
 import { ThemedView } from "./themed-view";
 import { HStack, VStack } from "./stack";
 import { Padding, Spacing, getAliasTokens } from "../config/theme";
-import { SessionFeedback } from "../../entities/nback/model/generate-types";
+import type { SessionFeedback } from "@/entities/nback";
 import React, { useEffect } from "react";
 import {
   StyleSheet,

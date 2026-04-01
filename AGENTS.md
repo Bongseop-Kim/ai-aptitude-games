@@ -47,7 +47,7 @@ src/
 
 ## 게임 추가 방법
 
-1. `constants/games.ts`에 게임 메타데이터 추가
+1. `src/entities/game/model/games.ts`에 게임 메타데이터 추가
 2. `src/entities/[gameId]/`에 도메인 모델 추가
 3. `app/games/[gameId]/`에 라우트 파일 구현
 
@@ -56,7 +56,7 @@ src/
 테마 토큰은 3단계: Primitive → Alias → Semantic.
 
 ```typescript
-import { getSemanticTokens } from "@/constants/theme";
+import { getSemanticTokens } from "@/shared/config/theme";
 const tokens = getSemanticTokens(colorScheme); // 권장
 ```
 

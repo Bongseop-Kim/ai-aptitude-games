@@ -108,7 +108,7 @@ const TrendIconComponent = ({ trend }: { trend: "up" | "down" | "same" }) => {
       1,
       false
     );
-  }, [rotation]);
+  }, [rotation, trend]);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {

@@ -13,16 +13,33 @@ export const useNbackHistory = () => {
   );
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchData = async () => {
-      const [list, header] = await Promise.all([
-        getNbackHistoryList(),
-        getNbackHistoryHeaderData(),
-      ]);
-      setHistoryList(list);
-      setHeaderData(header);
+      try {
+        const [list, header] = await Promise.all([
+          getNbackHistoryList(),
+          getNbackHistoryHeaderData(),
+        ]);
+
+        if (isMounted) {
+          setHistoryList(list);
+          setHeaderData(header);
+        }
+      } catch (error) {
+        console.error("Failed to fetch nback history:", error);
+        if (isMounted) {
+          setHistoryList([]);
+          setHeaderData(null);
+        }
+      }
     };
 
     void fetchData();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return { historyList, headerData };

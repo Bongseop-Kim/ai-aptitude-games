@@ -138,17 +138,17 @@ shared
 
 ```typescript
 // features/nback-game/index.ts
-export { useNbackGame } from './model/use-nback-game';
+export { useNBackGame } from './model/use-nback-game';
 export { NbackPlayBoard } from './ui/nback-play-board';
 export { NbackAnswerPicker } from './ui/nback-answer-picker';
 ```
 
 ```typescript
 // ✅ 올바른 import
-import { useNbackGame } from '@/features/nback-game';
+import { useNBackGame } from '@/features/nback-game';
 
 // ❌ 잘못된 import — 내부 직접 접근 금지
-import { useNbackGame } from '@/features/nback-game/model/use-nback-game';
+import { useNBackGame } from '@/features/nback-game/model/use-nback-game';
 ```
 
 ---

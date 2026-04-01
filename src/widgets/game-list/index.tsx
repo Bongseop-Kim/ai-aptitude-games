@@ -9,7 +9,7 @@ import { FlatList, Pressable, StyleSheet } from "react-native";
 
 export function GameListWidget() {
   return (
-    <ThemedView>
+    <ThemedView style={styles.flex1}>
       <FlatList
         data={GAMES}
         renderItem={({ item }) => <GameCard game={item} />}
@@ -46,6 +46,9 @@ const GameCard = ({ game }: { game: Game }) => {
 };
 
 const styles = StyleSheet.create({
+  flex1: {
+    flex: 1,
+  },
   gameCardContent: {
     padding: Padding.m,
   },

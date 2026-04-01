@@ -412,12 +412,12 @@ import { sessions, stageOffsets, stages, trials } from '@/db/schema/nback';
 import { NbackHistoryHeaderData, NbackHistoryItem, NbackDetailStage, StageSummary, saveNbackGameDataParams } from '@/types/nback/nback';
 
 // After
-import { db } from '../../shared/db/client';
-import { sessions, stageOffsets, stages, trials } from '../../shared/db/schema/nback';
+import { db } from '../../../shared/db/client';
+import { sessions, stageOffsets, stages, trials } from '../../../shared/db/schema/nback';
 import { NbackHistoryHeaderData, NbackHistoryItem, NbackDetailStage, StageSummary, saveNbackGameDataParams } from '../model/nback-types';
 ```
 
-> Note: nback-service.ts is in `src/entities/nback/api/`, so `../../shared/` refers to `src/shared/`. Verify this relative path is correct.
+> Note: nback-service.ts is in `src/entities/nback/api/`, so `../../../shared/` refers to `src/shared/`. The relative path goes up three levels: api/ → nback/ → entities/ → src/, then into shared/.
 
 For `src/entities/nback/lib/generate.ts`:
 ```typescript

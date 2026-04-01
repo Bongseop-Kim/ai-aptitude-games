@@ -10,7 +10,7 @@ import {
 } from "@react-navigation/native";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
-import { RelativePathString, Stack, router } from "expo-router";
+import { Stack, router } from "expo-router";
 import { SQLiteProvider } from "expo-sqlite";
 import { StatusBar } from "expo-status-bar";
 import { Suspense } from "react";
@@ -59,7 +59,7 @@ export default function RootLayout() {
                     <HeaderIcon
                       name="gearshape"
                       onPress={() =>
-                        router.push("/setting/index" as RelativePathString)
+                        router.push("/setting")
                       }
                     />
                   ),
