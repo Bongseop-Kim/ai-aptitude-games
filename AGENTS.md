@@ -66,7 +66,8 @@ const tokens = getSemanticTokens(colorScheme); // 권장
 ## 코드 규칙
 
 - 경로 별칭: `@/`로 절대 경로 참조
-- 파일명: kebab-case
+- 파일명: `src/` 아래 일반 소스 파일은 kebab-case
+- 예외: Expo Router 라우트 파일은 프레임워크 규칙을 따름 (`_layout.tsx`, `[id]/index.tsx` 등)
 - 스타일: StyleSheet 사용 (인라인 스타일 지양)
 
 ## 주의사항

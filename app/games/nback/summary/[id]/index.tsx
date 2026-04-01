@@ -1,4 +1,5 @@
 import { NbackSummaryWidget } from "@/widgets/nback-summary";
+import { parseSessionIdParam } from "@/shared/lib";
 import { Stack, useLocalSearchParams, router } from "expo-router";
 import React, { useEffect } from "react";
 import { ThemedView } from "@/shared/ui/themed-view";
@@ -7,16 +8,15 @@ import { ThemedText } from "@/shared/ui/themed-text";
 export default function NBackResultScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  const sessionId = Number(id);
-  const isValidId = id && Number.isInteger(sessionId) && sessionId > 0;
+  const sessionId = parseSessionIdParam(id);
 
   useEffect(() => {
-    if (!isValidId) {
+    if (sessionId === null) {
       router.back();
     }
-  }, [isValidId]);
+  }, [sessionId]);
 
-  if (!isValidId) {
+  if (sessionId === null) {
     return (
       <>
         <Stack.Screen options={{ headerShown: false }} />
