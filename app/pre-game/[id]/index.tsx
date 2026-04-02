@@ -1,10 +1,10 @@
-import DifficultyStars from "@/components/difficulty-stars";
-import { FixedButtonScroll } from "@/components/fixed-button-scroll";
-import HeaderIcon from "@/components/header-icon";
-import { ImageCarousel } from "@/components/image-carousel";
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import { GAMES_MAP } from "@/constants/games";
+import DifficultyStars from "@/shared/ui/difficulty-stars";
+import { FixedButtonScroll } from "@/shared/ui/fixed-button-scroll";
+import HeaderIcon from "@/shared/ui/header-icon";
+import { ImageCarousel } from "@/shared/ui/image-carousel";
+import { ThemedText } from "@/shared/ui/themed-text";
+import { ThemedView } from "@/shared/ui/themed-view";
+import { GAMES_MAP } from "@/entities/game";
 import { Link, Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { StyleSheet } from "react-native";
 

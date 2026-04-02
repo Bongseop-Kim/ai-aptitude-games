@@ -1,40 +1,36 @@
-import { FeedbackLayout } from "@/components/feedback-layout";
-import { FixedButtonView } from "@/components/fixed-button-view";
-import { getStagesBySessionId } from "@/db/services/nback";
-import { SessionFeedback } from "@/types/nback/generate";
-import { generateSessionFeedback } from "@/utils/nback/generate";
-import { Stack, router, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { NbackSummaryWidget } from "@/widgets/nback-summary";
+import { parseSessionIdParam } from "@/shared/lib";
+import { Stack, useLocalSearchParams, router } from "expo-router";
+import React, { useEffect } from "react";
+import { ThemedView } from "@/shared/ui/themed-view";
+import { ThemedText } from "@/shared/ui/themed-text";
 
 export default function NBackResultScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [sessionFeedback, setSessionFeedback] = useState<SessionFeedback>();
+
+  const sessionId = parseSessionIdParam(id);
 
   useEffect(() => {
-    const fetchStages = async () => {
-      const stages = await getStagesBySessionId(Number(id));
-      setSessionFeedback(generateSessionFeedback(stages));
-    };
-    fetchStages();
-  }, [id]);
+    if (sessionId === null) {
+      router.back();
+    }
+  }, [sessionId]);
+
+  if (sessionId === null) {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <ThemedText>잘못된 세션 ID입니다.</ThemedText>
+        </ThemedView>
+      </>
+    );
+  }
 
   return (
-    <FixedButtonView
-      buttonProps={{
-        onPress: () => {
-          router.back();
-        },
-        children: "한 번 더",
-      }}
-      secondaryButtonProps={{
-        onPress: () => {
-          router.push(`/games/nback/detail/${id}`);
-        },
-        children: "기록 확인",
-      }}
-    >
+    <>
       <Stack.Screen options={{ headerShown: false }} />
-      <FeedbackLayout sessionFeedback={sessionFeedback} />
-    </FixedButtonView>
+      <NbackSummaryWidget sessionId={sessionId} />
+    </>
   );
 }

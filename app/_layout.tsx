@@ -1,8 +1,8 @@
-import { AppInitError } from "@/components/app-init-error";
-import HeaderIcon from "@/components/header-icon";
-import { db, dbName, expo } from "@/db/client";
-import migrations from "@/db/migrations/migrations";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import { AppInitError } from "@/shared/ui/app-init-error";
+import HeaderIcon from "@/shared/ui/header-icon";
+import { db, dbName, expo } from "@/shared/db/client";
+import migrations from "@/shared/db/migrations/migrations";
+import { useColorScheme } from "@/shared/lib/use-color-scheme";
 import {
   DarkTheme,
   DefaultTheme,
@@ -25,10 +25,7 @@ export const unstable_settings = {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const { success, error } = useMigrations(db, migrations);
-
-  if (__DEV__ && useDrizzleStudio) {
-    useDrizzleStudio(expo);
-  }
+  useDrizzleStudio(expo);
 
   if (!success && !error) {
     return <ActivityIndicator size="large" style={{ flex: 1 }} />;
@@ -59,7 +56,12 @@ export default function RootLayout() {
                 options={{
                   headerLeft: undefined,
                   headerRight: () => (
-                    <HeaderIcon name="gearshape" onPress={() => router.push("/setting")} />
+                    <HeaderIcon
+                      name="gearshape"
+                      onPress={() =>
+                        router.push("/setting")
+                      }
+                    />
                   ),
                 }}
               />

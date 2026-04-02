@@ -1,0 +1,157 @@
+import { useNBackGame } from "@/features/nback-game";
+import { NBACK_GAME } from "@/entities/nback";
+import { Padding, WIDTH, getAliasTokens } from "@/shared/config/theme";
+import { Badge } from "@/shared/ui/badge";
+import { Countdown } from "@/shared/ui/countdown";
+import { FixedButtonView } from "@/shared/ui/fixed-button-view";
+import { GameExitGuard } from "@/shared/ui/game-exit-guard";
+import { SegmentedPicker } from "@/shared/ui/segmented-picker";
+import { Spacer } from "@/shared/ui/spacer";
+import { ThemedModal } from "@/shared/ui/themed-modal";
+import { ThemedText } from "@/shared/ui/themed-text";
+import { ThemedView } from "@/shared/ui/themed-view";
+import { TimerProgressBar } from "@/shared/ui/timer-progressbar";
+import { useColorScheme } from "@/shared/lib/use-color-scheme";
+import { useEffect, useState } from "react";
+import { StyleSheet } from "react-native";
+
+export function NbackPlayWidget() {
+  const stimulusSec = NBACK_GAME.rules.stimulusSec;
+  const colorScheme = useColorScheme();
+  const colors = getAliasTokens(colorScheme ?? "light");
+
+  const {
+    currentStage,
+    currentShape,
+    handleAnswer,
+    handleCountdownComplete,
+    handleTimeUp,
+    headerText,
+    isPickerDisabled,
+    isTimerRunning,
+    answerMarkerRatio,
+    finishedAccuracy,
+    gamePhase,
+    remainingQuestions,
+    selectedValue,
+    showCountdown,
+  } = useNBackGame();
+
+  const [isFinishedModalVisible, setIsFinishedModalVisible] = useState(false);
+
+  useEffect(() => {
+    if (gamePhase === "finished") {
+      setIsFinishedModalVisible(true);
+    }
+  }, [gamePhase]);
+
+  if (!currentStage) {
+    return null;
+  }
+
+  const { copy } = currentStage;
+  const SvgComponent = currentShape?.svg;
+  const accuracyText =
+    finishedAccuracy !== null
+      ? `정답률 ${Math.round(finishedAccuracy * 100)}%`
+      : "정답률 집계중";
+
+  return (
+    <FixedButtonView>
+      <GameExitGuard />
+      <TimerProgressBar
+        duration={stimulusSec}
+        isRunning={isTimerRunning}
+        onComplete={handleTimeUp}
+        markerRatio={answerMarkerRatio}
+        markerContent={
+          <Badge
+            variant="success"
+            type="fill"
+            kind="text"
+            shape="speech"
+            tailPosition="top"
+          >
+            응답완료
+          </Badge>
+        }
+      />
+
+      {gamePhase !== "countdown" && (
+        <ThemedView style={styles.contentContainer}>
+          <Spacer size="spacing48" />
+          <Badge
+            variant="default"
+            type="ghost"
+            kind="text"
+            style={styles.remainingBadge}
+          >
+            남은 문항 {remainingQuestions}
+          </Badge>
+          <Spacer size="spacing8" />
+
+          <ThemedText type="title1" style={styles.headerText}>
+            {headerText}
+          </ThemedText>
+          <Spacer size="spacing32" />
+          <SvgComponent
+            width={WIDTH / 2}
+            height={WIDTH / 2}
+            color={colors.brand.tertiary}
+          />
+
+          <Spacer size="spacing40" />
+          <SegmentedPicker
+            options={copy.options.map((opt) => ({
+              label: opt.label,
+              value: String(opt.value),
+            }))}
+            value={
+              selectedValue !== undefined ? String(selectedValue) : undefined
+            }
+            onChange={handleAnswer}
+            columns={3}
+            disabled={isPickerDisabled}
+            style={styles.segmentedPicker}
+          />
+        </ThemedView>
+      )}
+
+      <Countdown
+        startCount={3}
+        visible={showCountdown}
+        onComplete={handleCountdownComplete}
+      />
+
+      <ThemedModal
+        visible={isFinishedModalVisible}
+        title="시험 종료"
+        description={`모든 스테이지를 완료했어요. ${accuracyText}`}
+        onRequestClose={() => setIsFinishedModalVisible(false)}
+        primaryAction={{
+          label: "확인",
+          onPress: () => setIsFinishedModalVisible(false),
+        }}
+      />
+    </FixedButtonView>
+  );
+}
+
+const styles = StyleSheet.create({
+  contentContainer: {
+    flex: 1,
+    alignItems: "center",
+    paddingHorizontal: Padding.m,
+  },
+  remainingBadge: {
+    alignSelf: "flex-end",
+  },
+  headerText: {
+    textAlign: "center",
+    height: 80,
+    textAlignVertical: "center",
+  },
+  segmentedPicker: {
+    width: "100%",
+  },
+});
