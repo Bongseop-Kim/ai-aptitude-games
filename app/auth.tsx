@@ -13,7 +13,10 @@ import { AuthServiceError } from "@/shared/auth/auth-service";
 export default function AuthScreen() {
   const router = useRouter();
   const auth = useAuth();
-  const { returnTo } = useLocalSearchParams<{ returnTo?: string | string[] }>();
+  const { returnTo, reason } = useLocalSearchParams<{
+    returnTo?: string | string[];
+    reason?: string | string[];
+  }>();
   const colorScheme = useColorScheme();
   const colors = getAliasTokens(colorScheme ?? "light");
 
@@ -22,6 +25,7 @@ export default function AuthScreen() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const targetPath = resolveReturnTo(returnTo);
+  const authReason = resolveReason(reason);
 
   const handleSubmit = useCallback(async () => {
     const normalized = displayName.trim();
@@ -79,6 +83,11 @@ export default function AuthScreen() {
           <ThemedText type="body2" style={{ color: colors.text.secondary }}>
             닉네임을 등록하면 플레이 기록과 결과를 세션별로 확인할 수 있어요.
           </ThemedText>
+          {authReason === "expired" ? (
+            <ThemedText type="captionS" style={{ color: colors.feedback.warningFg }}>
+              세션이 만료되어 다시 로그인해 주세요.
+            </ThemedText>
+          ) : null}
         </ThemedView>
 
         <ThemedView
@@ -148,6 +157,14 @@ const resolveReturnTo = (returnTo: string | string[] | undefined): Href => {
   }
 
   return fallback;
+};
+
+const resolveReason = (reason: string | string[] | undefined) => {
+  const value = Array.isArray(reason) ? reason[0] : reason;
+  if (value === "expired") {
+    return "expired";
+  }
+  return "unauthenticated";
 };
 
 const resolveAuthErrorMessage = (error: unknown) => {

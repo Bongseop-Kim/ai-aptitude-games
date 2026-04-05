@@ -2,6 +2,7 @@ import DifficultyStars from "@/shared/ui/difficulty-stars";
 import { FixedButtonScroll } from "@/shared/ui/fixed-button-scroll";
 import { ImageCarousel } from "@/shared/ui/image-carousel";
 import { ThemedModal } from "@/shared/ui/themed-modal";
+import { BlockButton } from "@/shared/ui/block-button";
 import {
   BorderRadius,
   Padding,
@@ -9,7 +10,9 @@ import {
   getAliasTokens,
   getSemanticTokens,
 } from "@/shared/config/theme";
-import { isPracticeModalEnabled } from "@/shared/config/feature-flags";
+import {
+  getPracticeModalSettings,
+} from "@/shared/config/feature-flags";
 import {
   getPracticeModalCopy,
   PRACTICE_MODAL_I18N_KEYS,
@@ -41,8 +44,17 @@ export default function PreGameScreen() {
     return locale.startsWith("en") ? "en" : "ko";
   }, []);
 
+  const practiceModalSettings = useMemo(
+    () =>
+      getPracticeModalSettings(new Date(), process.env.EXPO_PUBLIC_PRACTICE_MODAL_CONFIG),
+    []
+  );
+  const practiceModalEnabled = practiceModalSettings.enabled;
   const [showPracticeModal, setShowPracticeModal] = useState(
-    isPracticeModalEnabled()
+    practiceModalEnabled && practiceModalSettings.variant !== "v3"
+  );
+  const [showPracticeBanner, setShowPracticeBanner] = useState(
+    practiceModalEnabled && practiceModalSettings.variant === "v3"
   );
   const [showDetails, setShowDetails] = useState(false);
 
@@ -111,23 +123,85 @@ export default function PreGameScreen() {
 
   return (
     <>
-      <ThemedModal
-        visible={showPracticeModal}
-        title={getPracticeModalCopy(PRACTICE_MODAL_I18N_KEYS.title, modalLocale)}
-        description={getPracticeModalCopy(
-          PRACTICE_MODAL_I18N_KEYS.description,
-          modalLocale
-        )}
-        onRequestClose={() => setShowPracticeModal(false)}
-        primaryAction={{
-          label: getPracticeModalCopy(
-            PRACTICE_MODAL_I18N_KEYS.primaryAction,
+      {practiceModalSettings.variant !== "v3" ? (
+        <ThemedModal
+          visible={showPracticeModal}
+          title={getPracticeModalCopy(
+            practiceModalSettings.variant === "v2"
+              ? PRACTICE_MODAL_I18N_KEYS.shortTitle
+              : PRACTICE_MODAL_I18N_KEYS.title,
             modalLocale
-          ),
-          onPress: () => setShowPracticeModal(false),
-        }}
-        modalProps={{ animationType: "none" }}
-      />
+          )}
+          description={getPracticeModalCopy(
+            practiceModalSettings.variant === "v2"
+              ? PRACTICE_MODAL_I18N_KEYS.shortBody
+              : PRACTICE_MODAL_I18N_KEYS.body,
+            modalLocale
+          )}
+          onRequestClose={() => setShowPracticeModal(false)}
+          secondaryAction={
+            practiceModalSettings.variant === "v2"
+              ? undefined
+              : {
+                  label: getPracticeModalCopy(
+                    PRACTICE_MODAL_I18N_KEYS.ctaSecondary,
+                    modalLocale
+                  ),
+                  onPress: () => setShowPracticeModal(false),
+                  variant: "secondary",
+                }
+          }
+          primaryAction={{
+            label: getPracticeModalCopy(
+              PRACTICE_MODAL_I18N_KEYS.ctaPrimary,
+              modalLocale
+            ),
+            onPress: () => setShowPracticeModal(false),
+            variant: "primary",
+          }}
+          modalProps={{ animationType: "none" }}
+        >
+          {practiceModalSettings.variant === "v1" ? (
+            <>
+              <ThemedText type="body2">
+                {getPracticeModalCopy(PRACTICE_MODAL_I18N_KEYS.bullet1, modalLocale)}
+              </ThemedText>
+              <ThemedText type="body2">
+                {getPracticeModalCopy(PRACTICE_MODAL_I18N_KEYS.bullet2, modalLocale)}
+              </ThemedText>
+              <ThemedText type="body2">
+                {getPracticeModalCopy(PRACTICE_MODAL_I18N_KEYS.bullet3, modalLocale)}
+              </ThemedText>
+              <ThemedText type="captionM">
+                {getPracticeModalCopy(PRACTICE_MODAL_I18N_KEYS.footer, modalLocale)}
+              </ThemedText>
+            </>
+          ) : (
+            <ThemedText type="body2">
+              {getPracticeModalCopy(PRACTICE_MODAL_I18N_KEYS.shortBody, modalLocale)}
+            </ThemedText>
+          )}
+        </ThemedModal>
+      ) : showPracticeBanner ? (
+        <View
+          style={[
+            styles.bannerContainer,
+            { backgroundColor: semanticColors.feedback.warningBg },
+          ]}
+          accessibilityRole="alert"
+        >
+          <ThemedText type="body2" style={{ color: aliasColors.text.inversePrimary }}>
+            {getPracticeModalCopy(PRACTICE_MODAL_I18N_KEYS.bannerText, modalLocale)}
+          </ThemedText>
+          <BlockButton
+            variant="tertiary"
+            onPress={() => setShowPracticeBanner(false)}
+            accessibilityRole="button"
+          >
+            {getPracticeModalCopy(PRACTICE_MODAL_I18N_KEYS.bannerCta, modalLocale)}
+          </BlockButton>
+        </View>
+      ) : null}
       <Stack.Screen
         options={{
           headerRight: () => (
@@ -287,11 +361,6 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 24,
   },
-  notFoundContainer: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 16,
-  },
   itemContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -337,5 +406,11 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  bannerContainer: {
+    margin: Padding.m,
+    borderRadius: BorderRadius.s,
+    padding: Padding.m,
+    gap: Spacing.spacing8,
   },
 });

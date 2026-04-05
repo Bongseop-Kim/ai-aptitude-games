@@ -58,6 +58,12 @@ interface Setting {
 
 const baseSettings: Setting[] = [
     {
+        id: "telemetry",
+        name: "텔레메트리 KPI",
+        link: "/setting/telemetry",
+        description: "평균 완료율/이탈률/지연 지표 요약",
+    },
+    {
         id: "improvement",
         name: "개선 제안",
         link: "/setting/improvement",

@@ -66,11 +66,12 @@ describe("mock-backend auth routes", () => {
 
     const payload = (await response.json()) as {
       userId?: string;
+      serverUserId?: string;
       displayName?: string;
     };
 
     expect(response.status).toBe(200);
-    expect(payload.userId).toBeTypeOf("string");
+    expect(payload.serverUserId ?? payload.userId).toBeTypeOf("string");
     expect(payload.displayName).toBe("Tester");
   });
 });

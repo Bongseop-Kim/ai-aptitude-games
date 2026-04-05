@@ -14,15 +14,15 @@ describe("practice-modal-copy", () => {
 
   it("returns requested locale when available", () => {
     expect(
-      getPracticeModalCopy(PRACTICE_MODAL_I18N_KEYS.primaryAction, "en")
+      getPracticeModalCopy(PRACTICE_MODAL_I18N_KEYS.ctaPrimary, "en")
     ).toBe("Got it");
   });
 
   it("falls back to Korean when locale is missing", () => {
     expect(
-      getPracticeModalCopy(PRACTICE_MODAL_I18N_KEYS.description, "ja")
+      getPracticeModalCopy(PRACTICE_MODAL_I18N_KEYS.body, "ja")
     ).toBe(
-      "내부 준비를 위한 연습 안내입니다. 제휴·후원·공식 연관을 의미하지 않습니다."
+      "앱 내 경험을 준비하기 위한 연습용 안내입니다. 내부 준비 목적일 뿐이며 어떤 제휴나 보증을 의미하지 않습니다."
     );
   });
 });

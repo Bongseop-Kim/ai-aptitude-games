@@ -15,7 +15,14 @@ services:
     container_name: ai-aptitude-games-mock-api
     working_dir: /srv
     command: ["node", "mock-backend.mjs"]
+    restart: unless-stopped
     volumes:
       - ./scripts/mock-backend.mjs:/srv/mock-backend.mjs:ro
     ports:
       - "4000:4000"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:4000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

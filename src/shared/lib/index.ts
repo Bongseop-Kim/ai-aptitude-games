@@ -15,6 +15,7 @@ export {
   getAssessmentSessionEventStream,
   getAssessmentSessionIds,
 } from "./telemetry";
+export { getAssessmentTelemetryKpiSnapshot } from "./telemetry-analytics";
 export { emitAuthTelemetryEvent, getRecentAuthTelemetryEvents } from "./auth-telemetry";
 export type {
   AssessmentGameKey,

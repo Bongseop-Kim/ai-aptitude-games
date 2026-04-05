@@ -102,6 +102,29 @@ docker compose up --build
 
 Mock API 구현 파일: `scripts/mock-backend.mjs`
 
+### Mock API 운영/복구 커맨드
+
+```bash
+# Mock API 단독 실행/복구 (권장)
+docker compose up -d mock-api
+
+# 상태 확인
+docker compose ps mock-api
+curl -sS http://localhost:4000/health
+```
+
+30분 연속 가용성 증적(기본 5분 간격)은 아래 스크립트로 수집할 수 있습니다.
+
+```bash
+bash scripts/mock-api-uptime-probe.sh 30 300
+```
+
+Data Analyst 핸드오프용 원라인:
+
+```bash
+cd /Users/gimbongseob/git/ai-aptitude-games && docker compose up -d mock-api && curl -sS http://localhost:4000/health
+```
+
 ## Telemetry Extract (What's New KPI)
 
 `ui.whatsNew.*` 이벤트의 일자별(UTC) / 환경별 KPI 집계는 아래 명령으로 추출할 수 있습니다.
