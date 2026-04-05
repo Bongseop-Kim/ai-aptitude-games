@@ -287,6 +287,11 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 24,
   },
+  notFoundContainer: {
+    flex: 1,
+    justifyContent: "center",
+    padding: 16,
+  },
   itemContainer: {
     flexDirection: "row",
     alignItems: "center",
