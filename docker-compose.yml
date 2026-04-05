@@ -1,0 +1,21 @@
+services:
+  app-preview:
+    build:
+      context: .
+    container_name: ai-aptitude-games-preview
+    depends_on:
+      - mock-api
+    environment:
+      EXPO_PUBLIC_API_URL: http://mock-api:4000
+    ports:
+      - "8080:8080"
+
+  mock-api:
+    image: node:20-alpine
+    container_name: ai-aptitude-games-mock-api
+    working_dir: /srv
+    command: ["node", "mock-backend.mjs"]
+    volumes:
+      - ./scripts/mock-backend.mjs:/srv/mock-backend.mjs:ro
+    ports:
+      - "4000:4000"
