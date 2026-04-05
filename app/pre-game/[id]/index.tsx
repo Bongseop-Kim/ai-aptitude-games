@@ -30,10 +30,27 @@ export default function PreGameScreen() {
       case "nback":
         router.push("/games/nback/play");
         break;
-      // TODO: 다른 게임 라우트 구현 시 case 추가
-      // case "rotation":
-      //   router.push("/games/rotation/play");
-      //   break;
+      case "rotation":
+        router.push("/games/rotation/play");
+        break;
+      case "stroop":
+        router.push("/games/stroop/play");
+        break;
+      case "gonogo":
+        router.push("/games/gonogo/play");
+        break;
+      case "rps":
+        router.push("/games/rps/play");
+        break;
+      case "promise":
+        router.push("/games/promise/play");
+        break;
+      case "numbers":
+        router.push("/games/numbers/play");
+        break;
+      case "potion":
+        router.push("/games/potion/play");
+        break;
       default:
         console.warn(`[handleStart] 미구현 게임: ${id}`);
         break;
@@ -41,18 +58,12 @@ export default function PreGameScreen() {
   };
 
   const handleHistory = () => {
-    switch (id) {
-      case "nback":
-        router.push("/games/nback/history");
-        break;
-      // TODO: 다른 게임 히스토리 라우트 구현 시 case 추가
-      // case "rotation":
-      //   router.push("/games/rotation/history");
-      //   break;
-      default:
-        console.warn(`[handleHistory] 미구현 게임: ${id}`);
-        break;
+    if (!id) {
+      console.warn("[handleHistory] 게임 ID 누락");
+      return;
     }
+
+    router.push(`/games/${id}/history`);
   };
 
   return (

@@ -14,14 +14,26 @@ import {
   getRemainingQuestions,
   summarizeStageTrials,
 } from "@/entities/nback";
+import {
+  AssessmentDifficultyTier,
+  AssessmentGameKey,
+  emitAssessmentEvent,
+} from "@/shared/lib";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+const NBACK_GAME_KEY: AssessmentGameKey = "nback";
+const NBACK_DIFFICULTY: AssessmentDifficultyTier = "normal";
 
 export const useNBackGame = ({
   sessionType = "real",
 }: UseNBackGameOptions = {}) => {
   const router = useRouter();
   const interStimulusSec = NBACK_GAME.rules.interStimulusSec;
+
+  const sessionIdRef = useRef(`nback-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`);
+  const hasStartedRef = useRef(false);
+  const presentedTrialRef = useRef<string | null>(null);
 
   const [stageIndex, setStageIndex] = useState<number>(0);
   const [gamePhase, setGamePhase] = useState<NbackPhase>("countdown");
@@ -90,11 +102,28 @@ export const useNBackGame = ({
     setPreCountIndex(0);
     setAnswerMarkerRatio(null);
     setIsTimerRunning(true);
+
+    if (!hasStartedRef.current) {
+      hasStartedRef.current = true;
+      emitAssessmentEvent({
+        gameKey: NBACK_GAME_KEY,
+        sessionId: sessionIdRef.current,
+        eventType: "session_started",
+        difficultyTier: NBACK_DIFFICULTY,
+        blockIndex: 0,
+        trialIndex: null,
+        latencyMs: null,
+        isCorrect: null,
+      });
+    }
   }, []);
 
   const finalizeCurrentTrial = useCallback((userAnswer?: number) => {
     const currentTrial = currentTrialRef.current;
     if (!currentTrial) return;
+
+    const trialIndex = currentTrial.trialIndex;
+    const blockIndex = currentTrial.stageIndex;
 
     const answeredAt = Date.now();
     const shownAt = shownAtRef.current ?? answeredAt;
@@ -102,6 +131,8 @@ export const useNBackGame = ({
       userAnswer !== undefined ? Math.max(0, answeredAt - shownAt) : undefined;
     const isCorrect =
       userAnswer !== undefined && userAnswer === currentTrial.correctAnswer;
+    const eventLatencyMs = rtMs ?? Math.max(0, Date.now() - shownAt);
+
     const finalized: NbackTrial = {
       ...currentTrial,
       userAnswer,
@@ -113,6 +144,28 @@ export const useNBackGame = ({
     sessionTrialsRef.current.push(finalized);
     currentTrialRef.current = null;
     setIsAnswerLocked(true);
+
+    emitAssessmentEvent({
+      gameKey: NBACK_GAME_KEY,
+      sessionId: sessionIdRef.current,
+      eventType: "response_submitted",
+      difficultyTier: NBACK_DIFFICULTY,
+      blockIndex,
+      trialIndex,
+      latencyMs: eventLatencyMs,
+      isCorrect,
+    });
+
+    emitAssessmentEvent({
+      gameKey: NBACK_GAME_KEY,
+      sessionId: sessionIdRef.current,
+      eventType: "trial_scored",
+      difficultyTier: NBACK_DIFFICULTY,
+      blockIndex,
+      trialIndex,
+      latencyMs: eventLatencyMs,
+      isCorrect,
+    });
   }, []);
 
   const handleTimeUp = useCallback(() => {
@@ -187,7 +240,24 @@ export const useNBackGame = ({
           (trial) => trial.isCorrect
         ).length;
         const totalCount = sessionTrials.length;
-        setFinishedAccuracy(totalCount > 0 ? correctCount / totalCount : 0);
+        const completedAccuracy = totalCount > 0 ? correctCount / totalCount : 0;
+
+        emitAssessmentEvent({
+          gameKey: NBACK_GAME_KEY,
+          sessionId: sessionIdRef.current,
+          eventType: "session_completed",
+          difficultyTier: NBACK_DIFFICULTY,
+          blockIndex: currentStageIdx,
+          trialIndex: currentQuestionIdx,
+          latencyMs: null,
+          isCorrect: null,
+          payload: {
+            completedTrials: sessionTrials.length,
+            totalQuestions: sessionTrials.length,
+          },
+        });
+
+        setFinishedAccuracy(completedAccuracy);
         setGamePhase("finished");
         setIsTimerRunning(false);
         if (!savedSessionRef.current) {
@@ -269,6 +339,21 @@ export const useNBackGame = ({
         isCorrect: false,
       };
       setIsAnswerLocked(false);
+
+      const trialKey = `${stageIndex}:${questionIndex}`;
+      if (presentedTrialRef.current !== trialKey) {
+        presentedTrialRef.current = trialKey;
+        emitAssessmentEvent({
+          gameKey: NBACK_GAME_KEY,
+          sessionId: sessionIdRef.current,
+          eventType: "trial_presented",
+          difficultyTier: NBACK_DIFFICULTY,
+          blockIndex: stageIndex,
+          trialIndex: questionIndex,
+          latencyMs: null,
+          isCorrect: null,
+        });
+      }
     }
   }, [correctAnswers, currentShape?.id, gamePhase, questionIndex, stageIndex]);
 

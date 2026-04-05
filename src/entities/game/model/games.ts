@@ -2,33 +2,13 @@ import Game from "./types";
 
 const GAMES: Game[] = [
   {
-    id: "nback",
-    name: "도형 순서 기억",
-    difficulty: 3,
-    description: "현재 도형이 n번째 이전 도형과 같은지 판단 (2-back → 3-back)",
-    measuredSkills: ["작업기억", "업데이트"],
-    numberOfQuestions: 20,
-    timeLimit: 180,
-    image: require("@assets/images/nback/nback.png"),
-    images: [
-      require("@assets/images/nback/tutorial-1.png"),
-      require("@assets/images/nback/tutorial-2.png"),
-      require("@assets/images/nback/tutorial-3.png"),
-      require("@assets/images/nback/tutorial-4.png"),
-    ],
-    numberOfRounds: 2,
-  },
-];
-
-export const NOTYET_GAMES: Game[] = [
-  {
-    id: "rotation",
-    name: "도형 회전 / 반전",
-    difficulty: 3,
-    description: "도형을 회전·반전하여 목표 도형과 동일하게 만들기",
-    measuredSkills: ["공간지각", "정신 회전"],
-    numberOfQuestions: 15,
-    timeLimit: 240,
+    id: "gonogo",
+    name: "Go / No-Go",
+    difficulty: 2,
+    description: "특정 자극에는 클릭, 특정 자극에는 클릭 금지",
+    measuredSkills: ["충동 억제", "반응 통제"],
+    numberOfQuestions: null,
+    timeLimit: 90,
     image: require("@assets/images/android-icon-background.png"),
     images: [
       require("@assets/images/android-icon-background.png"),
@@ -52,17 +32,34 @@ export const NOTYET_GAMES: Game[] = [
     numberOfRounds: 3,
   },
   {
-    id: "gonogo",
-    name: "Go / No-Go",
-    difficulty: 2,
-    description: "특정 자극에는 클릭, 특정 자극에는 클릭 금지",
-    measuredSkills: ["충동 억제", "반응 통제"],
-    numberOfQuestions: null,
-    timeLimit: 90,
+    id: "rotation",
+    name: "도형 회전 / 반전",
+    difficulty: 3,
+    description: "도형을 회전·반전하여 목표 도형과 동일하게 만들기",
+    measuredSkills: ["공간지각", "정신 회전"],
+    numberOfQuestions: 15,
+    timeLimit: 240,
     image: require("@assets/images/android-icon-background.png"),
     images: [
       require("@assets/images/android-icon-background.png"),
       require("@assets/images/react-logo.png"),
+    ],
+    numberOfRounds: 2,
+  },
+  {
+    id: "nback",
+    name: "도형 순서 기억",
+    difficulty: 3,
+    description: "현재 도형이 n번째 이전 도형과 같은지 판단 (2-back → 3-back)",
+    measuredSkills: ["작업기억", "업데이트"],
+    numberOfQuestions: 20,
+    timeLimit: 180,
+    image: require("@assets/images/nback/nback.png"),
+    images: [
+      require("@assets/images/nback/tutorial-1.png"),
+      require("@assets/images/nback/tutorial-2.png"),
+      require("@assets/images/nback/tutorial-3.png"),
+      require("@assets/images/nback/tutorial-4.png"),
     ],
     numberOfRounds: 2,
   },
@@ -128,7 +125,10 @@ export const NOTYET_GAMES: Game[] = [
     ],
     numberOfRounds: 3,
   },
-]
+];
+
+export const NOTYET_GAMES: Game[] = [
+];
 
 // 키-값 맵으로 변환 (O(1) 조회용)
 export const GAMES_MAP: Record<string, Game> = GAMES.reduce((acc, game) => {
