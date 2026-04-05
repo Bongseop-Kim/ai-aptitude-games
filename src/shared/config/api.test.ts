@@ -3,7 +3,7 @@ import { getApiBaseUrlFromEnv } from "./api";
 
 describe("getApiBaseUrlFromEnv", () => {
   it("throws when the env value is missing", () => {
-    expect(() => getApiBaseUrlFromEnv(undefined)).toThrow(
+    expect(() => getApiBaseUrlFromEnv("")).toThrow(
       "EXPO_PUBLIC_API_BASE_URL is required"
     );
   });
