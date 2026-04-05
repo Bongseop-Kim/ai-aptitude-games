@@ -2,7 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AssessmentDifficultyTier,
   AssessmentGameKey,
+  buildFixedDifficultySessionStartPayload,
   emitAssessmentEvent,
+  emitSessionAbandonedIfNeeded,
+  buildSessionCompletionScoringPayload,
+  useLatencyTracker,
 } from "@/shared/lib";
 
 type SymbolToken = "A" | "B" | "C" | "D" | "E" | "F";
@@ -103,7 +107,11 @@ export const usePromiseGame = () => {
     `promise-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`
   );
   const hasStartedRef = useRef(false);
+  const hasCompletedRef = useRef(false);
   const presentedQuestionRef = useRef<number | null>(null);
+  const latestQuestionIndexRef = useRef<number | null>(null);
+  const latestPhaseRef = useRef<Phase>("countdown");
+  const latencyTracker = useLatencyTracker();
 
   const rounds = useMemo(() => generateRounds(), []);
   const totalRounds = rounds.length;
@@ -127,6 +135,7 @@ export const usePromiseGame = () => {
       const selected = answer ?? "none";
       const isCorrect = inferCorrectness(currentRound.target, selected);
       const nextCorrectCount = correctAnswers + (isCorrect ? 1 : 0);
+      const { nextAnsweredCount, nextAvgLatencyMs } = latencyTracker.recordAnswer(elapsed);
 
       setIsAnswerLocked(true);
       setIsTimerRunning(false);
@@ -160,7 +169,16 @@ export const usePromiseGame = () => {
       });
 
       if (questionIndex + 1 >= totalRounds) {
+        const scoring = buildSessionCompletionScoringPayload({
+          gameKey: PROMISE_GAME_KEY,
+          difficultyTier: PROMISE_DIFFICULTY,
+          totalQuestions: totalRounds,
+          correctCount: nextCorrectCount,
+          answeredCount: nextAnsweredCount,
+          avgLatencyMs: nextAvgLatencyMs,
+        });
         setPhase("finished");
+        hasCompletedRef.current = true;
         emitAssessmentEvent({
           gameKey: PROMISE_GAME_KEY,
           sessionId: sessionIdRef.current,
@@ -173,6 +191,7 @@ export const usePromiseGame = () => {
           payload: {
             correctCount: nextCorrectCount,
             totalQuestions: totalRounds,
+            ...scoring,
           },
         });
         return;
@@ -220,6 +239,7 @@ export const usePromiseGame = () => {
         trialIndex: null,
         latencyMs: null,
         isCorrect: null,
+        payload: buildFixedDifficultySessionStartPayload(PROMISE_DIFFICULTY),
       });
     }
   }, [startRound]);
@@ -229,10 +249,33 @@ export const usePromiseGame = () => {
   }, [finalizeRound]);
 
   useEffect(() => {
+    latestQuestionIndexRef.current = questionIndex;
+  }, [questionIndex]);
+
+  useEffect(() => {
+    latestPhaseRef.current = phase;
+  }, [phase]);
+
+  useEffect(() => {
+    const sessionId = sessionIdRef.current;
     return () => {
       if (transitionTimerRef.current) {
         clearTimeout(transitionTimerRef.current);
       }
+
+      emitSessionAbandonedIfNeeded({
+        gameKey: PROMISE_GAME_KEY,
+        sessionId,
+        difficultyTier: PROMISE_DIFFICULTY,
+        blockIndex: 0,
+        trialIndex: latestQuestionIndexRef.current,
+        hasStarted: hasStartedRef.current,
+        hasCompleted: hasCompletedRef.current,
+        payload: {
+          reason: "hook_unmount",
+          phase: latestPhaseRef.current,
+        },
+      });
     };
   }, []);
 

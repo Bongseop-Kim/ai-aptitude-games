@@ -56,11 +56,13 @@ export function ThemedModal({
         {onRequestClose && (
           <Pressable
             accessibilityRole="button"
+            accessibilityLabel="Close modal"
             onPress={onRequestClose}
             style={StyleSheet.absoluteFill}
           />
         )}
         <View
+          accessibilityViewIsModal={true}
           style={[
             styles.card,
             { backgroundColor: surfaceColor, borderColor },

@@ -2,7 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AssessmentDifficultyTier,
   AssessmentGameKey,
+  buildFixedDifficultySessionStartPayload,
   emitAssessmentEvent,
+  emitSessionAbandonedIfNeeded,
+  buildSessionCompletionScoringPayload,
+  useLatencyTracker,
 } from "@/shared/lib";
 
 type ShapeMatrix = number[][];
@@ -178,7 +182,11 @@ export const useRotationGame = () => {
     `rotation-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`
   );
   const hasStartedRef = useRef(false);
+  const hasCompletedRef = useRef(false);
   const presentedQuestionRef = useRef<number | null>(null);
+  const latestQuestionIndexRef = useRef<number | null>(null);
+  const latestPhaseRef = useRef<Phase>("countdown");
+  const latencyTracker = useLatencyTracker();
 
   const puzzles = useMemo(() => generatePuzzleSet(), []);
   const currentPuzzle = puzzles[questionIndex];
@@ -194,10 +202,33 @@ export const useRotationGame = () => {
   );
 
   useEffect(() => {
+    latestQuestionIndexRef.current = questionIndex;
+  }, [questionIndex]);
+
+  useEffect(() => {
+    latestPhaseRef.current = phase;
+  }, [phase]);
+
+  useEffect(() => {
+    const sessionId = sessionIdRef.current;
     return () => {
       if (transitionTimerRef.current) {
         clearTimeout(transitionTimerRef.current);
       }
+
+      emitSessionAbandonedIfNeeded({
+        gameKey: ROTATION_GAME_KEY,
+        sessionId,
+        difficultyTier: ROTATION_DIFFICULTY,
+        blockIndex: 0,
+        trialIndex: latestQuestionIndexRef.current,
+        hasStarted: hasStartedRef.current,
+        hasCompleted: hasCompletedRef.current,
+        payload: {
+          reason: "hook_unmount",
+          phase: latestPhaseRef.current,
+        },
+      });
     };
   }, []);
 
@@ -221,6 +252,7 @@ export const useRotationGame = () => {
 
       const elapsed = Math.max(0, Date.now() - questionStartAt);
       const nextCorrectCount = correctAnswers + (isCorrect ? 1 : 0);
+      const { nextAnsweredCount, nextAvgLatencyMs } = latencyTracker.recordAnswer(elapsed);
       setCorrectAnswers(nextCorrectCount);
       setIsAnswerLocked(true);
       setIsTimerRunning(false);
@@ -255,7 +287,16 @@ export const useRotationGame = () => {
       });
 
       if (questionIndex + 1 >= TOTAL_QUESTIONS) {
+        const scoring = buildSessionCompletionScoringPayload({
+          gameKey: ROTATION_GAME_KEY,
+          difficultyTier: ROTATION_DIFFICULTY,
+          totalQuestions,
+          correctCount: nextCorrectCount,
+          answeredCount: nextAnsweredCount,
+          avgLatencyMs: nextAvgLatencyMs,
+        });
         setPhase("finished");
+        hasCompletedRef.current = true;
         emitAssessmentEvent({
           gameKey: ROTATION_GAME_KEY,
           sessionId: sessionIdRef.current,
@@ -268,6 +309,7 @@ export const useRotationGame = () => {
           payload: {
             correctCount: nextCorrectCount,
             totalQuestions: totalQuestions,
+            ...scoring,
           },
         });
         return;
@@ -369,6 +411,7 @@ export const useRotationGame = () => {
         trialIndex: null,
         latencyMs: null,
         isCorrect: null,
+        payload: buildFixedDifficultySessionStartPayload(ROTATION_DIFFICULTY),
       });
     }
   }, [prepareNextQuestion]);

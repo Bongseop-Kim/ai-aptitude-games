@@ -20,6 +20,8 @@ export function BlockButton({
   size = "l",
   children,
   disabled,
+  accessibilityLabel,
+  accessibilityHint,
   ...rest
 }: BlockButtonProps) {
   const colorScheme = useColorScheme();
@@ -75,9 +77,18 @@ export function BlockButton({
 
   const height = size === "m" ? 40 : 48;
 
+  const textLabel =
+    typeof children === "string"
+      ? children
+      : undefined;
+
   return (
     <Pressable
       disabled={isDisabled}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? textLabel}
+      accessibilityHint={accessibilityHint}
+      accessibilityState={{ disabled: isDisabled }}
       style={({ pressed }) => [
         styles.button,
         {

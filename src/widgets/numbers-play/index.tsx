@@ -7,12 +7,18 @@ import { ThemedModal } from "@/shared/ui/themed-modal";
 import { ThemedText } from "@/shared/ui/themed-text";
 import { ThemedView } from "@/shared/ui/themed-view";
 import { useNumbersGame } from "@/features/numbers-game";
+import { getAliasTokens } from "@/shared/config/theme";
+import { useColorScheme } from "@/shared/lib/use-color-scheme";
+import { router } from "expo-router";
 import { Pressable, StyleSheet, View } from "react-native";
 import { useEffect, useState } from "react";
 
 const NUMBER_BUTTONS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 export function NumbersPlayWidget() {
+  const colorScheme = useColorScheme();
+  const colors = getAliasTokens(colorScheme ?? "light");
+
   const {
     phase,
     currentIndex,
@@ -21,6 +27,7 @@ export function NumbersPlayWidget() {
     isTimerRunning,
     isAnswerLocked,
     isDoublePressReady,
+    sessionId,
     answerMarkerRatio,
     showCountdown,
     finishedAccuracy,
@@ -49,7 +56,18 @@ export function NumbersPlayWidget() {
       : currentStep.rule === "double"
         ? `${currentStep.value}를 2번 눌러 주세요.`
         : "건너뛰기";
-
+  const closeAndGoHome = () => {
+    setIsFinishedModalVisible(false);
+    router.replace("/");
+  };
+  const handleOpenResult = () => {
+    setIsFinishedModalVisible(false);
+    router.replace(`/games/numbers/result/${sessionId}`);
+  };
+  const handleRestart = () => {
+    setIsFinishedModalVisible(false);
+    router.replace("/pre-game/numbers");
+  };
   return (
     <FixedButtonView>
       <GameExitGuard />
@@ -59,7 +77,7 @@ export function NumbersPlayWidget() {
         onComplete={handleTimeUp}
         markerRatio={answerMarkerRatio}
         markerContent={
-          <ThemedText type="captionS" style={styles.markerText}>
+          <ThemedText type="captionS" style={{ color: colors.text.inversePrimary }}>
             응답완료
           </ThemedText>
         }
@@ -73,7 +91,7 @@ export function NumbersPlayWidget() {
           문제 {currentIndex + 1} / {totalSteps}
         </ThemedText>
         <Spacer size="spacing24" />
-        <ThemedView style={styles.card}>
+        <ThemedView style={[styles.card, { borderColor: colors.border.alpha }]}>
           <ThemedText type="title1">
             {currentStep.rule === "skip" ? "건너뛰기 라운드" : `활성 숫자: ${currentStep.value}`}
           </ThemedText>
@@ -91,9 +109,14 @@ export function NumbersPlayWidget() {
             <Pressable
               key={digit}
               disabled={isAnswerLocked}
+              accessibilityRole="button"
+              accessibilityLabel={`${digit} 선택`}
+              accessibilityHint={isAnswerLocked ? "정답 입력이 잠겨있습니다" : `${digit} 버튼을 탭해 숫자를 입력하세요`}
+              accessibilityState={{ disabled: isAnswerLocked, selected: false }}
               style={({ pressed }) => [
                 styles.digitButton,
-                {
+                  {
+                  borderColor: colors.border.layer2,
                   opacity: isAnswerLocked ? 0.6 : pressed ? 0.8 : 1,
                 },
               ]}
@@ -107,10 +130,18 @@ export function NumbersPlayWidget() {
         <Spacer size="spacing12" />
         <Pressable
           disabled={isAnswerLocked}
+          accessibilityRole="button"
+          accessibilityLabel="건너뛰기"
+          accessibilityHint={isAnswerLocked ? "정답 입력이 잠겨있습니다" : "현재 라운드를 건너뛰려면 탭하세요"}
+          accessibilityState={{ disabled: isAnswerLocked, selected: false }}
           onPress={handleSkip}
           style={({ pressed }) => [
             styles.skipButton,
-            { opacity: isAnswerLocked ? 0.6 : pressed ? 0.8 : 1 },
+            {
+              borderColor: colors.border.layer1,
+              backgroundColor: colors.surface.alpha,
+              opacity: isAnswerLocked ? 0.6 : pressed ? 0.8 : 1,
+            },
           ]}
         >
           <ThemedText>건너뛰기</ThemedText>
@@ -127,10 +158,14 @@ export function NumbersPlayWidget() {
         visible={isFinishedModalVisible}
         title="게임 종료"
         description={`정답률 ${finishedAccuracy}%`}
-        onRequestClose={() => setIsFinishedModalVisible(false)}
+        onRequestClose={closeAndGoHome}
         primaryAction={{
-          label: "확인",
-          onPress: () => setIsFinishedModalVisible(false),
+          label: "결과 보기",
+          onPress: handleOpenResult,
+        }}
+        secondaryAction={{
+          label: "다시 시작",
+          onPress: handleRestart,
         }}
       />
     </FixedButtonView>
@@ -145,7 +180,7 @@ const styles = StyleSheet.create({
   },
   card: {
     borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.12)",
+    borderColor: "transparent",
     borderRadius: 12,
     padding: 14,
     gap: 6,
@@ -166,7 +201,7 @@ const styles = StyleSheet.create({
     height: 58,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.2)",
+    borderColor: "transparent",
   },
   skipButton: {
     borderRadius: 12,
@@ -174,10 +209,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.24)",
-    backgroundColor: "rgba(255,255,255,0.04)",
-  },
-  markerText: {
-    color: "#ffffff",
+    borderColor: "transparent",
   },
 });

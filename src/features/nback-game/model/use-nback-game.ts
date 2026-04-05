@@ -17,9 +17,12 @@ import {
 import {
   AssessmentDifficultyTier,
   AssessmentGameKey,
+  buildFixedDifficultySessionStartPayload,
   emitAssessmentEvent,
+  emitSessionAbandonedIfNeeded,
+  buildSessionCompletionScoringPayload,
+  useLatencyTracker,
 } from "@/shared/lib";
-import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const NBACK_GAME_KEY: AssessmentGameKey = "nback";
@@ -28,12 +31,15 @@ const NBACK_DIFFICULTY: AssessmentDifficultyTier = "normal";
 export const useNBackGame = ({
   sessionType = "real",
 }: UseNBackGameOptions = {}) => {
-  const router = useRouter();
   const interStimulusSec = NBACK_GAME.rules.interStimulusSec;
 
   const sessionIdRef = useRef(`nback-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`);
   const hasStartedRef = useRef(false);
+  const hasCompletedRef = useRef(false);
   const presentedTrialRef = useRef<string | null>(null);
+  const latestStageIndexRef = useRef(0);
+  const latestQuestionIndexRef = useRef<number | null>(null);
+  const latestPhaseRef = useRef<NbackPhase>("countdown");
 
   const [stageIndex, setStageIndex] = useState<number>(0);
   const [gamePhase, setGamePhase] = useState<NbackPhase>("countdown");
@@ -47,6 +53,9 @@ export const useNBackGame = ({
     null
   );
   const [finishedAccuracy, setFinishedAccuracy] = useState<number | null>(null);
+  const [finishedSessionId, setFinishedSessionId] = useState<number | null>(
+    null
+  );
 
   const restTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const shownAtRef = useRef<number | null>(null);
@@ -56,6 +65,7 @@ export const useNBackGame = ({
   const stageSummariesRef = useRef<StageSummary[]>([]);
   const savedStagesRef = useRef<Set<number>>(new Set());
   const savedSessionRef = useRef(false);
+  const latencyTracker = useLatencyTracker();
 
   const currentStage = useMemo(
     () => NBACK_GAME.stages[stageIndex],
@@ -105,6 +115,7 @@ export const useNBackGame = ({
 
     if (!hasStartedRef.current) {
       hasStartedRef.current = true;
+      latencyTracker.reset();
       emitAssessmentEvent({
         gameKey: NBACK_GAME_KEY,
         sessionId: sessionIdRef.current,
@@ -114,9 +125,10 @@ export const useNBackGame = ({
         trialIndex: null,
         latencyMs: null,
         isCorrect: null,
+        payload: buildFixedDifficultySessionStartPayload(NBACK_DIFFICULTY),
       });
     }
-  }, []);
+  }, [latencyTracker]);
 
   const finalizeCurrentTrial = useCallback((userAnswer?: number) => {
     const currentTrial = currentTrialRef.current;
@@ -132,6 +144,7 @@ export const useNBackGame = ({
     const isCorrect =
       userAnswer !== undefined && userAnswer === currentTrial.correctAnswer;
     const eventLatencyMs = rtMs ?? Math.max(0, Date.now() - shownAt);
+    latencyTracker.recordAnswer(eventLatencyMs);
 
     const finalized: NbackTrial = {
       ...currentTrial,
@@ -166,7 +179,7 @@ export const useNBackGame = ({
       latencyMs: eventLatencyMs,
       isCorrect,
     });
-  }, []);
+  }, [latencyTracker]);
 
   const handleTimeUp = useCallback(() => {
     setIsTimerRunning(false);
@@ -241,6 +254,14 @@ export const useNBackGame = ({
         ).length;
         const totalCount = sessionTrials.length;
         const completedAccuracy = totalCount > 0 ? correctCount / totalCount : 0;
+        const scoring = buildSessionCompletionScoringPayload({
+          gameKey: NBACK_GAME_KEY,
+          difficultyTier: NBACK_DIFFICULTY,
+          totalQuestions: totalCount,
+          correctCount,
+          answeredCount: totalCount,
+          avgLatencyMs: latencyTracker.getAvgLatencyMs(),
+        });
 
         emitAssessmentEvent({
           gameKey: NBACK_GAME_KEY,
@@ -254,8 +275,10 @@ export const useNBackGame = ({
           payload: {
             completedTrials: sessionTrials.length,
             totalQuestions: sessionTrials.length,
+            ...scoring,
           },
         });
+        hasCompletedRef.current = true;
 
         setFinishedAccuracy(completedAccuracy);
         setGamePhase("finished");
@@ -269,7 +292,7 @@ export const useNBackGame = ({
                 trialsList: sessionTrialsRef.current,
                 type: sessionType,
               });
-              router.replace(`/games/nback/summary/${sessionId}`);
+              setFinishedSessionId(sessionId);
             } catch (error) {
               savedSessionRef.current = false;
               console.error("Failed to save NBack game data", error);
@@ -280,7 +303,7 @@ export const useNBackGame = ({
         console.log("NBack session summaries", stageSummariesRef.current);
       }
     },
-    [allowedOffsets, preCount, router, sessionType, totalQuestions]
+    [allowedOffsets, latencyTracker, preCount, router, sessionType, totalQuestions]
   );
 
   useEffect(() => {
@@ -315,6 +338,37 @@ export const useNBackGame = ({
     questionIndex,
     stageIndex,
   ]);
+
+  useEffect(() => {
+    latestStageIndexRef.current = stageIndex;
+  }, [stageIndex]);
+
+  useEffect(() => {
+    latestQuestionIndexRef.current = questionIndex;
+  }, [questionIndex]);
+
+  useEffect(() => {
+    latestPhaseRef.current = gamePhase;
+  }, [gamePhase]);
+
+  useEffect(() => {
+    const sessionId = sessionIdRef.current;
+    return () => {
+      emitSessionAbandonedIfNeeded({
+        gameKey: NBACK_GAME_KEY,
+        sessionId,
+        difficultyTier: NBACK_DIFFICULTY,
+        blockIndex: latestStageIndexRef.current,
+        trialIndex: latestQuestionIndexRef.current,
+        hasStarted: hasStartedRef.current,
+        hasCompleted: hasCompletedRef.current,
+        payload: {
+          reason: "hook_unmount",
+          phase: latestPhaseRef.current,
+        },
+      });
+    };
+  }, []);
 
   useEffect(() => {
     stageTrialsRef.current = [];
@@ -413,5 +467,6 @@ export const useNBackGame = ({
     remainingQuestions,
     selectedValue,
     showCountdown,
+    finishedSessionId,
   };
 };

@@ -9,6 +9,7 @@ import { ThemedModal } from "@/shared/ui/themed-modal";
 import { ThemedText } from "@/shared/ui/themed-text";
 import { ThemedView } from "@/shared/ui/themed-view";
 import { TimerProgressBar } from "@/shared/ui/timer-progressbar";
+import { router } from "expo-router";
 import { StyleSheet } from "react-native";
 import { useEffect, useState } from "react";
 
@@ -53,6 +54,18 @@ export function RpsPlayWidget() {
   const trialNumber = currentIndex + 1;
   const isLastRound = currentIndex + 1 === totalRounds;
   const phaseText = isLastRound ? "마지막 라운드" : `라운드 ${trialNumber} / ${totalRounds}`;
+  const closeAndGoHome = () => {
+    setIsFinishedModalVisible(false);
+    router.replace("/");
+  };
+  const handleRestart = () => {
+    setIsFinishedModalVisible(false);
+    router.replace("/pre-game/rps");
+  };
+  const handleHistory = () => {
+    setIsFinishedModalVisible(false);
+    router.push("/games/rps/history");
+  };
 
   return (
     <FixedButtonView>
@@ -93,6 +106,7 @@ export function RpsPlayWidget() {
           columns={3}
           disabled={isAnswerLocked}
           style={styles.picker}
+          accessibilityHint="현재 라운드 규칙에 맞는 손동작을 탭해 선택하세요"
         />
         <Spacer size="spacing24" />
       </ThemedView>
@@ -107,10 +121,14 @@ export function RpsPlayWidget() {
         visible={isFinishedModalVisible}
         title="게임 종료"
         description={`정답률 ${finishedAccuracy}%`}
-        onRequestClose={() => setIsFinishedModalVisible(false)}
+        onRequestClose={closeAndGoHome}
         primaryAction={{
-          label: "확인",
-          onPress: () => setIsFinishedModalVisible(false),
+          label: "다시 시작",
+          onPress: handleRestart,
+        }}
+        secondaryAction={{
+          label: "기록 보기",
+          onPress: handleHistory,
         }}
       />
     </FixedButtonView>

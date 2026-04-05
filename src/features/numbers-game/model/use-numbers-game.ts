@@ -2,7 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AssessmentDifficultyTier,
   AssessmentGameKey,
+  buildFixedDifficultySessionStartPayload,
   emitAssessmentEvent,
+  emitSessionAbandonedIfNeeded,
+  buildSessionCompletionScoringPayload,
+  useLatencyTracker,
 } from "@/shared/lib";
 
 type Rule = "single" | "double" | "skip";
@@ -55,17 +59,44 @@ export const useNumbersGame = () => {
     `numbers-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`
   );
   const hasStartedRef = useRef(false);
+  const hasCompletedRef = useRef(false);
   const presentedQuestionRef = useRef<number | null>(null);
+  const latestStepIndexRef = useRef<number | null>(null);
+  const latestPhaseRef = useRef<Phase>("countdown");
+  const latencyTracker = useLatencyTracker();
 
   const steps = useMemo(() => generateSteps(), []);
   const totalSteps = steps.length;
   const currentStep = steps[stepIndex];
 
   useEffect(() => {
+    latestStepIndexRef.current = stepIndex;
+  }, [stepIndex]);
+
+  useEffect(() => {
+    latestPhaseRef.current = phase;
+  }, [phase]);
+
+  useEffect(() => {
+    const sessionId = sessionIdRef.current;
     return () => {
       if (transitionTimerRef.current) {
         clearTimeout(transitionTimerRef.current);
       }
+
+      emitSessionAbandonedIfNeeded({
+        gameKey: NUMBERS_GAME_KEY,
+        sessionId,
+        difficultyTier: NUMBERS_DIFFICULTY,
+        blockIndex: 0,
+        trialIndex: latestStepIndexRef.current,
+        hasStarted: hasStartedRef.current,
+        hasCompleted: hasCompletedRef.current,
+        payload: {
+          reason: "hook_unmount",
+          phase: latestPhaseRef.current,
+        },
+      });
     };
   }, []);
 
@@ -86,6 +117,7 @@ export const useNumbersGame = () => {
       const elapsed = Date.now() - questionStartAt;
       const ratio = Math.min(1, Math.max(0, elapsed / (STEP_TIME_SEC * 1000)));
       const nextCorrectCount = correctAnswers + (isCorrect ? 1 : 0);
+      const { nextAnsweredCount, nextAvgLatencyMs } = latencyTracker.recordAnswer(elapsed);
 
       setIsAnswerLocked(true);
       setIsTimerRunning(false);
@@ -121,7 +153,16 @@ export const useNumbersGame = () => {
       });
 
       if (stepIndex + 1 >= totalSteps) {
+        const scoring = buildSessionCompletionScoringPayload({
+          gameKey: NUMBERS_GAME_KEY,
+          difficultyTier: NUMBERS_DIFFICULTY,
+          totalQuestions: totalSteps,
+          correctCount: nextCorrectCount,
+          answeredCount: nextAnsweredCount,
+          avgLatencyMs: nextAvgLatencyMs,
+        });
         setPhase("finished");
+        hasCompletedRef.current = true;
         emitAssessmentEvent({
           gameKey: NUMBERS_GAME_KEY,
           sessionId: sessionIdRef.current,
@@ -134,6 +175,7 @@ export const useNumbersGame = () => {
           payload: {
             correctCount: nextCorrectCount,
             totalQuestions: totalSteps,
+            ...scoring,
           },
         });
         return;
@@ -210,6 +252,7 @@ export const useNumbersGame = () => {
         trialIndex: null,
         latencyMs: null,
         isCorrect: null,
+        payload: buildFixedDifficultySessionStartPayload(NUMBERS_DIFFICULTY),
       });
     }
   }, [nextStep]);
@@ -248,6 +291,7 @@ export const useNumbersGame = () => {
     isTimerRunning,
     isAnswerLocked,
     isDoublePressReady: doublePressReady,
+    sessionId: sessionIdRef.current,
     showCountdown,
     answerMarkerRatio,
     finishedAccuracy:

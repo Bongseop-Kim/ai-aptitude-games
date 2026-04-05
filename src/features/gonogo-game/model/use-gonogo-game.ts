@@ -8,7 +8,11 @@ import {
 import {
   AssessmentDifficultyTier,
   AssessmentGameKey,
+  buildFixedDifficultySessionStartPayload,
   emitAssessmentEvent,
+  emitSessionAbandonedIfNeeded,
+  buildSessionCompletionScoringPayload,
+  useLatencyTracker,
 } from "@/shared/lib";
 
 type GoNoGoTrial = {
@@ -49,7 +53,11 @@ export const useGoNoGoGame = () => {
     `gonogo-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`
   );
   const hasStartedRef = useRef(false);
+  const hasCompletedRef = useRef(false);
   const presentedTrialRef = useRef<number | null>(null);
+  const latestTrialIndexRef = useRef<number | null>(null);
+  const latestPhaseRef = useRef<Phase>("countdown");
+  const latencyTracker = useLatencyTracker();
 
   const trials = useMemo(() => createTrials(), []);
   const totalTrials = trials.length;
@@ -74,12 +82,13 @@ export const useGoNoGoGame = () => {
       const latencyMs = Math.max(0, Date.now() - trialStartAt);
       const ratio = Math.min(1, Math.max(0, latencyMs / (TRIAL_TIME_SEC * 1000)));
       const isCorrect = currentTrial.isGo ? didTap : !didTap;
-
+      const nextCorrectCount = correctCount + (isCorrect ? 1 : 0);
+      const { nextAnsweredCount, nextAvgLatencyMs } = latencyTracker.recordAnswer(latencyMs);
       setIsTapCorrect(isCorrect);
       setIsAnswerLocked(true);
       setIsTimerRunning(false);
       setAnswerMarkerRatio(ratio);
-      setCorrectCount((prev) => prev + (isCorrect ? 1 : 0));
+      setCorrectCount(nextCorrectCount);
 
       emitAssessmentEvent({
         gameKey: GONO_GAME_KEY,
@@ -103,7 +112,16 @@ export const useGoNoGoGame = () => {
       });
 
       if (questionIndex + 1 >= totalTrials) {
+        const scoring = buildSessionCompletionScoringPayload({
+          gameKey: GONO_GAME_KEY,
+          difficultyTier: GONO_DIFFICULTY,
+          totalQuestions: totalTrials,
+          correctCount: nextCorrectCount,
+          answeredCount: nextAnsweredCount,
+          avgLatencyMs: nextAvgLatencyMs,
+        });
         setPhase("finished");
+        hasCompletedRef.current = true;
         emitAssessmentEvent({
           gameKey: GONO_GAME_KEY,
           sessionId: sessionIdRef.current,
@@ -114,8 +132,9 @@ export const useGoNoGoGame = () => {
           latencyMs: null,
           isCorrect: null,
           payload: {
-            correctCount: isCorrect ? correctCount + 1 : correctCount,
+            correctCount: nextCorrectCount,
             totalQuestions: totalTrials,
+            ...scoring,
           },
         });
         return;
@@ -129,6 +148,7 @@ export const useGoNoGoGame = () => {
     [
       currentTrial,
       isAnswerLocked,
+      latencyTracker,
       prepareCurrentTrial,
       questionIndex,
       totalTrials,
@@ -165,9 +185,18 @@ export const useGoNoGoGame = () => {
         trialIndex: null,
         latencyMs: null,
         isCorrect: null,
+        payload: buildFixedDifficultySessionStartPayload(GONO_DIFFICULTY),
       });
     }
   }, [prepareCurrentTrial]);
+
+  useEffect(() => {
+    latestTrialIndexRef.current = questionIndex;
+  }, [questionIndex]);
+
+  useEffect(() => {
+    latestPhaseRef.current = phase;
+  }, [phase]);
 
   useEffect(() => {
     if (phase !== "playing" || currentTrial == null) return;
@@ -190,10 +219,25 @@ export const useGoNoGoGame = () => {
   }, [currentTrial, phase, questionIndex]);
 
   useEffect(() => {
+    const sessionId = sessionIdRef.current;
     return () => {
       if (nextTimerRef.current) {
         clearTimeout(nextTimerRef.current);
       }
+
+      emitSessionAbandonedIfNeeded({
+        gameKey: GONO_GAME_KEY,
+        sessionId,
+        difficultyTier: GONO_DIFFICULTY,
+        blockIndex: 0,
+        trialIndex: latestTrialIndexRef.current,
+        hasStarted: hasStartedRef.current,
+        hasCompleted: hasCompletedRef.current,
+        payload: {
+          reason: "hook_unmount",
+          phase: latestPhaseRef.current,
+        },
+      });
     };
   }, []);
 

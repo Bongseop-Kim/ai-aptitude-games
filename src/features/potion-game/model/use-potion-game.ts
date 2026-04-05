@@ -2,7 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AssessmentDifficultyTier,
   AssessmentGameKey,
+  buildFixedDifficultySessionStartPayload,
   emitAssessmentEvent,
+  emitSessionAbandonedIfNeeded,
+  buildSessionCompletionScoringPayload,
+  useLatencyTracker,
 } from "@/shared/lib";
 
 type Color = "red" | "blue" | "green";
@@ -86,17 +90,44 @@ export const usePotionGame = () => {
     `potion-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`
   );
   const hasStartedRef = useRef(false);
+  const hasCompletedRef = useRef(false);
   const presentedRoundRef = useRef<number | null>(null);
+  const latestStepIndexRef = useRef<number | null>(null);
+  const latestPhaseRef = useRef<Phase>("countdown");
+  const latencyTracker = useLatencyTracker();
 
   const steps = useMemo(() => generateSteps(), []);
   const totalSteps = steps.length;
   const currentStep = steps[stepIndex];
 
   useEffect(() => {
+    latestStepIndexRef.current = stepIndex;
+  }, [stepIndex]);
+
+  useEffect(() => {
+    latestPhaseRef.current = phase;
+  }, [phase]);
+
+  useEffect(() => {
+    const sessionId = sessionIdRef.current;
     return () => {
       if (transitionTimerRef.current) {
         clearTimeout(transitionTimerRef.current);
       }
+
+      emitSessionAbandonedIfNeeded({
+        gameKey: POTION_GAME_KEY,
+        sessionId,
+        difficultyTier: POTION_DIFFICULTY,
+        blockIndex: 0,
+        trialIndex: latestStepIndexRef.current,
+        hasStarted: hasStartedRef.current,
+        hasCompleted: hasCompletedRef.current,
+        payload: {
+          reason: "hook_unmount",
+          phase: latestPhaseRef.current,
+        },
+      });
     };
   }, []);
 
@@ -117,6 +148,7 @@ export const usePotionGame = () => {
       const ratio = Math.min(1, Math.max(0, elapsed / (ROUND_TIME_SEC * 1000)));
       const isCorrect = selected === currentStep.correctColor;
       const nextCorrectCount = correctAnswers + (isCorrect ? 1 : 0);
+      const { nextAnsweredCount, nextAvgLatencyMs } = latencyTracker.recordAnswer(elapsed);
 
       setIsAnswerLocked(true);
       setIsTimerRunning(false);
@@ -150,7 +182,16 @@ export const usePotionGame = () => {
       });
 
       if (stepIndex + 1 >= totalSteps) {
+        const scoring = buildSessionCompletionScoringPayload({
+          gameKey: POTION_GAME_KEY,
+          difficultyTier: POTION_DIFFICULTY,
+          totalQuestions: totalSteps,
+          correctCount: nextCorrectCount,
+          answeredCount: nextAnsweredCount,
+          avgLatencyMs: nextAvgLatencyMs,
+        });
         setPhase("finished");
+        hasCompletedRef.current = true;
         emitAssessmentEvent({
           gameKey: POTION_GAME_KEY,
           sessionId: sessionIdRef.current,
@@ -163,6 +204,7 @@ export const usePotionGame = () => {
           payload: {
             correctCount: nextCorrectCount,
             totalQuestions: totalSteps,
+            ...scoring,
           },
         });
         return;
@@ -214,6 +256,7 @@ export const usePotionGame = () => {
         trialIndex: null,
         latencyMs: null,
         isCorrect: null,
+        payload: buildFixedDifficultySessionStartPayload(POTION_DIFFICULTY),
       });
     }
   }, [prepareStep]);

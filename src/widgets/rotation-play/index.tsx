@@ -8,6 +8,7 @@ import { TimerProgressBar } from "@/shared/ui/timer-progressbar";
 import { ThemedModal } from "@/shared/ui/themed-modal";
 import { ThemedText } from "@/shared/ui/themed-text";
 import { ThemedView } from "@/shared/ui/themed-view";
+import { router } from "expo-router";
 import { useColorScheme } from "@/shared/lib/use-color-scheme";
 import { useRotationGame } from "@/features/rotation-game";
 import { useEffect, useMemo, useState } from "react";
@@ -30,7 +31,15 @@ const ShapeGrid = ({
       <ThemedText type="captionS" style={styles.labelText}>
         {label}
       </ThemedText>
-      <ThemedView style={styles.shapeFrame}>
+      <ThemedView
+        style={[
+          styles.shapeFrame,
+          {
+            borderColor: colors.border.alpha,
+            backgroundColor: colors.surface.alpha,
+          },
+        ]}
+      >
         {matrix.map((row, rowIndex) => (
           <View key={`row-${rowIndex}`} style={styles.row}>
             {row.map((cell, colIndex) => (
@@ -84,6 +93,18 @@ export function RotationPlayWidget() {
     totalQuestions === 0
       ? 0
       : Math.round((correctAnswers / totalQuestions) * 100);
+  const closeAndGoHome = () => {
+    setIsFinishedModalVisible(false);
+    router.replace("/");
+  };
+  const handleRestart = () => {
+    setIsFinishedModalVisible(false);
+    router.replace("/pre-game/rotation");
+  };
+  const handleHistory = () => {
+    setIsFinishedModalVisible(false);
+    router.push("/games/rotation/history");
+  };
 
   const transformedPuzzleWithFallback = useMemo(() => {
     if (!transformedPuzzle.length) {
@@ -145,6 +166,12 @@ export function RotationPlayWidget() {
           <Pressable
             onPress={rotateRight}
             disabled={isAnswerLocked || !isPlaying}
+            accessibilityRole="button"
+            accessibilityLabel="회전"
+            accessibilityHint="현재 도형을 오른쪽으로 회전합니다"
+            accessibilityState={{
+              disabled: isAnswerLocked || !isPlaying,
+            }}
             style={({ pressed }) => [
               styles.controlButton,
               {
@@ -159,6 +186,12 @@ export function RotationPlayWidget() {
           <Pressable
             onPress={flipHorizontalAxis}
             disabled={isAnswerLocked || !isPlaying}
+            accessibilityRole="button"
+            accessibilityLabel="가로반전"
+            accessibilityHint="현재 도형을 가로로 반전합니다"
+            accessibilityState={{
+              disabled: isAnswerLocked || !isPlaying,
+            }}
             style={({ pressed }) => [
               styles.controlButton,
               {
@@ -173,6 +206,12 @@ export function RotationPlayWidget() {
           <Pressable
             onPress={flipVerticalAxis}
             disabled={isAnswerLocked || !isPlaying}
+            accessibilityRole="button"
+            accessibilityLabel="세로반전"
+            accessibilityHint="현재 도형을 세로로 반전합니다"
+            accessibilityState={{
+              disabled: isAnswerLocked || !isPlaying,
+            }}
             style={({ pressed }) => [
               styles.controlButton,
               {
@@ -187,6 +226,12 @@ export function RotationPlayWidget() {
           <Pressable
             onPress={resetTransform}
             disabled={isAnswerLocked || !isPlaying}
+            accessibilityRole="button"
+            accessibilityLabel="초기화"
+            accessibilityHint="도형 조작을 초기 상태로 되돌립니다"
+            accessibilityState={{
+              disabled: isAnswerLocked || !isPlaying,
+            }}
             style={({ pressed }) => [
               styles.controlButton,
               {
@@ -205,6 +250,12 @@ export function RotationPlayWidget() {
         <Pressable
           onPress={handleSubmit}
           disabled={isAnswerLocked || !isPlaying}
+          accessibilityRole="button"
+          accessibilityLabel="정답 확인"
+          accessibilityHint="현재 조작 내용을 정답으로 제출합니다"
+          accessibilityState={{
+            disabled: isAnswerLocked || !isPlaying,
+          }}
           style={({ pressed }) => [
             styles.submitButton,
             {
@@ -231,10 +282,14 @@ export function RotationPlayWidget() {
         visible={isFinishedModalVisible}
         title="게임 종료"
         description={`전체 정답률 ${finishedAccuracy}%`}
-        onRequestClose={() => setIsFinishedModalVisible(false)}
+        onRequestClose={closeAndGoHome}
         primaryAction={{
-          label: "확인",
-          onPress: () => setIsFinishedModalVisible(false),
+          label: "다시 시작",
+          onPress: handleRestart,
+        }}
+        secondaryAction={{
+          label: "기록 보기",
+          onPress: handleHistory,
         }}
       />
     </FixedButtonView>
@@ -259,8 +314,8 @@ const styles = StyleSheet.create({
     padding: 10,
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 12,
-    borderColor: "rgba(0,0,0,0.12)",
-    backgroundColor: "rgba(255,255,255,0.03)",
+    borderColor: "transparent",
+    backgroundColor: "transparent",
   },
   row: {
     flexDirection: "row",

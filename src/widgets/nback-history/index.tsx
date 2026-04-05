@@ -154,25 +154,25 @@ const TrendIconComponent = ({ trend }: { trend: "up" | "down" | "same" }) => {
 
 const formatTimeAgo = (date: Date): string => {
   const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
+  const diffMs = Math.max(0, now.getTime() - date.getTime());
   const diffMins = Math.floor(diffMs / (1000 * 60));
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
   if (diffMins < 1) {
-    return "방금 전";
+    return "방금";
   }
   if (diffMins < 60) {
-    return `${diffMins}분전`;
+    return `${diffMins}분 전`;
   }
   if (diffHours < 24) {
-    return `${diffHours}시간전`;
+    return `${diffHours}시간 전`;
   }
   if (diffDays < 7) {
-    return `${diffDays}일전`;
+    return `${diffDays}일 전`;
   }
   return date.toLocaleDateString("ko-KR", {
-    year: "numeric",
+    year: "2-digit",
     month: "long",
     day: "numeric",
   });
@@ -191,6 +191,14 @@ const ListItemComponent = ({ item }: { item: NbackHistoryItem }) => {
       onPress={() => {
         router.push(`/games/nback/detail/${item.id}`);
       }}
+      style={({ pressed }) => [
+        styles.itemPressable,
+        pressed && { backgroundColor: colors.bgHover },
+      ]}
+      accessibilityRole="button"
+      accessibilityLabel={`${item.type === "real" ? "실전" : "연습"} 기록, 정확도 ${Math.round(accuracy)}%, ${item.totalQuestions}문제 중 ${item.correctCount}문제 정답, ${formatTimeAgo(item.createdAt)}`}
+      accessibilityHint="탭하면 기록 상세 화면으로 이동합니다"
+      accessibilityState={{ disabled: false }}
     >
       <ThemedView style={[styles.itemContainer]}>
         <HStack align="center" justify="space-between" spacing="spacing12">
@@ -247,9 +255,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: BorderWidth.s,
     paddingBottom: Padding.m,
   },
-  itemContainer: {
+  itemPressable: {
     paddingHorizontal: Padding.m,
     paddingVertical: Padding.s,
+    minHeight: 44,
+  },
+  itemContainer: {
   },
   emptyContainer: {
     paddingVertical: Padding.xxl,

@@ -1,50 +1,127 @@
-# Welcome to your Expo app 👋
+# AI Aptitude Games
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+기업 AI 역량 검사(인지능력 테스트) 대비용 Expo + React Native 앱입니다.
 
-## Get started
+## Requirements
 
-1. Install dependencies
+- Node.js 20+
+- npm 10+
+- Expo CLI (`npx expo`)
+- EAS CLI (`npm i -g eas-cli`, EAS 배포 시 필요)
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Local Development
 
 ```bash
-npm run reset-project
+npm install
+cp .env.example .env
+npm run lint
+npm run test
+npm start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Getting Started (API Base URL)
 
-## Learn more
+앱 부팅 시 `EXPO_PUBLIC_API_BASE_URL` 설정을 검증합니다. 값이 없거나 URL 형식이 아니면 앱이 초기화 에러 화면을 표시합니다.
 
-To learn more about developing your project with Expo, look at the following resources:
+`.env.example`:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```dotenv
+EXPO_PUBLIC_API_BASE_URL=http://localhost:4000
+```
 
-## Join the community
+플랫폼 실행:
 
-Join our community of developers creating universal apps.
+```bash
+npm run ios
+npm run android
+npm run web
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## CI
+
+GitHub Actions `CI` 워크플로(`.github/workflows/ci.yml`)는 아래를 실행합니다.
+
+- `npm ci`
+- `npm run lint`
+- `npm run test`
+- `npx expo-doctor`
+
+트리거:
+
+- `pull_request`
+- `push` to `main`
+
+## EAS Build / Update
+
+`eas.json`에 staging 채널과 수동 빌드용 프로필이 포함되어 있습니다.
+
+- `staging`: 내부 배포 채널
+- `android-internal`: Android APK internal build
+- `ios-simulator`: iOS simulator build
+
+수동 EAS 빌드 워크플로:
+
+- 파일: `.github/workflows/eas-build-dispatch.yml`
+- 트리거: `workflow_dispatch`
+- 입력: `platform` (`all`, `android`, `ios`)
+
+워크플로는 다음 명령을 실행합니다.
+
+- `eas build --platform android --profile android-internal --non-interactive --no-wait`
+- `eas build --platform ios --profile ios-simulator --non-interactive --no-wait`
+
+수동 OTA 업데이트 워크플로:
+
+- 파일: `.github/workflows/eas-update.yml`
+- 트리거: `workflow_dispatch`
+- 입력:
+  - `channel` (`staging`, `production`)
+  - `message` (릴리즈 메시지)
+
+## CI Secrets
+
+GitHub repository secrets에 아래 값을 설정해야 합니다.
+
+- `EXPO_TOKEN`: EAS 인증 토큰 (`eas token:create`로 생성)
+
+서명 인증서/프로비저닝은 EAS 서버 자격증명 관리 사용을 권장합니다. 민감정보(.env, keystore, p12, provisioning profile)는 저장소에 커밋하지 마세요.
+
+## Docker Local Preview (Expo Web + Mock API)
+
+`Dockerfile`은 Expo 웹 번들을 빌드해 정적 서버로 제공합니다.
+
+```bash
+docker compose up --build
+```
+
+서비스:
+
+- 앱 미리보기: `http://localhost:8080`
+- Mock API: `http://localhost:4000`
+- Mock health: `http://localhost:4000/health`
+
+Mock API 구현 파일: `scripts/mock-backend.mjs`
+
+## Telemetry Extract (What's New KPI)
+
+`ui.whatsNew.*` 이벤트의 일자별(UTC) / 환경별 KPI 집계는 아래 명령으로 추출할 수 있습니다.
+
+```bash
+bash scripts/telemetry/export-whatsnew-kpis.sh <sqlite-db-path>
+```
+
+예시:
+
+```bash
+bash scripts/telemetry/export-whatsnew-kpis.sh /tmp/db.db
+bash scripts/telemetry/export-whatsnew-kpis.sh /tmp/db.db 2026-04-01 2026-04-07
+```
+
+출력 컬럼:
+
+- `event_day_utc`
+- `environment` (`payload.environment` 우선, 없으면 `device`)
+- `shown_count`
+- `dismissed_count`
+- `clicked_count`
+- `error_count`

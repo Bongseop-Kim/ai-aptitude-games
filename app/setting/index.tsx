@@ -4,6 +4,8 @@ import { IconSymbol } from "@/shared/ui/icon-symbol";
 import { Padding, SemanticTokens, Spacing } from "@/shared/config/theme";
 import { useColorScheme } from "@/shared/lib/use-color-scheme";
 import { useThemeColor } from "@/shared/lib/use-theme-color";
+import { useAuth } from "@/shared/auth/auth-context";
+import { useMemo } from "react";
 import * as Application from "expo-application";
 import Constants from "expo-constants";
 import { RelativePathString, Stack, router } from "expo-router";
@@ -21,13 +23,19 @@ const buildNumber =
     "0";
 
 export default function SettingScreen() {
+    const { session, signOut } = useAuth();
     const separatorColor = useThemeColor({}, "border.base");
+    const displayName = session?.displayName;
+    const settings = useMemo(
+        () => buildSettings(signOut, displayName),
+        [signOut, displayName]
+    );
 
     return (
         <ThemedView style={styles.container}>
             <Stack.Screen options={{ headerTitle: "설정" }} />
             <FlatList
-                data={SETTINGS}
+                data={settings}
                 renderItem={({ item }) => <Item setting={item} />}
                 keyExtractor={(item) => item.id}
                 showsVerticalScrollIndicator={false}
@@ -45,9 +53,10 @@ interface Setting {
     name: string;
     description?: string;
     link?: string;
+    onPress?: () => void;
 }
 
-const SETTINGS: Setting[] = [
+const baseSettings: Setting[] = [
     {
         id: "improvement",
         name: "개선 제안",
@@ -65,18 +74,37 @@ const SETTINGS: Setting[] = [
     },
 ];
 
+const buildSettings = (signOut: () => Promise<void>, displayName?: string): Setting[] => {
+    const settings: Setting[] = [...baseSettings];
+
+    if (displayName != null) {
+        settings.push({
+            id: "user",
+            name: `로그인: ${displayName}`,
+            description: "탭하면 로그아웃합니다",
+            onPress: async () => {
+                await signOut();
+                router.replace("/auth");
+            },
+        });
+    }
+
+    return settings;
+};
+
 const Item = ({ setting }: { setting: Setting }) => {
     const hoverBg = useThemeColor({}, "surface.layer1");
     const tertiaryColor = useThemeColor({}, "text.tertiary");
     const colorScheme = useColorScheme();
-    const isPressable = !!setting.link;
+    const isPressable = setting.link != null || setting.onPress != null;
+    const isLink = setting.link != null;
 
     const content = (
         <View style={styles.itemInner}>
             <ThemedText type="captionL" numberOfLines={1}>
                 {setting.name}
             </ThemedText>
-            {setting.description != null && setting.link == null && (
+            {setting.description != null && (
                 <ThemedText
                     type="captionM"
                     style={[styles.description, { color: tertiaryColor }]}
@@ -85,7 +113,7 @@ const Item = ({ setting }: { setting: Setting }) => {
                     {setting.description}
                 </ThemedText>
             )}
-            {setting.link != null && (
+            {(isLink || setting.onPress != null) && (
                 <IconSymbol
                     name="chevron.right"
                     size={16}
@@ -96,9 +124,20 @@ const Item = ({ setting }: { setting: Setting }) => {
     );
 
     if (isPressable) {
+        const handlePress = () => {
+            if (setting.link != null) {
+                router.push(setting.link as RelativePathString);
+                return;
+            }
+            setting.onPress?.();
+        };
+
         return (
             <Pressable
-                onPress={() => router.push(setting.link as RelativePathString)}
+                onPress={handlePress}
+                accessibilityRole="button"
+                accessibilityLabel={setting.link != null ? `${setting.name} 화면으로 이동` : `${setting.name}`}
+                accessibilityHint={setting.link != null ? `${setting.name} 화면으로 이동하려면 더블 탭하세요` : `${setting.name} 동작을 실행하려면 더블 탭하세요`}
                 style={({ pressed }) => [
                     styles.item,
                     pressed && { backgroundColor: hoverBg },
@@ -134,6 +173,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
+        minHeight: 52,
     },
     itemInner: {
         flex: 1,

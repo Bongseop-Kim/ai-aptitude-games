@@ -1,7 +1,11 @@
 import {
   AssessmentDifficultyTier,
   AssessmentGameKey,
+  buildFixedDifficultySessionStartPayload,
   emitAssessmentEvent,
+  emitSessionAbandonedIfNeeded,
+  buildSessionCompletionScoringPayload,
+  useLatencyTracker,
 } from "@/shared/lib";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -83,9 +87,13 @@ export const useStroopGame = () => {
   const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const presentedQuestionRef = useRef<number | null>(null);
   const hasStartedRef = useRef(false);
+  const hasCompletedRef = useRef(false);
   const sessionIdRef = useRef(
     `stroop-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`
   );
+  const latestQuestionIndexRef = useRef<number | null>(null);
+  const latestPhaseRef = useRef<Phase>("countdown");
+  const latencyTracker = useLatencyTracker();
 
   const currentQuestion = questions[questionIndex];
   const remainingQuestions = STROOP_QUESTIONS - questionIndex;
@@ -108,7 +116,7 @@ export const useStroopGame = () => {
       );
 
       resultRef.current.push(isCorrect);
-      const nextAnsweredCount = resultRef.current.length;
+      const { nextAnsweredCount, nextAvgLatencyMs } = latencyTracker.recordAnswer(elapsedMs);
       setAnsweredQuestions(nextAnsweredCount);
       setIsAnswerLocked(true);
       setIsTimerRunning(false);
@@ -144,8 +152,17 @@ export const useStroopGame = () => {
       if (nextIndex >= STROOP_QUESTIONS) {
         const correctCount = resultRef.current.filter((v) => v).length;
         const totalCount = resultRef.current.length;
+        const scoring = buildSessionCompletionScoringPayload({
+          gameKey: STROOP_GAME_KEY,
+          difficultyTier: STROOP_DIFFICULTY,
+          totalQuestions: totalCount,
+          correctCount,
+          answeredCount: totalCount,
+          avgLatencyMs: totalCount > 0 ? nextAvgLatencyMs : null,
+        });
         setFinishedAccuracy(totalCount > 0 ? correctCount / totalCount : 0);
         setGamePhase("finished");
+        hasCompletedRef.current = true;
         emitAssessmentEvent({
           gameKey: STROOP_GAME_KEY,
           sessionId: sessionIdRef.current,
@@ -158,6 +175,7 @@ export const useStroopGame = () => {
           payload: {
             correctCount,
             totalQuestions: totalCount,
+            ...scoring,
           },
         });
         return;
@@ -207,6 +225,7 @@ export const useStroopGame = () => {
         trialIndex: null,
         latencyMs: null,
         isCorrect: null,
+        payload: buildFixedDifficultySessionStartPayload(STROOP_DIFFICULTY),
       });
     }
   }, []);
@@ -226,10 +245,33 @@ export const useStroopGame = () => {
   }, [gamePhase, questionIndex]);
 
   useEffect(() => {
+    latestQuestionIndexRef.current = questionIndex;
+  }, [questionIndex]);
+
+  useEffect(() => {
+    latestPhaseRef.current = gamePhase;
+  }, [gamePhase]);
+
+  useEffect(() => {
+    const sessionId = sessionIdRef.current;
     return () => {
       if (transitionTimerRef.current) {
         clearTimeout(transitionTimerRef.current);
       }
+
+      emitSessionAbandonedIfNeeded({
+        gameKey: STROOP_GAME_KEY,
+        sessionId,
+        difficultyTier: STROOP_DIFFICULTY,
+        blockIndex: 0,
+        trialIndex: latestQuestionIndexRef.current,
+        hasStarted: hasStartedRef.current,
+        hasCompleted: hasCompletedRef.current,
+        payload: {
+          reason: "hook_unmount",
+          phase: latestPhaseRef.current,
+        },
+      });
     };
   }, []);
 
@@ -256,6 +298,7 @@ export const useStroopGame = () => {
     remainingQuestions,
     answeredQuestions,
     selectedAnswer,
+    sessionId: sessionIdRef.current,
     isAnswerLocked,
     isTimerRunning,
     showCountdown,

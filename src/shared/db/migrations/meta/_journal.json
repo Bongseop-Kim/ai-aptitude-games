@@ -29,6 +29,20 @@
       "when": 1769650496308,
       "tag": "0003_add_not_null_to_fk_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1769971230000,
+      "tag": "0004_assessment_telemetry_events",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1770310200000,
+      "tag": "0005_auth_telemetry_events",
+      "breakpoints": true
     }
   ]
 }

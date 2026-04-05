@@ -8,10 +8,10 @@ import { Spacer } from "@/shared/ui/spacer";
 import { ThemedModal } from "@/shared/ui/themed-modal";
 import { ThemedText } from "@/shared/ui/themed-text";
 import { ThemedView } from "@/shared/ui/themed-view";
-import { router } from "expo-router";
 import { TimerProgressBar } from "@/shared/ui/timer-progressbar";
 import { Padding } from "@/shared/config/theme";
 import { StyleSheet } from "react-native";
+import { router } from "expo-router";
 
 const STROOP_COPY = {
   questionHeader: "단어와 색상이 일치하나요?",
@@ -25,6 +25,7 @@ export function StroopPlayWidget() {
     currentQuestion,
     answerMarkerRatio,
     finishedAccuracy,
+    sessionId,
     gamePhase,
     handleAnswer,
     handleCountdownComplete,
@@ -41,6 +42,10 @@ export function StroopPlayWidget() {
   const isFinished = gamePhase === "finished";
   const accuracyPercent =
     finishedAccuracy === null ? 0 : Math.round(finishedAccuracy * 100);
+  const handleRestart = () => router.replace("/pre-game/stroop");
+  const handleOpenResult = () => {
+    router.replace(`/games/stroop/result/${sessionId}`);
+  };
 
   if (!currentQuestion) {
     return null;
@@ -50,7 +55,7 @@ export function StroopPlayWidget() {
   return (
     <FixedButtonView>
       <GameExitGuard />
-    <TimerProgressBar
+      <TimerProgressBar
         duration={questionDurationSec}
         isRunning={isTimerRunning}
         onComplete={handleTimeUp}
@@ -91,6 +96,7 @@ export function StroopPlayWidget() {
           value={selectedAnswer}
           onChange={handleAnswer}
           disabled={isAnswerLocked || gamePhase !== "playing"}
+          accessibilityHint="현재 문항의 정답을 탭해 선택하세요"
         />
       </ThemedView>
       <Countdown
@@ -104,8 +110,12 @@ export function StroopPlayWidget() {
         description={`${answeredQuestions}문항을 완료했어요. 정확도 ${accuracyPercent}%`}
         onRequestClose={() => router.replace("/")}
         primaryAction={{
-          label: "확인",
-          onPress: () => router.replace("/"),
+          label: "결과 보기",
+          onPress: handleOpenResult,
+        }}
+        secondaryAction={{
+          label: "다시 시작",
+          onPress: handleRestart,
         }}
       />
     </FixedButtonView>

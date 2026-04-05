@@ -9,6 +9,7 @@ import { ThemedModal } from "@/shared/ui/themed-modal";
 import { ThemedText } from "@/shared/ui/themed-text";
 import { ThemedView } from "@/shared/ui/themed-view";
 import { TimerProgressBar } from "@/shared/ui/timer-progressbar";
+import { router } from "expo-router";
 import { useColorScheme } from "@/shared/lib/use-color-scheme";
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet } from "react-native";
@@ -58,6 +59,18 @@ export function GoNoGoPlayWidget() {
 
   const trialNumber = Math.min(totalTrials, currentIndex + 1);
   const isCorrectLabel = isTapCorrect === null ? null : isTapCorrect ? "정답" : "오답";
+  const closeAndGoHome = () => {
+    setIsFinishedModalVisible(false);
+    router.replace("/");
+  };
+  const handleRestart = () => {
+    setIsFinishedModalVisible(false);
+    router.replace("/pre-game/gonogo");
+  };
+  const handleHistory = () => {
+    setIsFinishedModalVisible(false);
+    router.push("/games/gonogo/history");
+  };
 
   return (
     <FixedButtonView>
@@ -105,6 +118,10 @@ export function GoNoGoPlayWidget() {
         <Pressable
           onPress={handleTap}
           disabled={isAnswerLocked}
+          accessibilityRole="button"
+          accessibilityLabel={GO_NO_GO_COPY.goLabel}
+          accessibilityHint="문항을 확인한 뒤 탭해 즉시 반응을 기록하세요"
+          accessibilityState={{ disabled: isAnswerLocked, selected: false }}
           style={({ pressed }) => [
             styles.actionButton,
             {
@@ -131,10 +148,14 @@ export function GoNoGoPlayWidget() {
         visible={isFinishedModalVisible}
         title={GO_NO_GO_COPY.finishTitle}
         description={`${GO_NO_GO_COPY.accuracyLabel}: ${accuracyPercent}%`}
-        onRequestClose={() => setIsFinishedModalVisible(false)}
+        onRequestClose={closeAndGoHome}
         primaryAction={{
-          label: "확인",
-          onPress: () => setIsFinishedModalVisible(false),
+          label: "다시 시작",
+          onPress: handleRestart,
+        }}
+        secondaryAction={{
+          label: "기록 보기",
+          onPress: handleHistory,
         }}
       />
     </FixedButtonView>

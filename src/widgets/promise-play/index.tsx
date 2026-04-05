@@ -8,6 +8,7 @@ import { ThemedText } from "@/shared/ui/themed-text";
 import { ThemedView } from "@/shared/ui/themed-view";
 import { TimerProgressBar } from "@/shared/ui/timer-progressbar";
 import { usePromiseGame } from "@/features/promise-game";
+import { router } from "expo-router";
 import { StyleSheet } from "react-native";
 import { useEffect, useMemo, useState } from "react";
 
@@ -65,6 +66,18 @@ export function PromisePlayWidget() {
       value,
     }));
   }, [currentRound]);
+  const closeAndGoHome = () => {
+    setIsFinishedModalVisible(false);
+    router.replace("/");
+  };
+  const handleRestart = () => {
+    setIsFinishedModalVisible(false);
+    router.replace("/pre-game/promise");
+  };
+  const handleHistory = () => {
+    setIsFinishedModalVisible(false);
+    router.push("/games/promise/history");
+  };
 
   useEffect(() => {
     if (phase === "finished") {
@@ -123,6 +136,7 @@ export function PromisePlayWidget() {
           columns={3}
           disabled={isAnswerLocked}
           style={styles.picker}
+          accessibilityHint="현재 카드에 공통으로 나타난 항목을 선택하세요"
         />
       </ThemedView>
 
@@ -136,10 +150,14 @@ export function PromisePlayWidget() {
         visible={isFinishedModalVisible}
         title="게임 종료"
         description={`정답률 ${finishedAccuracy}%`}
-        onRequestClose={() => setIsFinishedModalVisible(false)}
+        onRequestClose={closeAndGoHome}
         primaryAction={{
-          label: "확인",
-          onPress: () => setIsFinishedModalVisible(false),
+          label: "다시 시작",
+          onPress: handleRestart,
+        }}
+        secondaryAction={{
+          label: "기록 보기",
+          onPress: handleHistory,
         }}
       />
     </FixedButtonView>

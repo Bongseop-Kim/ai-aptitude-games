@@ -2,6 +2,8 @@ import { AppInitError } from "@/shared/ui/app-init-error";
 import HeaderIcon from "@/shared/ui/header-icon";
 import { db, dbName, expo } from "@/shared/db/client";
 import migrations from "@/shared/db/migrations/migrations";
+import { AuthProvider } from "@/shared/auth/auth-context";
+import { getApiBaseUrlFromEnv } from "@/shared/config";
 import { useColorScheme } from "@/shared/lib/use-color-scheme";
 import {
   DarkTheme,
@@ -26,6 +28,21 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const { success, error } = useMigrations(db, migrations);
   useDrizzleStudio(expo);
+  let apiConfigError: Error | null = null;
+  try {
+    getApiBaseUrlFromEnv();
+  } catch (caughtError) {
+    apiConfigError = caughtError instanceof Error ? caughtError : new Error("Unknown API config error");
+  }
+
+  if (apiConfigError) {
+    return (
+      <AppInitError
+        error={apiConfigError}
+        title="API 설정이 올바르지 않습니다"
+      />
+    );
+  }
 
   if (!success && !error) {
     return <ActivityIndicator size="large" style={{ flex: 1 }} />;
@@ -41,20 +58,15 @@ export default function RootLayout() {
     <Suspense fallback={<ActivityIndicator size="large" />}>
       <SQLiteProvider databaseName={dbName} useSuspense>
         <KeyboardProvider>
-          <ThemeProvider
-            value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-          >
-            <Stack
-              screenOptions={{
-                headerBackButtonDisplayMode: "minimal",
-                headerTitle: "",
-                headerLeft: () => <HeaderIcon name="chevron.left" onPress={router.back} />,
-              }}
+          <AuthProvider>
+            <ThemeProvider
+              value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
             >
-              <Stack.Screen
-                name="(tabs)"
-                options={{
-                  headerLeft: undefined,
+              <Stack
+                screenOptions={{
+                  headerBackButtonDisplayMode: "minimal",
+                  headerTitle: "",
+                  headerLeft: () => <HeaderIcon name="chevron.left" onPress={router.back} />,
                   headerRight: () => (
                     <HeaderIcon
                       name="gearshape"
@@ -64,10 +76,25 @@ export default function RootLayout() {
                     />
                   ),
                 }}
-              />
-            </Stack>
-            <StatusBar style="auto" />
-          </ThemeProvider>
+              >
+                <Stack.Screen
+                  name="(tabs)"
+                  options={{
+                    headerLeft: undefined,
+                    headerRight: () => (
+                      <HeaderIcon
+                        name="gearshape"
+                        onPress={() =>
+                          router.push("/setting")
+                        }
+                      />
+                    ),
+                  }}
+                />
+              </Stack>
+              <StatusBar style="auto" />
+            </ThemeProvider>
+          </AuthProvider>
         </KeyboardProvider>
       </SQLiteProvider>
     </Suspense>

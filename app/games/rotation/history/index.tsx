@@ -1,5 +1,5 @@
 import { GameHistoryPlaceholder } from "@/widgets/game-history-placeholder";
 
 export default function RotationHistoryScreen() {
-  return <GameHistoryPlaceholder gameName="Rotation" />;
+  return <GameHistoryPlaceholder gameId="rotation" />;
 }
