@@ -14,6 +14,11 @@ import {
   shouldApplyRefreshResult,
 } from "@/shared/auth/model/auth-provider-helpers";
 import {
+  buildBootstrapFailureState,
+  buildRefreshFailureState,
+  clearPersistedAuthStateBestEffort,
+} from "@/shared/auth/model/auth-context-helpers";
+import {
   bootstrapAuthSession,
   clearPersistedAuthState,
   saveAuthSession,
@@ -106,18 +111,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return true;
       } catch (error) {
         console.error("refreshIfNeeded: failed to refresh auth tokens", error);
-        if (
-          !shouldApplyRefreshResult({
-            startedGeneration,
-            currentGeneration: sessionGenerationRef.current,
-          })
-        ) {
+        const failureState = buildRefreshFailureState({
+          startedGeneration,
+          currentGeneration: sessionGenerationRef.current,
+        });
+        if (failureState == null) {
           return false;
         }
-        await clearPersistedAuthState();
-        setSession(null);
-        setHasValidAccessToken(false);
-        setRefreshFailed(true);
+        void clearPersistedAuthStateBestEffort({
+          clearPersistedAuthState,
+          logError: console.error,
+          context: "refreshIfNeeded",
+        });
+        setSession(failureState.session);
+        setHasValidAccessToken(failureState.hasValidAccessToken);
+        setRefreshFailed(failureState.refreshFailed);
         return false;
       } finally {
         if (refreshInFlightRef.current === refreshPromise) {
@@ -184,18 +192,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             ) {
               return;
             }
-            await clearPersistedAuthState();
-            storedSession = null;
-            hasValidToken = false;
-            didRefreshFail = true;
+            ({ storedSession, hasValidToken, didRefreshFail } =
+              buildBootstrapFailureState());
+            await clearPersistedAuthStateBestEffort({
+              clearPersistedAuthState,
+              logError: console.error,
+              context: "bootstrap",
+            });
           }
         }
       } catch (error) {
         console.error("bootstrap: unexpected auth init error", error);
-        await clearPersistedAuthState();
-        storedSession = null;
-        hasValidToken = false;
-        didRefreshFail = true;
+        ({ storedSession, hasValidToken, didRefreshFail } =
+          buildBootstrapFailureState());
+        await clearPersistedAuthStateBestEffort({
+          clearPersistedAuthState,
+          logError: console.error,
+          context: "bootstrap",
+        });
       } finally {
         if (
           mounted &&
