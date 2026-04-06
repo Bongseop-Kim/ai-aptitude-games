@@ -1,1 +1,1 @@
-export { usePotionGame } from "./model/use-potion-game";
+export { usePotionGame, renderSample, sampleLabel } from "./model/use-potion-game";

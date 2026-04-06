@@ -13,6 +13,8 @@ import {
   emitSessionAbandonedIfNeeded,
   buildSessionCompletionScoringPayload,
   useLatencyTracker,
+  generateSessionId,
+  useLatestRef,
 } from "@/shared/lib";
 
 type GoNoGoTrial = {
@@ -41,22 +43,20 @@ function createTrials(): GoNoGoTrial[] {
 
 export const useGoNoGoGame = () => {
   const [phase, setPhase] = useState<Phase>("countdown");
+  const latestPhaseRef = useLatestRef(phase);
   const [showCountdown, setShowCountdown] = useState(true);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [isAnswerLocked, setIsAnswerLocked] = useState(false);
   const [answerMarkerRatio, setAnswerMarkerRatio] = useState<number | null>(null);
   const [questionIndex, setQuestionIndex] = useState(0);
+  const latestTrialIndexRef = useLatestRef<number | null>(questionIndex);
   const [correctCount, setCorrectCount] = useState(0);
   const [isTapCorrect, setIsTapCorrect] = useState<boolean | null>(null);
-  const [trialStartAt, setTrialStartAt] = useState<number>(Date.now());
-  const sessionIdRef = useRef(
-    `gonogo-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`
-  );
+  const trialStartAtRef = useRef<number>(Date.now());
+  const sessionIdRef = useRef(generateSessionId("gonogo"));
   const hasStartedRef = useRef(false);
   const hasCompletedRef = useRef(false);
   const presentedTrialRef = useRef<number | null>(null);
-  const latestTrialIndexRef = useRef<number | null>(null);
-  const latestPhaseRef = useRef<Phase>("countdown");
   const latencyTracker = useLatencyTracker();
 
   const trials = useMemo(() => createTrials(), []);
@@ -69,7 +69,7 @@ export const useGoNoGoGame = () => {
     setIsAnswerLocked(false);
     setIsTapCorrect(null);
     setAnswerMarkerRatio(null);
-    setTrialStartAt(Date.now());
+    trialStartAtRef.current = Date.now();
     setIsTimerRunning(true);
   }, []);
 
@@ -79,7 +79,7 @@ export const useGoNoGoGame = () => {
         return;
       }
 
-      const latencyMs = Math.max(0, Date.now() - trialStartAt);
+      const latencyMs = Math.max(0, Date.now() - trialStartAtRef.current);
       const ratio = Math.min(1, Math.max(0, latencyMs / (TRIAL_TIME_SEC * 1000)));
       const isCorrect = currentTrial.isGo ? didTap : !didTap;
       const nextCorrectCount = correctCount + (isCorrect ? 1 : 0);
@@ -152,7 +152,6 @@ export const useGoNoGoGame = () => {
       prepareCurrentTrial,
       questionIndex,
       totalTrials,
-      trialStartAt,
     ]
   );
 
@@ -189,14 +188,6 @@ export const useGoNoGoGame = () => {
       });
     }
   }, [prepareCurrentTrial]);
-
-  useEffect(() => {
-    latestTrialIndexRef.current = questionIndex;
-  }, [questionIndex]);
-
-  useEffect(() => {
-    latestPhaseRef.current = phase;
-  }, [phase]);
 
   useEffect(() => {
     if (phase !== "playing" || currentTrial == null) return;
@@ -254,7 +245,7 @@ export const useGoNoGoGame = () => {
     isFinished: phase === "finished",
     trialTimeSec: TRIAL_TIME_SEC,
     accuracyPercent:
-      totalTrials === 0 ? 0 : Math.round((correctCount / (questionIndex + 1)) * 100),
+      totalTrials === 0 ? 0 : Math.round((correctCount / totalTrials) * 100),
     handleTap,
     handleCountdownComplete,
     handleTimeUp,

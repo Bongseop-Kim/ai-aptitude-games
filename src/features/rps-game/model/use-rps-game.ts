@@ -7,6 +7,8 @@ import {
   emitSessionAbandonedIfNeeded,
   buildSessionCompletionScoringPayload,
   useLatencyTracker,
+  generateSessionId,
+  useLatestRef,
 } from "@/shared/lib";
 
 type Hand = "rock" | "paper" | "scissors";
@@ -63,21 +65,19 @@ function createRounds(): RpsRound[] {
 
 export const useRpsGame = () => {
   const [phase, setPhase] = useState<Phase>("countdown");
+  const latestPhaseRef = useLatestRef(phase);
   const [questionIndex, setQuestionIndex] = useState(0);
+  const latestQuestionIndexRef = useLatestRef<number | null>(questionIndex);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [isAnswerLocked, setIsAnswerLocked] = useState(false);
   const [answerMarkerRatio, setAnswerMarkerRatio] = useState<number | null>(null);
-  const [questionStartAt, setQuestionStartAt] = useState<number>(Date.now());
   const [showCountdown, setShowCountdown] = useState(true);
-  const sessionIdRef = useRef(
-    `rps-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`
-  );
+  const questionStartAtRef = useRef<number>(Date.now());
+  const sessionIdRef = useRef(generateSessionId("rps"));
   const hasStartedRef = useRef(false);
   const hasCompletedRef = useRef(false);
   const presentedQuestionRef = useRef<number | null>(null);
-  const latestQuestionIndexRef = useRef<number | null>(null);
-  const latestPhaseRef = useRef<Phase>("countdown");
 
   const rounds = useMemo(() => createRounds(), []);
   const totalRounds = rounds.length;
@@ -88,7 +88,7 @@ export const useRpsGame = () => {
   const prepareRound = useCallback(() => {
     setIsAnswerLocked(false);
     setAnswerMarkerRatio(null);
-    setQuestionStartAt(Date.now());
+    questionStartAtRef.current = Date.now();
     setIsTimerRunning(true);
   }, []);
 
@@ -98,7 +98,7 @@ export const useRpsGame = () => {
         return;
       }
 
-      const elapsed = Math.max(0, Date.now() - questionStartAt);
+      const elapsed = Math.max(0, Date.now() - questionStartAtRef.current);
       const ratio = Math.min(1, elapsed / (ROUND_TIME_SEC * 1000));
       const userResult =
         userHand === undefined ? "draw" : evaluateRound(userHand, currentRound.opponentHand);
@@ -180,7 +180,6 @@ export const useRpsGame = () => {
       phase,
       prepareRound,
       questionIndex,
-      questionStartAt,
       totalRounds,
     ]
   );
@@ -218,14 +217,6 @@ export const useRpsGame = () => {
       });
     }
   }, [prepareRound]);
-
-  useEffect(() => {
-    latestQuestionIndexRef.current = questionIndex;
-  }, [questionIndex]);
-
-  useEffect(() => {
-    latestPhaseRef.current = phase;
-  }, [phase]);
 
   useEffect(() => {
     if (phase !== "playing" || !currentRound) {

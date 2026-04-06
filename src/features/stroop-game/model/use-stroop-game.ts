@@ -6,6 +6,8 @@ import {
   emitSessionAbandonedIfNeeded,
   buildSessionCompletionScoringPayload,
   useLatencyTracker,
+  generateSessionId,
+  useLatestRef,
 } from "@/shared/lib";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -88,11 +90,9 @@ export const useStroopGame = () => {
   const presentedQuestionRef = useRef<number | null>(null);
   const hasStartedRef = useRef(false);
   const hasCompletedRef = useRef(false);
-  const sessionIdRef = useRef(
-    `stroop-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`
-  );
-  const latestQuestionIndexRef = useRef<number | null>(null);
-  const latestPhaseRef = useRef<Phase>("countdown");
+  const sessionIdRef = useRef(generateSessionId("stroop"));
+  const latestQuestionIndexRef = useLatestRef<number | null>(questionIndex);
+  const latestPhaseRef = useLatestRef(gamePhase);
   const latencyTracker = useLatencyTracker();
 
   const currentQuestion = questions[questionIndex];
@@ -160,7 +160,7 @@ export const useStroopGame = () => {
           answeredCount: totalCount,
           avgLatencyMs: totalCount > 0 ? nextAvgLatencyMs : null,
         });
-        setFinishedAccuracy(totalCount > 0 ? correctCount / totalCount : 0);
+        setFinishedAccuracy(totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0);
         setGamePhase("finished");
         hasCompletedRef.current = true;
         emitAssessmentEvent({
@@ -243,14 +243,6 @@ export const useStroopGame = () => {
     questionStartAtRef.current = Date.now();
     setIsTimerRunning(true);
   }, [gamePhase, questionIndex]);
-
-  useEffect(() => {
-    latestQuestionIndexRef.current = questionIndex;
-  }, [questionIndex]);
-
-  useEffect(() => {
-    latestPhaseRef.current = gamePhase;
-  }, [gamePhase]);
 
   useEffect(() => {
     const sessionId = sessionIdRef.current;

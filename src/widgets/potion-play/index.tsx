@@ -1,4 +1,4 @@
-import { usePotionGame } from "@/features/potion-game";
+import { usePotionGame, renderSample, sampleLabel } from "@/features/potion-game";
 import { Badge } from "@/shared/ui/badge";
 import { Countdown } from "@/shared/ui/countdown";
 import { FixedButtonView } from "@/shared/ui/fixed-button-view";
@@ -29,8 +29,6 @@ export function PotionPlayWidget() {
     isAnswerLocked,
     isTimerRunning,
     phase,
-    renderSample,
-    sampleLabel,
     showCountdown,
     stepDurationSec,
     totalSteps,
@@ -52,7 +50,7 @@ export function PotionPlayWidget() {
     const a = renderSample(currentStep.sampleA);
     const b = renderSample(currentStep.sampleB);
     return `시료 A: ${a}\n시료 B: ${b}`;
-  }, [currentStep, renderSample]);
+  }, [currentStep]);
   const closeAndGoHome = () => {
     setIsFinishedModalVisible(false);
     router.replace("/");

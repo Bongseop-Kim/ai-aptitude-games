@@ -50,7 +50,7 @@ export function GameHistoryPlaceholder({
             <ThemedText type="title1">
               {game?.name ?? "이 게임"} 기록
             </ThemedText>
-            <ThemedText type="body" lightColor={mutedTextColor}>
+            <ThemedText type="body2" lightColor={mutedTextColor}>
               기록이 아직 없습니다. 아래 기준으로 시작 화면을 확인하고
               첫 기록을 남겨보세요.
             </ThemedText>

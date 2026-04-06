@@ -3,7 +3,7 @@ import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
 import { Option, OptionButton } from "./option-button";
 
 export type SegmentedPickerProps<T extends string> = {
-  options: { label: string; value: T }[];
+  options: readonly { label: string; value: T }[];
   value?: T;
   onChange: (value: T) => void;
   columns?: number;

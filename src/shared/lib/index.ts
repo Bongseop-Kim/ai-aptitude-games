@@ -1,4 +1,6 @@
 export { useColorScheme } from "./use-color-scheme";
+export { useLatestRef } from "./use-latest-ref";
+export { generateSessionId, pick, shuffle } from "./game-utils";
 export { useLatencyTracker } from "./use-latency-tracker";
 export { useThemeColor } from "./use-theme-color";
 export { parseSessionIdParam } from "./parse-session-id-param";

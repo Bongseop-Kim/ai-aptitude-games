@@ -193,7 +193,7 @@ const ListItemComponent = ({ item }: { item: NbackHistoryItem }) => {
       }}
       style={({ pressed }) => [
         styles.itemPressable,
-        pressed && { backgroundColor: colors.bgHover },
+        pressed && { backgroundColor: colors.surface.layer1 },
       ]}
       accessibilityRole="button"
       accessibilityLabel={`${item.type === "real" ? "실전" : "연습"} 기록, 정확도 ${Math.round(accuracy)}%, ${item.totalQuestions}문제 중 ${item.correctCount}문제 정답, ${formatTimeAgo(item.createdAt)}`}

@@ -1,5 +1,5 @@
 import { GAMES, type Game } from "@/entities/game";
-import { BorderRadius, getSemanticTokens, Padding, Spacing } from "@/shared/config/theme";
+import { BorderRadius, getAliasTokens, getSemanticTokens, Padding, Spacing } from "@/shared/config/theme";
 import { useColorScheme } from "@/shared/lib/use-color-scheme";
 import DifficultyStars from "@/shared/ui/difficulty-stars";
 import { ThemedText } from "@/shared/ui/themed-text";
@@ -19,7 +19,7 @@ const formatDuration = (seconds: number) => {
 
 export function GameListWidget() {
   const colorScheme = useColorScheme();
-  const colors = getSemanticTokens(colorScheme ?? "light");
+  const aliasColors = getAliasTokens(colorScheme ?? "light");
 
   return (
     <ThemedView style={styles.flex1}>
@@ -32,7 +32,7 @@ export function GameListWidget() {
         ListHeaderComponent={
           <ThemedView style={styles.listHeader}>
             <ThemedText type="headlineS">AI 역량 훈련 게임</ThemedText>
-            <ThemedText type="body2" style={{ color: colors.text.secondary }}>
+            <ThemedText type="body2" style={{ color: aliasColors.text.secondary }}>
               오늘은 어떤 역량을 강화할지 선택해 보세요.
             </ThemedText>
           </ThemedView>

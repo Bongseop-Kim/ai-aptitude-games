@@ -7,6 +7,8 @@ import {
   emitSessionAbandonedIfNeeded,
   buildSessionCompletionScoringPayload,
   useLatencyTracker,
+  generateSessionId,
+  useLatestRef,
 } from "@/shared/lib";
 
 type Rule = "single" | "double" | "skip";
@@ -47,35 +49,25 @@ function generateSteps(): NumberStep[] {
 export const useNumbersGame = () => {
   const [phase, setPhase] = useState<Phase>("countdown");
   const [stepIndex, setStepIndex] = useState(0);
+  const latestStepIndexRef = useLatestRef<number | null>(stepIndex);
+  const latestPhaseRef = useLatestRef(phase);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [isAnswerLocked, setIsAnswerLocked] = useState(false);
   const [showCountdown, setShowCountdown] = useState(true);
-  const [questionStartAt, setQuestionStartAt] = useState<number>(Date.now());
   const [answerMarkerRatio, setAnswerMarkerRatio] = useState<number | null>(null);
   const [doublePressReady, setDoublePressReady] = useState(false);
   const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const sessionIdRef = useRef(
-    `numbers-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`
-  );
+  const questionStartAtRef = useRef<number>(Date.now());
+  const sessionIdRef = useRef(generateSessionId("numbers"));
   const hasStartedRef = useRef(false);
   const hasCompletedRef = useRef(false);
   const presentedQuestionRef = useRef<number | null>(null);
-  const latestStepIndexRef = useRef<number | null>(null);
-  const latestPhaseRef = useRef<Phase>("countdown");
   const latencyTracker = useLatencyTracker();
 
   const steps = useMemo(() => generateSteps(), []);
   const totalSteps = steps.length;
   const currentStep = steps[stepIndex];
-
-  useEffect(() => {
-    latestStepIndexRef.current = stepIndex;
-  }, [stepIndex]);
-
-  useEffect(() => {
-    latestPhaseRef.current = phase;
-  }, [phase]);
 
   useEffect(() => {
     const sessionId = sessionIdRef.current;
@@ -104,7 +96,7 @@ export const useNumbersGame = () => {
     setIsAnswerLocked(false);
     setDoublePressReady(false);
     setAnswerMarkerRatio(null);
-    setQuestionStartAt(Date.now());
+    questionStartAtRef.current = Date.now();
     setIsTimerRunning(true);
   }, []);
 
@@ -114,7 +106,7 @@ export const useNumbersGame = () => {
         return;
       }
 
-      const elapsed = Date.now() - questionStartAt;
+      const elapsed = Date.now() - questionStartAtRef.current;
       const ratio = Math.min(1, Math.max(0, elapsed / (STEP_TIME_SEC * 1000)));
       const nextCorrectCount = correctAnswers + (isCorrect ? 1 : 0);
       const { nextAnsweredCount, nextAvgLatencyMs } = latencyTracker.recordAnswer(elapsed);
@@ -192,7 +184,6 @@ export const useNumbersGame = () => {
       isAnswerLocked,
       phase,
       nextStep,
-      questionStartAt,
       stepIndex,
       totalSteps,
     ],

@@ -7,6 +7,9 @@ import {
   emitSessionAbandonedIfNeeded,
   buildSessionCompletionScoringPayload,
   useLatencyTracker,
+  generateSessionId,
+  pick,
+  useLatestRef,
 } from "@/shared/lib";
 
 type Color = "red" | "blue" | "green";
@@ -24,10 +27,6 @@ const ROUND_TIME_SEC = 8;
 const ROUND_GAP_MS = 360;
 const POTION_GAME_KEY: AssessmentGameKey = "potion";
 const POTION_DIFFICULTY: AssessmentDifficultyTier = "normal";
-
-function pick<T>(values: T[]): T {
-  return values[Math.floor(Math.random() * values.length)] as T;
-}
 
 function randomSamples(): Color[] {
   return Array.from({ length: 4 }, () => pick(COLORS));
@@ -58,13 +57,13 @@ function generateSteps(): PotionStep[] {
   return Array.from({ length: ROUND_COUNT }, makeStep);
 }
 
-function sampleLabel(color: Color) {
+export function sampleLabel(color: Color) {
   if (color === "red") return "빨강";
   if (color === "blue") return "파랑";
   return "초록";
 }
 
-function renderSample(values: Color[]) {
+export function renderSample(values: Color[]) {
   return values.map(sampleLabel).join(", ");
 }
 
@@ -80,33 +79,23 @@ export const usePotionGame = () => {
   const [phase, setPhase] = useState<Phase>("countdown");
   const [stepIndex, setStepIndex] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
-  const [questionStartAt, setQuestionStartAt] = useState<number>(Date.now());
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [isAnswerLocked, setIsAnswerLocked] = useState(false);
   const [showCountdown, setShowCountdown] = useState(true);
   const [answerMarkerRatio, setAnswerMarkerRatio] = useState<number | null>(null);
+  const latestStepIndexRef = useLatestRef<number | null>(stepIndex);
+  const latestPhaseRef = useLatestRef(phase);
   const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const sessionIdRef = useRef(
-    `potion-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`
-  );
+  const questionStartAtRef = useRef<number>(Date.now());
+  const sessionIdRef = useRef(generateSessionId("potion"));
   const hasStartedRef = useRef(false);
   const hasCompletedRef = useRef(false);
   const presentedRoundRef = useRef<number | null>(null);
-  const latestStepIndexRef = useRef<number | null>(null);
-  const latestPhaseRef = useRef<Phase>("countdown");
   const latencyTracker = useLatencyTracker();
 
   const steps = useMemo(() => generateSteps(), []);
   const totalSteps = steps.length;
   const currentStep = steps[stepIndex];
-
-  useEffect(() => {
-    latestStepIndexRef.current = stepIndex;
-  }, [stepIndex]);
-
-  useEffect(() => {
-    latestPhaseRef.current = phase;
-  }, [phase]);
 
   useEffect(() => {
     const sessionId = sessionIdRef.current;
@@ -135,7 +124,7 @@ export const usePotionGame = () => {
     setIsAnswerLocked(false);
     setAnswerMarkerRatio(null);
     setIsTimerRunning(true);
-    setQuestionStartAt(Date.now());
+    questionStartAtRef.current = Date.now();
   }, []);
 
   const finalizeStep = useCallback(
@@ -144,7 +133,7 @@ export const usePotionGame = () => {
         return;
       }
 
-      const elapsed = Date.now() - questionStartAt;
+      const elapsed = Date.now() - questionStartAtRef.current;
       const ratio = Math.min(1, Math.max(0, elapsed / (ROUND_TIME_SEC * 1000)));
       const isCorrect = selected === currentStep.correctColor;
       const nextCorrectCount = correctAnswers + (isCorrect ? 1 : 0);
@@ -221,7 +210,6 @@ export const usePotionGame = () => {
       isAnswerLocked,
       phase,
       prepareStep,
-      questionStartAt,
       stepIndex,
       totalSteps,
     ],
@@ -296,8 +284,6 @@ export const usePotionGame = () => {
     finishedAccuracy:
       totalSteps === 0 ? 0 : Math.round((correctAnswers / totalSteps) * 100),
     stepDurationSec: ROUND_TIME_SEC,
-    renderSample,
-    sampleLabel,
     handleSelect,
     handleTimeUp,
     handleCountdownComplete,

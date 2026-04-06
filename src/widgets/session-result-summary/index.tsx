@@ -46,9 +46,13 @@ const roundPercent = (value: number | null) => {
 const parseScoreSummary = (events: unknown[]): CompletionSummary => {
   const completionEvent = [...events]
     .reverse()
-    .find((event) => typeof event?.event === "string" && event.event.endsWith(".session_completed"));
+    .find((event) => {
+      const e = event as Record<string, unknown> | null | undefined;
+      return typeof e?.event === "string" && (e.event as string).endsWith(".session_completed");
+    }) as Record<string, unknown> | undefined;
 
-  if (completionEvent?.payload == null || typeof completionEvent.payload !== "object") {
+  const rawPayload = completionEvent?.payload;
+  if (rawPayload == null || typeof rawPayload !== "object") {
     return {
       readinessScore: null,
       accuracy: null,
@@ -60,7 +64,7 @@ const parseScoreSummary = (events: unknown[]): CompletionSummary => {
     };
   }
 
-  const payload = completionEvent.payload as Record<string, unknown>;
+  const payload = rawPayload as Record<string, unknown>;
   const scoring = (payload.scoring ?? {}) as Record<string, unknown>;
 
   return {
@@ -155,7 +159,7 @@ export function SessionResultSummaryWidget({
         {isLoading && <ActivityIndicator size="large" />}
 
         {!isLoading && loadError && (
-          <ThemedText type="body1" style={{ color: aliasTokens.text.error }}>
+          <ThemedText type="body1" style={{ color: aliasTokens.feedback.errorFg }}>
             {loadError}
           </ThemedText>
         )}

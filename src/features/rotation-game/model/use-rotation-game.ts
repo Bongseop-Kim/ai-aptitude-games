@@ -7,6 +7,8 @@ import {
   emitSessionAbandonedIfNeeded,
   buildSessionCompletionScoringPayload,
   useLatencyTracker,
+  generateSessionId,
+  useLatestRef,
 } from "@/shared/lib";
 
 type ShapeMatrix = number[][];
@@ -172,20 +174,18 @@ export const useRotationGame = () => {
     flipH: false,
     flipV: false,
   });
-  const [questionStartAt, setQuestionStartAt] = useState<number>(Date.now());
   const [isAnswerLocked, setIsAnswerLocked] = useState(false);
   const [showCountdown, setShowCountdown] = useState(true);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [answerMarkerRatio, setAnswerMarkerRatio] = useState<number | null>(null);
+  const latestQuestionIndexRef = useLatestRef<number | null>(questionIndex);
+  const latestPhaseRef = useLatestRef(phase);
   const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const sessionIdRef = useRef(
-    `rotation-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`
-  );
+  const questionStartAtRef = useRef<number>(Date.now());
+  const sessionIdRef = useRef(generateSessionId("rotation"));
   const hasStartedRef = useRef(false);
   const hasCompletedRef = useRef(false);
   const presentedQuestionRef = useRef<number | null>(null);
-  const latestQuestionIndexRef = useRef<number | null>(null);
-  const latestPhaseRef = useRef<Phase>("countdown");
   const latencyTracker = useLatencyTracker();
 
   const puzzles = useMemo(() => generatePuzzleSet(), []);
@@ -200,14 +200,6 @@ export const useRotationGame = () => {
         : EMPTY_MATRIX,
     [currentPuzzle, currentTransform]
   );
-
-  useEffect(() => {
-    latestQuestionIndexRef.current = questionIndex;
-  }, [questionIndex]);
-
-  useEffect(() => {
-    latestPhaseRef.current = phase;
-  }, [phase]);
 
   useEffect(() => {
     const sessionId = sessionIdRef.current;
@@ -240,7 +232,7 @@ export const useRotationGame = () => {
     });
     setIsAnswerLocked(false);
     setAnswerMarkerRatio(null);
-    setQuestionStartAt(Date.now());
+    questionStartAtRef.current = Date.now();
     setIsTimerRunning(true);
   }, []);
 
@@ -250,7 +242,7 @@ export const useRotationGame = () => {
         return;
       }
 
-      const elapsed = Math.max(0, Date.now() - questionStartAt);
+      const elapsed = Math.max(0, Date.now() - questionStartAtRef.current);
       const nextCorrectCount = correctAnswers + (isCorrect ? 1 : 0);
       const { nextAnsweredCount, nextAvgLatencyMs } = latencyTracker.recordAnswer(elapsed);
       setCorrectAnswers(nextCorrectCount);
@@ -317,15 +309,7 @@ export const useRotationGame = () => {
 
       transitionTimerRef.current = setTimeout(() => {
         setQuestionIndex((prev) => prev + 1);
-        setCurrentTransform({
-          rotation: 0,
-          flipH: false,
-          flipV: false,
-        });
-        setIsAnswerLocked(false);
-        setAnswerMarkerRatio(null);
-        setQuestionStartAt(Date.now());
-        setIsTimerRunning(true);
+        prepareNextQuestion();
       }, INTER_QUESTION_DELAY_MS);
     },
     [
@@ -333,10 +317,10 @@ export const useRotationGame = () => {
       phase,
       isAnswerLocked,
       questionIndex,
-      questionStartAt,
       transformedPuzzle,
       correctAnswers,
       totalQuestions,
+      prepareNextQuestion,
     ]
   );
 
@@ -437,12 +421,6 @@ export const useRotationGame = () => {
       isCorrect: null,
     });
   }, [currentPuzzle, phase, questionIndex]);
-
-  useEffect(() => {
-    if (phase !== "playing") {
-      setIsTimerRunning(false);
-    }
-  }, [phase]);
 
   return {
     currentIndex,

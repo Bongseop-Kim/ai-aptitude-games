@@ -22,6 +22,8 @@ import {
   emitSessionAbandonedIfNeeded,
   buildSessionCompletionScoringPayload,
   useLatencyTracker,
+  generateSessionId,
+  useLatestRef,
 } from "@/shared/lib";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -33,20 +35,20 @@ export const useNBackGame = ({
 }: UseNBackGameOptions = {}) => {
   const interStimulusSec = NBACK_GAME.rules.interStimulusSec;
 
-  const sessionIdRef = useRef(`nback-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`);
+  const sessionIdRef = useRef(generateSessionId("nback"));
   const hasStartedRef = useRef(false);
   const hasCompletedRef = useRef(false);
   const presentedTrialRef = useRef<string | null>(null);
-  const latestStageIndexRef = useRef(0);
-  const latestQuestionIndexRef = useRef<number | null>(null);
-  const latestPhaseRef = useRef<NbackPhase>("countdown");
 
   const [stageIndex, setStageIndex] = useState<number>(0);
+  const latestStageIndexRef = useLatestRef(stageIndex);
   const [gamePhase, setGamePhase] = useState<NbackPhase>("countdown");
+  const latestPhaseRef = useLatestRef<NbackPhase>(gamePhase);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [showCountdown, setShowCountdown] = useState(true);
   const [selectedValue, setSelectedValue] = useState<number | undefined>();
   const [questionIndex, setQuestionIndex] = useState(0);
+  const latestQuestionIndexRef = useLatestRef<number | null>(questionIndex);
   const [preCountIndex, setPreCountIndex] = useState(0);
   const [isAnswerLocked, setIsAnswerLocked] = useState(false);
   const [answerMarkerRatio, setAnswerMarkerRatio] = useState<number | null>(
@@ -230,8 +232,6 @@ export const useNBackGame = ({
           );
           savedStagesRef.current.add(currentStageIdx);
           stageSummariesRef.current.push(summary);
-          console.log("NBack stage summary", summary);
-          console.log("NBack stage trials", stageTrialsRef.current);
         }
 
         const isLastStage = currentStageIdx >= NBACK_GAME.stages.length - 1;
@@ -247,7 +247,6 @@ export const useNBackGame = ({
           return;
         }
 
-        console.log("게임 종료!");
         const sessionTrials = sessionTrialsRef.current;
         const correctCount = sessionTrials.filter(
           (trial) => trial.isCorrect
@@ -299,11 +298,9 @@ export const useNBackGame = ({
             }
           })();
         }
-        console.log("NBack session trials", sessionTrialsRef.current);
-        console.log("NBack session summaries", stageSummariesRef.current);
       }
     },
-    [allowedOffsets, latencyTracker, preCount, router, sessionType, totalQuestions]
+    [allowedOffsets, latencyTracker, preCount, sessionType, totalQuestions]
   );
 
   useEffect(() => {
@@ -338,18 +335,6 @@ export const useNBackGame = ({
     questionIndex,
     stageIndex,
   ]);
-
-  useEffect(() => {
-    latestStageIndexRef.current = stageIndex;
-  }, [stageIndex]);
-
-  useEffect(() => {
-    latestQuestionIndexRef.current = questionIndex;
-  }, [questionIndex]);
-
-  useEffect(() => {
-    latestPhaseRef.current = gamePhase;
-  }, [gamePhase]);
 
   useEffect(() => {
     const sessionId = sessionIdRef.current;

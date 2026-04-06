@@ -7,6 +7,10 @@ import {
   emitSessionAbandonedIfNeeded,
   buildSessionCompletionScoringPayload,
   useLatencyTracker,
+  generateSessionId,
+  useLatestRef,
+  pick,
+  shuffle,
 } from "@/shared/lib";
 
 type SymbolToken = "A" | "B" | "C" | "D" | "E" | "F";
@@ -27,16 +31,10 @@ const ROUND_GAP_MS = 320;
 const PROMISE_GAME_KEY: AssessmentGameKey = "promise";
 const PROMISE_DIFFICULTY: AssessmentDifficultyTier = "normal";
 
-function shuffle<T>(values: T[]): T[] {
-  return [...values].sort(() => Math.random() - 0.5);
-}
-
-function pick<T>(values: T[]): T {
-  return values[Math.floor(Math.random() * values.length)] as T;
-}
+const VALID_OPTIONS = new Set<string>([...ALL_TOKENS, "none"]);
 
 function createRoundCards(target: SymbolToken | null): SymbolToken[][] {
-  const rounds = [[], [], []];
+  const rounds: SymbolToken[][] = [[], [], []];
 
   if (target !== null) {
     for (let i = 0; i < 3; i += 1) {
@@ -55,11 +53,7 @@ function createRoundCards(target: SymbolToken | null): SymbolToken[][] {
     return [first, second, third] as SymbolToken[][];
   })();
 
-  return [
-    avoidCommon[0],
-    avoidCommon[1],
-    avoidCommon[2],
-  ];
+  return avoidCommon;
 }
 
 function makeOptions(target: SymbolToken | null): ShowOption[] {
@@ -96,21 +90,19 @@ function inferCorrectness(target: SymbolToken | null, answer: ShowOption) {
 export const usePromiseGame = () => {
   const [phase, setPhase] = useState<Phase>("countdown");
   const [questionIndex, setQuestionIndex] = useState(0);
+  const latestQuestionIndexRef = useLatestRef<number | null>(questionIndex);
+  const latestPhaseRef = useLatestRef(phase);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [showCountdown, setShowCountdown] = useState(true);
   const [isAnswerLocked, setIsAnswerLocked] = useState(false);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const [questionStartAt, setQuestionStartAt] = useState<number>(Date.now());
   const [answerMarkerRatio, setAnswerMarkerRatio] = useState<number | null>(null);
   const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const sessionIdRef = useRef(
-    `promise-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`
-  );
+  const questionStartAtRef = useRef<number>(Date.now());
+  const sessionIdRef = useRef(generateSessionId("promise"));
   const hasStartedRef = useRef(false);
   const hasCompletedRef = useRef(false);
   const presentedQuestionRef = useRef<number | null>(null);
-  const latestQuestionIndexRef = useRef<number | null>(null);
-  const latestPhaseRef = useRef<Phase>("countdown");
   const latencyTracker = useLatencyTracker();
 
   const rounds = useMemo(() => generateRounds(), []);
@@ -121,7 +113,7 @@ export const usePromiseGame = () => {
     setIsTimerRunning(true);
     setIsAnswerLocked(false);
     setAnswerMarkerRatio(null);
-    setQuestionStartAt(Date.now());
+    questionStartAtRef.current = Date.now();
   }, []);
 
   const finalizeRound = useCallback(
@@ -130,7 +122,7 @@ export const usePromiseGame = () => {
         return;
       }
 
-      const elapsed = Date.now() - questionStartAt;
+      const elapsed = Date.now() - questionStartAtRef.current;
       const ratio = Math.min(1, Math.max(0, elapsed / (ROUND_TIME_SEC * 1000)));
       const selected = answer ?? "none";
       const isCorrect = inferCorrectness(currentRound.target, selected);
@@ -208,7 +200,6 @@ export const usePromiseGame = () => {
       isAnswerLocked,
       phase,
       questionIndex,
-      questionStartAt,
       startRound,
       totalRounds,
     ],
@@ -216,10 +207,10 @@ export const usePromiseGame = () => {
 
   const handleAnswer = useCallback(
     (value: string | undefined) => {
-      if (value !== "A" && value !== "B" && value !== "C" && value !== "D" && value !== "E" && value !== "F" && value !== "none") {
+      if (!VALID_OPTIONS.has(value ?? "")) {
         return;
       }
-      finalizeRound(value);
+      finalizeRound(value as ShowOption);
     },
     [finalizeRound],
   );
@@ -247,14 +238,6 @@ export const usePromiseGame = () => {
   const handleTimeUp = useCallback(() => {
     finalizeRound("none");
   }, [finalizeRound]);
-
-  useEffect(() => {
-    latestQuestionIndexRef.current = questionIndex;
-  }, [questionIndex]);
-
-  useEffect(() => {
-    latestPhaseRef.current = phase;
-  }, [phase]);
 
   useEffect(() => {
     const sessionId = sessionIdRef.current;
