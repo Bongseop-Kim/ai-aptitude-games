@@ -46,10 +46,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const refreshIfNeeded = useCallback(async () => {
     const tokens = await loadAuthTokens();
-    const hasToken = Boolean(tokens?.accessToken);
+
+    if (tokens === null) {
+      // No tokens (e.g., legacy-migrated session): leave existing auth state intact.
+      return true;
+    }
 
     if (!shouldRefreshToken(tokens)) {
-      setHasValidAccessToken(hasToken);
+      setHasValidAccessToken(Boolean(tokens.accessToken));
       setRefreshFailed(false);
       return true;
     }
@@ -107,6 +111,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             didRefreshFail = true;
           }
         }
+      } catch (error) {
+        console.error("bootstrap: unexpected auth init error", error);
+        await Promise.allSettled([clearAuthTokens(), clearAuthSession()]);
+        storedSession = null;
+        hasValidToken = false;
+        didRefreshFail = true;
       } finally {
         if (mounted) {
           setSession(storedSession);

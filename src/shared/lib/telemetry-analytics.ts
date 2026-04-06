@@ -376,6 +376,9 @@ export const getAssessmentTelemetryKpiSnapshot = async ({
   asOf = new Date(),
   windowDays = DEFAULT_WINDOW_DAYS,
 }: SnapshotOptions = {}): Promise<AssessmentTelemetryKpiSnapshot> => {
+  if (!Number.isInteger(windowDays) || windowDays <= 0) {
+    throw new Error(`getAssessmentTelemetryKpiSnapshot: windowDays must be a positive integer, got ${windowDays}`);
+  }
   const nowMs = asOf.getTime();
   const dayMs = windowDays * DAY_MS;
   const currentRange: KpiWindow = {

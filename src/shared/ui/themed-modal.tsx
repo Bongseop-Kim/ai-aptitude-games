@@ -15,6 +15,7 @@ type ModalAction = {
   label: string;
   onPress: () => void;
   variant?: BlockButtonVariant;
+  disabled?: boolean;
 };
 
 export type ThemedModalProps = {
@@ -92,6 +93,7 @@ export function ThemedModal({
                 <BlockButton
                   variant={primaryAction.variant ?? "primary"}
                   onPress={primaryAction.onPress}
+                  disabled={primaryAction.disabled}
                 >
                   {primaryAction.label}
                 </BlockButton>

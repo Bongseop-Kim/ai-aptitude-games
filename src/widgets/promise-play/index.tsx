@@ -12,7 +12,7 @@ import { BorderRadius, Padding, Spacing, getAliasTokens } from "@/shared/config/
 import { useColorScheme } from "@/shared/lib/use-color-scheme";
 import { useGameNavigation } from "@/shared/lib/use-game-navigation";
 import { StyleSheet } from "react-native";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 const SYMBOL_LABELS: Record<string, string> = {
   none: "없음",
@@ -54,6 +54,12 @@ export function PromisePlayWidget() {
       value,
     }));
   }, [currentRound]);
+
+  const [selectedAnswer, setSelectedAnswer] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    setSelectedAnswer(undefined);
+  }, [currentIndex]);
 
   if (!currentRound) {
     return null;
@@ -104,8 +110,13 @@ export function PromisePlayWidget() {
         <Spacer size="spacing8" />
         <SegmentedPicker
           options={optionItems}
-          value={undefined}
-          onChange={handleAnswer}
+          value={selectedAnswer}
+          onChange={(value) => {
+            if (!isAnswerLocked) {
+              setSelectedAnswer(value);
+            }
+            handleAnswer(value);
+          }}
           columns={3}
           disabled={isAnswerLocked}
           style={styles.picker}

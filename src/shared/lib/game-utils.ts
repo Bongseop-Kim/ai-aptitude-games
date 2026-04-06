@@ -3,6 +3,9 @@ export function generateSessionId(gameKey: string): string {
 }
 
 export function pick<T>(values: T[]): T {
+  if (values.length === 0) {
+    throw new Error("pick(): empty array");
+  }
   return values[Math.floor(Math.random() * values.length)] as T;
 }
 

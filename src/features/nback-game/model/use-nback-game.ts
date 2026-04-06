@@ -274,6 +274,7 @@ export const useNBackGame = ({
           payload: {
             completedTrials: sessionTrials.length,
             totalQuestions: sessionTrials.length,
+            correctCount,
             ...scoring,
           },
         });

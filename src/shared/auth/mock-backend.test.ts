@@ -2,6 +2,23 @@ import { afterEach, describe, expect, it } from "vitest";
 import { spawn, type ChildProcess } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
 import { resolve } from "node:path";
+import { createServer } from "node:net";
+
+const allocatePort = (): Promise<number> =>
+  new Promise((resolve, reject) => {
+    const server = createServer();
+    server.listen(0, () => {
+      const addr = server.address();
+      server.close(() => {
+        if (addr && typeof addr === "object") {
+          resolve(addr.port);
+        } else {
+          reject(new Error("allocatePort: could not determine port"));
+        }
+      });
+    });
+    server.on("error", reject);
+  });
 
 const backendScriptPath = resolve(process.cwd(), "scripts/mock-backend.mjs");
 
@@ -33,9 +50,10 @@ describe("mock-backend auth routes", () => {
         }
 
         child.kill("SIGTERM");
-        await new Promise<void>((resolveKill) => {
+        await new Promise<void>((resolveKill, rejectKill) => {
           const timeout = setTimeout(() => {
-            resolveKill();
+            child.kill("SIGKILL");
+            rejectKill(new Error("child process did not exit within 1s; force-killed"));
           }, 1_000);
 
           child.once("exit", () => {
@@ -49,7 +67,7 @@ describe("mock-backend auth routes", () => {
   });
 
   it("supports POST /api/v1/auth/sign-in", async () => {
-    const port = 4100 + Math.floor(Math.random() * 300);
+    const port = await allocatePort();
     const stderrChunks: string[] = [];
     const child = spawn(process.execPath, [backendScriptPath], {
       env: {

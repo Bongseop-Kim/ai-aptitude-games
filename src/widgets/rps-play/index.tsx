@@ -22,6 +22,7 @@ const RPS_OPTIONS = [
 export function RpsPlayWidget() {
   const { goHome, goPreGame, goHistory } = useGameNavigation("rps");
   const {
+    phase,
     currentIndex,
     currentRound,
     currentRule,
@@ -37,7 +38,7 @@ export function RpsPlayWidget() {
     questionDurationSec,
     showCountdown,
   } = useRpsGame();
-  const isFinished = finishedAccuracy !== null && currentIndex + 1 >= totalRounds;
+  const isFinished = phase === "finished";
 
   if (!currentRound) {
     return null;

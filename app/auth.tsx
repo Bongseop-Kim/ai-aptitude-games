@@ -159,6 +159,7 @@ const resolveReturnTo = (returnTo: string | string[] | undefined): Href => {
   if (
     decoded === "/" ||
     decoded === "/setting" ||
+    decoded.startsWith("/setting/") ||
     decoded.startsWith("/games/") ||
     decoded.startsWith("/pre-game/")
   ) {

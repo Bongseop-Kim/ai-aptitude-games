@@ -36,13 +36,15 @@ export function MailFeedbackScreen({
       return;
     }
 
+    setIsSending(true);
+
     const available = await MailComposer.isAvailableAsync();
     if (!available) {
       Alert.alert("알림", "이 기기에서는 메일 앱을 사용할 수 없습니다.");
+      setIsSending(false);
       return;
     }
 
-    setIsSending(true);
     try {
       const result = await MailComposer.composeAsync({
         recipients: [recipient],

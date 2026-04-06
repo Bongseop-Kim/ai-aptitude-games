@@ -60,10 +60,7 @@ export function NbackPlayWidget() {
       ? `정답률 ${Math.round(finishedAccuracy * 100)}%`
       : "정답률 집계중";
   const handleOpenSummary = () => {
-    if (finishedSessionId === null) {
-      goPreGame();
-      return;
-    }
+    if (finishedSessionId === null) return;
     router.replace(`/games/nback/summary/${finishedSessionId}`);
   };
 
@@ -160,6 +157,7 @@ export function NbackPlayWidget() {
         primaryAction={{
           label: "결과 요약 보기",
           onPress: handleOpenSummary,
+          disabled: finishedSessionId === null,
         }}
         secondaryAction={{
           label: "다시 시작",

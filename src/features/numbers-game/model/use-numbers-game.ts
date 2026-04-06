@@ -198,7 +198,7 @@ export const useNumbersGame = () => {
       if (Number.isNaN(typed)) return;
 
       if (currentStep.rule === "skip") {
-        finalizeStep(false, "skip");
+        finalizeStep(false, typed);
         return;
       }
 
