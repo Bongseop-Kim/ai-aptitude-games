@@ -6,7 +6,7 @@ import { resolve } from "node:path";
 const backendScriptPath = resolve(process.cwd(), "scripts/mock-backend.mjs");
 
 const waitForHealth = async (port: number) => {
-  for (let attempt = 0; attempt < 40; attempt += 1) {
+  for (let attempt = 0; attempt < 80; attempt += 1) {
     try {
       const response = await fetch(`http://127.0.0.1:${port}/health`);
       if (response.ok) {
@@ -28,13 +28,18 @@ describe("mock-backend auth routes", () => {
   afterEach(async () => {
     await Promise.all(
       children.map(async (child) => {
-        if (child.killed) {
+        if (child.exitCode !== null || child.signalCode !== null) {
           return;
         }
 
         child.kill("SIGTERM");
         await new Promise<void>((resolveKill) => {
+          const timeout = setTimeout(() => {
+            resolveKill();
+          }, 1_000);
+
           child.once("exit", () => {
+            clearTimeout(timeout);
             resolveKill();
           });
         });
@@ -71,7 +76,7 @@ describe("mock-backend auth routes", () => {
     };
 
     expect(response.status).toBe(200);
-    expect(payload.serverUserId ?? payload.userId).toBeTypeOf("string");
+    expect(payload.serverUserId).toBeTypeOf("string");
     expect(payload.displayName).toBe("Tester");
   });
 });

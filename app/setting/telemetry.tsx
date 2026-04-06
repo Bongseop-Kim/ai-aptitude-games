@@ -159,7 +159,7 @@ export default function TelemetrySettingScreen() {
     );
 }
 
-const formatMetric = (value: MetricRows[string] | null | undefined) => {
+const formatMetric = (value: number | null | undefined) => {
     if (value == null) return "N/A";
     if (typeof value === "number") return `${value.toFixed(2)}%`;
     return "N/A";

@@ -33,14 +33,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const refreshIfNeeded = useCallback(async () => {
     const tokens = await loadAuthTokens();
-    if (!shouldRefreshToken(tokens)) {
-      setHasValidAccessToken(session != null);
-      setRefreshFailed(false);
-      return true;
-    }
+    const hasToken = Boolean(tokens?.accessToken);
 
-    if (tokens == null) {
-      setHasValidAccessToken(session != null);
+    if (!shouldRefreshToken(tokens)) {
+      setHasValidAccessToken(hasToken);
       setRefreshFailed(false);
       return true;
     }
@@ -50,20 +46,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         baseUrl: getApiBaseUrlFromEnv(),
         authorizedRequest: (url, init) => fetch(url, init),
       });
-      const refreshed = await authApi.refresh(tokens.refreshToken);
+      const refreshed = await authApi.refresh(tokens!.refreshToken);
       await saveAuthTokens(refreshed);
       setHasValidAccessToken(true);
       setRefreshFailed(false);
       return true;
     } catch {
-      await clearAuthTokens();
-      await clearAuthSession();
+      await Promise.allSettled([clearAuthTokens(), clearAuthSession()]);
       setSession(null);
       setHasValidAccessToken(false);
       setRefreshFailed(true);
       return false;
     }
-  }, [session]);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -93,8 +88,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             await saveAuthTokens(refreshed);
             hasValidToken = true;
           } catch {
-            await clearAuthTokens();
-            await clearAuthSession();
+            await Promise.allSettled([clearAuthTokens(), clearAuthSession()]);
             storedSession = null;
             hasValidToken = false;
             didRefreshFail = true;
@@ -105,8 +99,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setSession(storedSession);
           setHasValidAccessToken(hasValidToken);
           setRefreshFailed(didRefreshFail);
-        }
-        if (mounted) {
           setIsLoading(false);
         }
       }

@@ -30,7 +30,7 @@ const makeQueryChain = (result: unknown[]) => {
   return chain;
 };
 
-vi.mock("../db/client", () => ({
+vi.mock("@/shared/db/client", () => ({
   db: mockDb,
 }));
 
@@ -39,6 +39,7 @@ const telemetryRow = ({
   userId,
   createdAt,
   event,
+  gameKey = "rps",
   trialIndex,
   latencyMs,
   isCorrect,
@@ -47,6 +48,7 @@ const telemetryRow = ({
   userId: string;
   createdAt: number;
   event: string;
+  gameKey?: string;
   trialIndex?: number | null;
   latencyMs: number | null;
   isCorrect: boolean | null;
@@ -55,6 +57,7 @@ const telemetryRow = ({
   userId,
   createdAt,
   event,
+  gameKey,
   difficultyTier: "normal",
   blockIndex: 0,
   trialIndex,
@@ -64,7 +67,7 @@ const telemetryRow = ({
   appVersion: "1.2.3",
 });
 
-import { getAssessmentTelemetryKpiSnapshot } from "./telemetry-analytics";
+import { getAssessmentTelemetryKpiSnapshot } from "@/shared/lib/telemetry-analytics";
 
 describe("telemetry-analytics", () => {
   beforeEach(() => {
@@ -261,5 +264,67 @@ describe("telemetry-analytics", () => {
     });
 
     expect(snapshot.current.overall.retryRatePct).toBe(33.33);
+  });
+
+  it("segments game_mode by telemetry gameKey values", async () => {
+    const asOf = new Date("2026-01-10T00:00:00.000Z");
+    const currentSessionAt = asOf.getTime() - 12 * 60 * 60 * 1000;
+
+    mockDb.select
+      .mockImplementationOnce(() =>
+        makeQueryChain([
+          telemetryRow({
+            sessionId: "s-game-a",
+            userId: "u-1",
+            createdAt: currentSessionAt + 100,
+            event: "assessment.rps.session_started",
+            gameKey: "gameA",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+          telemetryRow({
+            sessionId: "s-game-a",
+            userId: "u-1",
+            createdAt: currentSessionAt + 200,
+            event: "assessment.rps.session_completed",
+            gameKey: "gameA",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+          telemetryRow({
+            sessionId: "s-game-b",
+            userId: "u-2",
+            createdAt: currentSessionAt + 300,
+            event: "assessment.stroop.session_started",
+            gameKey: "gameB",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+          telemetryRow({
+            sessionId: "s-game-b",
+            userId: "u-2",
+            createdAt: currentSessionAt + 400,
+            event: "assessment.stroop.session_completed",
+            gameKey: "gameB",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+        ])
+      )
+      .mockImplementationOnce(() => makeQueryChain([]));
+
+    const snapshot = await getAssessmentTelemetryKpiSnapshot({
+      asOf,
+      windowDays: 1,
+    });
+
+    expect(Object.keys(snapshot.current.segments.game_mode).sort()).toEqual([
+      "gameA",
+      "gameB",
+    ]);
   });
 });

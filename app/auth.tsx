@@ -42,14 +42,13 @@ export default function AuthScreen() {
       setIsSubmitting(true);
       setSubmitError(null);
       await auth.signIn(normalized);
-      router.replace(targetPath);
     } catch (error) {
       const message = resolveAuthErrorMessage(error);
       setSubmitError(message);
     } finally {
       setIsSubmitting(false);
     }
-  }, [auth, displayName, router, targetPath]);
+  }, [auth, displayName]);
 
   useEffect(() => {
     if (!auth.isLoading && auth.isAuthenticated) {

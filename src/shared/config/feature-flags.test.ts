@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
-import { isPracticeModalEnabled } from "./feature-flags";
+import { getPracticeModalSettings, isPracticeModalEnabled } from "./feature-flags";
 
 describe("feature-flags", () => {
   const prevFlagEnv = process.env.EXPO_PUBLIC_FLAG_PRACTICE_MODAL;
@@ -55,5 +55,50 @@ describe("feature-flags", () => {
     expect(isPracticeModalEnabled(undefined, new Date("2026-04-07T04:00:00Z"))).toBe(
       false
     );
+  });
+
+  it("uses the injected config value when checking practice modal enablement", () => {
+    const configValue = JSON.stringify({
+      flags: {
+        "app.delivery.t0_enabled": true,
+        "ui.modals.whats_new_enabled": true,
+        "comms.waitlist_batch_enabled": true,
+        "app.delivery.rollback_enabled": false,
+      },
+      practice_modal: {
+        variant: "v2",
+        windows: {
+          t0: {
+            start: "2026-04-07T01:00:00Z",
+            end: "2026-04-07T03:00:00Z",
+          },
+        },
+      },
+    });
+
+    expect(
+      isPracticeModalEnabled(undefined, new Date("2026-04-07T01:30:00Z"), configValue)
+    ).toBe(true);
+  });
+
+  it("rejects malformed practice modal config objects", () => {
+    const malformedConfig = JSON.stringify({
+      flags: "enabled",
+      practice_modal: {
+        variant: "unexpected",
+        windows: {
+          t0: {
+            start: 123,
+          },
+        },
+      },
+    });
+
+    expect(getPracticeModalSettings(new Date("2026-04-07T01:30:00Z"), malformedConfig)).toEqual({
+      enabled: false,
+      variant: "v1",
+      windows: {},
+      flags: {},
+    });
   });
 });

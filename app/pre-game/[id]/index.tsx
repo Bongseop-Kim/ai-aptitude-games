@@ -24,7 +24,7 @@ import { GAMES_MAP } from "@/entities/game";
 import { IconSymbol } from "@/shared/ui/icon-symbol";
 import { Link, Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Alert, Pressable, StyleSheet, View } from "react-native";
 import { GameHeaderActions } from "@/shared/ui/game-header-actions";
 
 export default function PreGameScreen() {
@@ -117,6 +117,7 @@ export default function PreGameScreen() {
         break;
       default:
         console.warn(`[handleStart] 미구현 게임: ${id}`);
+        Alert.alert("준비 중", "선택한 게임은 아직 구현되지 않았습니다.");
         break;
     }
   };
@@ -321,14 +322,6 @@ export default function PreGameScreen() {
             <View style={styles.detailsContent}>
               <ItemContainer header="난이도">
                 <DifficultyStars level={game.difficulty} size={18} />
-              </ItemContainer>
-              <ItemContainer header="측정 역량">
-                <ThemedText type="captionM">
-                  {game.measuredSkills.join(", ")}
-                </ThemedText>
-              </ItemContainer>
-              <ItemContainer header="진행 방법">
-                <ThemedText type="captionM">{game.description}</ThemedText>
               </ItemContainer>
             </View>
           )}

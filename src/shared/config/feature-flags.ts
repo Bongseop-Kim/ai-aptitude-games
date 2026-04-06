@@ -104,6 +104,7 @@ function isWithinPracticeModalWindow(
     return false;
   }
 
+  // t0 can span a launch window, while t3/t7 are evaluated as reminder points.
   if (windows.t0 && isWithinRangeWindow(now, windows.t0)) {
     return true;
   }
@@ -117,14 +118,71 @@ function isWithinPracticeModalWindow(
   return false;
 }
 
+function isPracticeModalWindowSpec(value: unknown): value is PracticeModalWindowSpec {
+  if (value == null || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as PracticeModalWindowSpec;
+  return (
+    (candidate.start === undefined || typeof candidate.start === "string") &&
+    (candidate.end === undefined || typeof candidate.end === "string") &&
+    (candidate.at === undefined || typeof candidate.at === "string")
+  );
+}
+
+function isPracticeModalWindows(value: unknown): value is PracticeModalWindows {
+  if (value == null || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as PracticeModalWindows;
+  return (
+    (candidate.timezone === undefined || typeof candidate.timezone === "string") &&
+    (candidate.t0 === undefined || isPracticeModalWindowSpec(candidate.t0)) &&
+    (candidate.t3 === undefined || isPracticeModalWindowSpec(candidate.t3)) &&
+    (candidate.t7 === undefined || isPracticeModalWindowSpec(candidate.t7))
+  );
+}
+
+function isPracticeModalFlagConfig(value: unknown): value is PracticeModalFlagConfig {
+  if (value == null || typeof value !== "object") {
+    return false;
+  }
+
+  return Object.values(value).every((flag) => typeof flag === "boolean");
+}
+
+function isPracticeModalConfig(value: unknown): value is PracticeModalConfig {
+  if (value == null || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as PracticeModalConfig;
+  const practiceModal = candidate.practice_modal;
+
+  return (
+    (candidate.flags === undefined || isPracticeModalFlagConfig(candidate.flags)) &&
+    (practiceModal === undefined ||
+      (practiceModal != null &&
+        typeof practiceModal === "object" &&
+        (practiceModal.variant === undefined ||
+          practiceModal.variant === "v1" ||
+          practiceModal.variant === "v2" ||
+          practiceModal.variant === "v3") &&
+        (practiceModal.windows === undefined ||
+          isPracticeModalWindows(practiceModal.windows))))
+  );
+}
+
 function parseConfig(value: FlagValues): PracticeModalConfig | null {
   if (!value) {
     return null;
   }
 
   try {
-    const parsed = JSON.parse(value) as PracticeModalConfig;
-    return parsed;
+    const parsed = JSON.parse(value);
+    return isPracticeModalConfig(parsed) ? parsed : null;
   } catch {
     return null;
   }
@@ -139,7 +197,6 @@ function normalizePracticeModalSettings(
     return {
       ...DEFAULT_PRACTICE_MODAL_SETTINGS,
       enabled: false,
-      flags: {},
     };
   }
 
@@ -194,13 +251,13 @@ export function getPracticeModalSettings(
 export function isPracticeModalEnabled(
   flagValue: FlagValues = getPracticeModalFlagEnv(),
   now: Date = new Date(),
+  configValue: FlagValues = getPracticeModalConfigEnv()
 ): boolean {
-  const settings = getPracticeModalSettings(now);
+  const settings = getPracticeModalSettings(now, configValue);
   if (settings.enabled) {
     return true;
   }
 
-  const configValue = getPracticeModalConfigEnv();
   const hasConfig =
     configValue != null && parseConfig(configValue) !== null;
   if (hasConfig) {

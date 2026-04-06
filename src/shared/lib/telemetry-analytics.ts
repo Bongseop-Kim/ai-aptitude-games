@@ -1,6 +1,6 @@
 import { and, gte, lt, min } from "drizzle-orm";
-import { db } from "../db/client";
-import { assessmentTelemetryEvents } from "../db/schema/assessment-telemetry";
+import { db } from "@/shared/db/client";
+import { assessmentTelemetryEvents } from "@/shared/db/schema/assessment-telemetry";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_WINDOW_DAYS = 7;
@@ -11,6 +11,7 @@ type RawTelemetryRow = {
   userId: string;
   createdAt: number;
   event: string;
+  gameKey: string;
   difficultyTier: string;
   blockIndex: number | null;
   trialIndex: number | null;
@@ -186,7 +187,7 @@ const buildSession = (row: RawTelemetryRow): AggregatedSession => ({
   sessionId: row.sessionId,
   userId: row.userId,
   firstEventAt: row.createdAt,
-  gameMode: normalizeSegmentValue(row.difficultyTier),
+  gameMode: normalizeSegmentValue(row.gameKey),
   device: normalizeSegmentValue(row.device),
   appVersion: normalizeSegmentValue(row.appVersion),
   startedAt: null,
