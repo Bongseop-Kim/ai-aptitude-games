@@ -21,6 +21,10 @@ export const resolveReturnTo = (returnTo: string | string[] | undefined): Href =
 
   if (
     decoded === "/" ||
+    decoded === "/tabs" ||
+    decoded.startsWith("/tabs/") ||
+    decoded === "/home" ||
+    decoded.startsWith("/home/") ||
     decoded === "/setting" ||
     decoded.startsWith("/setting/") ||
     decoded.startsWith("/games/") ||

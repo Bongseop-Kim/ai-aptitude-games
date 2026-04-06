@@ -186,6 +186,7 @@ export const useNumbersGame = () => {
       currentStep,
       correctAnswers,
       isAnswerLocked,
+      latencyTracker,
       phase,
       nextStep,
       stepIndex,

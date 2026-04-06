@@ -26,9 +26,12 @@ import {
   useLatestRef,
 } from "@/shared/lib";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getAbandonedTrialIndex } from "./nback-session-helpers";
 
 const NBACK_GAME_KEY: AssessmentGameKey = "nback";
 const NBACK_DIFFICULTY: AssessmentDifficultyTier = "normal";
+type NbackSaveStatus = "idle" | "saving" | "error" | "saved";
+
 const countAnsweredTrials = (trials: NbackTrial[]) =>
   trials.filter((trial) => trial.userAnswer !== undefined).length;
 
@@ -60,6 +63,8 @@ export const useNBackGame = ({
   const [finishedSessionId, setFinishedSessionId] = useState<number | null>(
     null
   );
+  const [saveStatus, setSaveStatus] = useState<NbackSaveStatus>("idle");
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const restTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const shownAtRef = useRef<number | null>(null);
@@ -108,6 +113,31 @@ export const useNBackGame = ({
 
   const currentShape =
     SHAPE_POOL[shapeSequence[currentSequenceIndex] ?? 0] ?? SHAPE_POOL[0];
+
+  const persistFinishedSession = useCallback(async () => {
+    if (savedSessionRef.current) {
+      return;
+    }
+
+    savedSessionRef.current = true;
+    setSaveStatus("saving");
+    setSaveError(null);
+
+    try {
+      const sessionId = await saveNbackGameData({
+        summaryList: stageSummariesRef.current,
+        trialsList: sessionTrialsRef.current,
+        type: sessionType,
+      });
+      setFinishedSessionId(sessionId);
+      setSaveStatus("saved");
+    } catch (error) {
+      savedSessionRef.current = false;
+      setSaveStatus("error");
+      setSaveError("결과 저장에 실패했어요. 다시 시도해 주세요.");
+      console.error("Failed to save NBack game data", error);
+    }
+  }, [sessionType]);
 
   const handleCountdownComplete = useCallback(() => {
     setShowCountdown(false);
@@ -286,25 +316,10 @@ export const useNBackGame = ({
         setFinishedAccuracy(completedAccuracy);
         setGamePhase("finished");
         setIsTimerRunning(false);
-        if (!savedSessionRef.current) {
-          savedSessionRef.current = true;
-          void (async () => {
-            try {
-              const sessionId = await saveNbackGameData({
-                summaryList: stageSummariesRef.current,
-                trialsList: sessionTrialsRef.current,
-                type: sessionType,
-              });
-              setFinishedSessionId(sessionId);
-            } catch (error) {
-              savedSessionRef.current = false;
-              console.error("Failed to save NBack game data", error);
-            }
-          })();
-        }
+        void persistFinishedSession();
       }
     },
-    [allowedOffsets, latencyTracker, preCount, sessionType, totalQuestions]
+    [allowedOffsets, latencyTracker, persistFinishedSession, preCount, totalQuestions]
   );
 
   useEffect(() => {
@@ -340,24 +355,33 @@ export const useNBackGame = ({
     stageIndex,
   ]);
 
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     const sessionId = sessionIdRef.current;
     return () => {
+      const latestStageIndex = latestStageIndexRef.current;
+      const latestQuestionIndex = latestQuestionIndexRef.current;
+      const latestPhase = latestPhaseRef.current;
+
       emitSessionAbandonedIfNeeded({
         gameKey: NBACK_GAME_KEY,
         sessionId,
         difficultyTier: NBACK_DIFFICULTY,
-        blockIndex: latestStageIndexRef.current,
-        trialIndex: latestQuestionIndexRef.current,
+        blockIndex: latestStageIndex,
+        trialIndex: getAbandonedTrialIndex({
+          hasStarted: hasStartedRef.current,
+          latestQuestionIndex,
+        }),
         hasStarted: hasStartedRef.current,
         hasCompleted: hasCompletedRef.current,
         payload: {
           reason: "hook_unmount",
-          phase: latestPhaseRef.current,
+          phase: latestPhase,
         },
       });
     };
   }, []);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   useEffect(() => {
     stageTrialsRef.current = [];
@@ -441,6 +465,14 @@ export const useNBackGame = ({
     [finalizeCurrentTrial, gamePhase, isAnswerLocked]
   );
 
+  const retrySave = useCallback(() => {
+    if (gamePhase !== "finished" || savedSessionRef.current) {
+      return;
+    }
+
+    void persistFinishedSession();
+  }, [gamePhase, persistFinishedSession]);
+
   return {
     currentStage,
     currentShape,
@@ -457,5 +489,8 @@ export const useNBackGame = ({
     selectedValue,
     showCountdown,
     finishedSessionId,
+    saveStatus,
+    saveError,
+    retrySave,
   };
 };

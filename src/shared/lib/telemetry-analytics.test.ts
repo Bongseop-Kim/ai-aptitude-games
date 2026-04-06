@@ -41,8 +41,8 @@ const telemetryRow = ({
   event,
   gameKey = "rps",
   trialIndex,
-  latencyMs,
-  isCorrect,
+  latencyMs = null,
+  isCorrect = null,
 }: {
   sessionId: string;
   userId: string;
@@ -50,8 +50,8 @@ const telemetryRow = ({
   event: string;
   gameKey?: string;
   trialIndex?: number | null;
-  latencyMs: number | null;
-  isCorrect: boolean | null;
+  latencyMs?: number | null;
+  isCorrect?: boolean | null;
 }) => ({
   sessionId,
   userId,
@@ -385,15 +385,6 @@ describe("telemetry-analytics", () => {
             sessionId: "current-complete-3",
             userId: "u-3",
             createdAt: currentSessionAt + 600,
-            event: "assessment.rps.session_started",
-            trialIndex: null,
-            latencyMs: null,
-            isCorrect: null,
-          }),
-          telemetryRow({
-            sessionId: "current-complete-3",
-            userId: "u-3",
-            createdAt: currentSessionAt + 700,
             event: "assessment.rps.session_completed",
             trialIndex: null,
             latencyMs: null,

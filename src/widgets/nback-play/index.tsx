@@ -38,6 +38,9 @@ export function NbackPlayWidget() {
     selectedValue,
     showCountdown,
     finishedSessionId,
+    saveStatus,
+    saveError,
+    retrySave,
   } = useNBackGame();
 
   const { goHome, goPreGame } = useGameNavigation("nback");
@@ -59,6 +62,13 @@ export function NbackPlayWidget() {
     finishedAccuracy !== null
       ? `정답률 ${Math.round(finishedAccuracy * 100)}%`
       : "정답률 집계중";
+  const modalDescription = [ `모든 스테이지를 완료했어요. ${accuracyText}`,
+    saveStatus === "saving"
+      ? "결과를 저장하고 있어요."
+      : saveError ?? null,
+  ]
+    .filter(Boolean)
+    .join(" ");
   const handleOpenSummary = () => {
     if (finishedSessionId === null) return;
     router.replace(`/games/nback/summary/${finishedSessionId}`);
@@ -152,12 +162,17 @@ export function NbackPlayWidget() {
       <ThemedModal
         visible={gamePhase === "finished"}
         title="게임 종료"
-        description={`모든 스테이지를 완료했어요. ${accuracyText}`}
+        description={modalDescription}
         onRequestClose={goHome}
         primaryAction={{
-          label: "결과 요약 보기",
-          onPress: handleOpenSummary,
-          disabled: finishedSessionId === null,
+          label:
+            finishedSessionId !== null
+              ? "결과 요약 보기"
+              : saveStatus === "saving"
+                ? "저장 중"
+                : "다시 저장",
+          onPress: finishedSessionId !== null ? handleOpenSummary : retrySave,
+          disabled: saveStatus === "saving",
         }}
         secondaryAction={{
           label: "다시 시작",

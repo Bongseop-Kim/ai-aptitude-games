@@ -11,12 +11,24 @@ import {
   type AuthStatus,
 } from "@/shared/auth/model/auth-session";
 import {
+  persistSignedInSession,
+  shouldApplyRefreshResult,
+} from "@/shared/auth/model/auth-provider-helpers";
+import {
   bootstrapAuthSession,
   clearAuthSession,
   saveAuthSession,
   type AuthSession,
 } from "@/shared/auth/auth-service";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { ActivityIndicator, StyleSheet } from "react-native";
 
 type AuthState = {
@@ -32,7 +44,6 @@ type AuthState = {
 };
 
 const AuthContext = createContext<AuthState | null>(null);
-let refreshInFlight: Promise<boolean> | null = null;
 
 const AuthLoadingFallback = () => (
   <ActivityIndicator size="large" style={styles.loadingFallback} />
@@ -44,13 +55,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [hasValidAccessToken, setHasValidAccessToken] = useState(false);
   const [refreshFailed, setRefreshFailed] = useState(false);
+  const refreshInFlightRef = useRef<Promise<boolean> | null>(null);
+  const sessionGenerationRef = useRef(0);
 
   const refreshIfNeeded = useCallback(async () => {
-    if (refreshInFlight != null) {
-      return refreshInFlight;
+    if (refreshInFlightRef.current != null) {
+      return refreshInFlightRef.current;
     }
 
-    refreshInFlight = (async () => {
+    const startedGeneration = sessionGenerationRef.current;
+    let refreshPromise: Promise<boolean> | null = null;
+    refreshPromise = (async () => {
       try {
         const tokens = await loadAuthTokens();
 
@@ -70,29 +85,57 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           authorizedRequest: (url, init) => fetch(url, init),
         });
         const refreshed = await authApi.refresh(tokens.refreshToken);
+        if (
+          !shouldApplyRefreshResult({
+            startedGeneration,
+            currentGeneration: sessionGenerationRef.current,
+          })
+        ) {
+          return false;
+        }
         await saveAuthTokens(refreshed);
+        if (
+          !shouldApplyRefreshResult({
+            startedGeneration,
+            currentGeneration: sessionGenerationRef.current,
+          })
+        ) {
+          return false;
+        }
         setHasValidAccessToken(true);
         setRefreshFailed(false);
         return true;
       } catch (error) {
         console.error("refreshIfNeeded: failed to refresh auth tokens", error);
+        if (
+          !shouldApplyRefreshResult({
+            startedGeneration,
+            currentGeneration: sessionGenerationRef.current,
+          })
+        ) {
+          return false;
+        }
         await Promise.allSettled([clearAuthTokens(), clearAuthSession()]);
         setSession(null);
         setHasValidAccessToken(false);
         setRefreshFailed(true);
         return false;
       } finally {
-        refreshInFlight = null;
+        if (refreshInFlightRef.current === refreshPromise) {
+          refreshInFlightRef.current = null;
+        }
       }
     })();
+    refreshInFlightRef.current = refreshPromise;
 
-    return refreshInFlight;
+    return refreshPromise;
   }, []);
 
   useEffect(() => {
     let mounted = true;
 
     const bootstrap = async () => {
+      const bootstrapGeneration = sessionGenerationRef.current;
       let storedSession: AuthSession | null = null;
       let hasValidToken = false;
       let didRefreshFail = false;
@@ -108,15 +151,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } else if (!shouldRefreshToken(storedTokens)) {
           hasValidToken = true;
         } else {
+          const startedGeneration = sessionGenerationRef.current;
           const authApi = createAuthApi({
             baseUrl: getApiBaseUrlFromEnv(),
             authorizedRequest: (url, init) => fetch(url, init),
           });
           try {
             const refreshed = await authApi.refresh(storedTokens.refreshToken);
+            if (
+              !shouldApplyRefreshResult({
+                startedGeneration,
+                currentGeneration: sessionGenerationRef.current,
+              })
+            ) {
+              return;
+            }
             await saveAuthTokens(refreshed);
+            if (
+              !shouldApplyRefreshResult({
+                startedGeneration,
+                currentGeneration: sessionGenerationRef.current,
+              })
+            ) {
+              return;
+            }
             hasValidToken = true;
           } catch {
+            if (
+              !shouldApplyRefreshResult({
+                startedGeneration,
+                currentGeneration: sessionGenerationRef.current,
+              })
+            ) {
+              return;
+            }
             await Promise.allSettled([clearAuthTokens(), clearAuthSession()]);
             storedSession = null;
             hasValidToken = false;
@@ -130,7 +198,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         hasValidToken = false;
         didRefreshFail = true;
       } finally {
-        if (mounted) {
+        if (
+          mounted &&
+          shouldApplyRefreshResult({
+            startedGeneration: bootstrapGeneration,
+            currentGeneration: sessionGenerationRef.current,
+          })
+        ) {
           setSession(storedSession);
           setHasValidAccessToken(hasValidToken);
           setRefreshFailed(didRefreshFail);
@@ -149,12 +223,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     async (displayName: string) => {
       setIsSigningIn(true);
       try {
-        const nextSession = await saveAuthSession(displayName);
-        const storedTokens = await loadAuthTokens();
-        setSession(nextSession);
-        setHasValidAccessToken(storedTokens == null || !shouldRefreshToken(storedTokens));
+        const nextState = await persistSignedInSession({
+          displayName,
+          saveSession: saveAuthSession,
+          loadTokens: loadAuthTokens,
+          rollbackAuthState: async () => {
+            await Promise.allSettled([clearAuthSession(), clearAuthTokens()]);
+          },
+        });
+        setSession(nextState.session);
+        setHasValidAccessToken(nextState.hasValidAccessToken);
         setRefreshFailed(false);
-        return nextSession;
+        return nextState.session;
       } finally {
         setIsSigningIn(false);
       }
@@ -163,6 +243,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   );
 
   const signOut = useCallback(async () => {
+    sessionGenerationRef.current += 1;
     try {
       await Promise.allSettled([clearAuthSession(), clearAuthTokens()]);
     } finally {
