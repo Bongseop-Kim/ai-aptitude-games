@@ -1,7 +1,6 @@
 import { getApiBaseUrlFromEnv } from "@/shared/config/api";
 import { createAuthApi } from "@/shared/auth/api/auth-api";
 import {
-  clearAuthTokens,
   loadAuthTokens,
   saveAuthTokens,
 } from "@/shared/auth/lib/token-store";
@@ -16,7 +15,7 @@ import {
 } from "@/shared/auth/model/auth-provider-helpers";
 import {
   bootstrapAuthSession,
-  clearAuthSession,
+  clearPersistedAuthState,
   saveAuthSession,
   type AuthSession,
 } from "@/shared/auth/auth-service";
@@ -115,7 +114,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         ) {
           return false;
         }
-        await Promise.allSettled([clearAuthTokens(), clearAuthSession()]);
+        await clearPersistedAuthState();
         setSession(null);
         setHasValidAccessToken(false);
         setRefreshFailed(true);
@@ -185,7 +184,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             ) {
               return;
             }
-            await Promise.allSettled([clearAuthTokens(), clearAuthSession()]);
+            await clearPersistedAuthState();
             storedSession = null;
             hasValidToken = false;
             didRefreshFail = true;
@@ -193,7 +192,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } catch (error) {
         console.error("bootstrap: unexpected auth init error", error);
-        await Promise.allSettled([clearAuthTokens(), clearAuthSession()]);
+        await clearPersistedAuthState();
         storedSession = null;
         hasValidToken = false;
         didRefreshFail = true;
@@ -228,7 +227,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           saveSession: saveAuthSession,
           loadTokens: loadAuthTokens,
           rollbackAuthState: async () => {
-            await Promise.allSettled([clearAuthSession(), clearAuthTokens()]);
+            await clearPersistedAuthState();
           },
         });
         setSession(nextState.session);
@@ -245,7 +244,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signOut = useCallback(async () => {
     sessionGenerationRef.current += 1;
     try {
-      await Promise.allSettled([clearAuthSession(), clearAuthTokens()]);
+      await clearPersistedAuthState();
     } finally {
       setSession(null);
       setHasValidAccessToken(false);

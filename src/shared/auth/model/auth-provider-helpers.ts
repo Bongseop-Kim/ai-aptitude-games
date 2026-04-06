@@ -1,6 +1,6 @@
-import type { AuthSession } from "../auth-service";
-import type { AuthTokens } from "./auth-types";
-import { shouldRefreshToken } from "./auth-session";
+import type { AuthSession } from "@/shared/auth/auth-service";
+import type { AuthTokens } from "@/shared/auth/model/auth-types";
+import { shouldRefreshToken } from "@/shared/auth/model/auth-session";
 
 type PersistSignedInSessionArgs = {
   displayName: string;
@@ -19,12 +19,22 @@ export const persistSignedInSession = async ({
 
   try {
     const tokens = await loadTokens();
+    const hasValidAccessToken =
+      tokens != null && !shouldRefreshToken(tokens);
+
+    if (!hasValidAccessToken) {
+      await rollbackAuthState();
+      throw new Error("missing valid auth tokens after sign-in");
+    }
+
     return {
       session,
-      hasValidAccessToken: tokens == null || !shouldRefreshToken(tokens),
+      hasValidAccessToken,
     };
   } catch (error) {
-    await rollbackAuthState();
+    if (!(error instanceof Error) || error.message !== "missing valid auth tokens after sign-in") {
+      await rollbackAuthState();
+    }
     throw error;
   }
 };

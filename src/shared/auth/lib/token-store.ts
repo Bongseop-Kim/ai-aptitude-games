@@ -1,5 +1,5 @@
 import { expo } from "@/shared/db/client";
-import type { AuthTokens } from "../model/auth-types";
+import type { AuthTokens } from "@/shared/auth/model/auth-types";
 
 type StoredTokenRow = {
   access_token: string;
@@ -9,12 +9,12 @@ type StoredTokenRow = {
   server_user_id: string;
 };
 
-const TOKEN_TABLE_NAME = "app_auth_tokens";
-const TOKEN_KEY = "current";
+export const TOKEN_TABLE_NAME = "app_auth_tokens";
+export const TOKEN_KEY = "current";
 
 let isTokenStoreInitialized = false;
 
-const initializeTokenStore = () => {
+export const initializeTokenStore = () => {
   if (isTokenStoreInitialized) {
     return;
   }

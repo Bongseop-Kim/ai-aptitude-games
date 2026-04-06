@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getAbandonedTrialIndex } from "./nback-session-helpers";
+import { getAbandonedTrialIndex } from "@/features/nback-game/model/nback-session-helpers";
 
 describe("getAbandonedTrialIndex", () => {
   it("returns null before the first playable trial is presented", () => {

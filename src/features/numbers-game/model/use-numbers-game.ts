@@ -10,6 +10,10 @@ import {
   generateSessionId,
   useLatestRef,
 } from "@/shared/lib";
+import {
+  resetStepFinalizationLock,
+  tryLockStepFinalization,
+} from "@/features/numbers-game/model/step-finalization-guard";
 
 type Rule = "single" | "double" | "skip";
 
@@ -62,6 +66,7 @@ export const useNumbersGame = () => {
   const sessionIdRef = useRef(generateSessionId("numbers"));
   const hasStartedRef = useRef(false);
   const hasCompletedRef = useRef(false);
+  const isFinalizingRef = useRef(false);
   const presentedQuestionRef = useRef<number | null>(null);
   const latencyTracker = useLatencyTracker();
 
@@ -97,6 +102,7 @@ export const useNumbersGame = () => {
   }, []);
 
   const nextStep = useCallback(() => {
+    resetStepFinalizationLock(isFinalizingRef);
     setIsAnswerLocked(false);
     setDoublePressReady(false);
     setAnswerMarkerRatio(null);
@@ -107,6 +113,7 @@ export const useNumbersGame = () => {
   const finalizeStep = useCallback(
     (isCorrect: boolean, response: AnswerInput) => {
       if (!currentStep || isAnswerLocked || phase !== "playing") {
+        resetStepFinalizationLock(isFinalizingRef);
         return;
       }
 
@@ -203,11 +210,17 @@ export const useNumbersGame = () => {
       if (Number.isNaN(typed)) return;
 
       if (currentStep.rule === "skip") {
+        if (!tryLockStepFinalization(isFinalizingRef)) {
+          return;
+        }
         finalizeStep(false, typed);
         return;
       }
 
       if (currentStep.rule === "single") {
+        if (!tryLockStepFinalization(isFinalizingRef)) {
+          return;
+        }
         finalizeStep(typed === currentStep.value, typed);
         return;
       }
@@ -217,10 +230,16 @@ export const useNumbersGame = () => {
           setDoublePressReady(true);
           return;
         }
+        if (!tryLockStepFinalization(isFinalizingRef)) {
+          return;
+        }
         finalizeStep(false, typed);
         return;
       }
 
+      if (!tryLockStepFinalization(isFinalizingRef)) {
+        return;
+      }
       finalizeStep(typed === currentStep.value, typed);
     },
     [currentStep, doublePressReady, finalizeStep, isAnswerLocked, phase],
@@ -228,6 +247,9 @@ export const useNumbersGame = () => {
 
   const handleSkip = useCallback(() => {
     if (!currentStep || isAnswerLocked || phase !== "playing") {
+      return;
+    }
+    if (!tryLockStepFinalization(isFinalizingRef)) {
       return;
     }
     finalizeStep(currentStep.rule === "skip", "skip");
@@ -254,6 +276,9 @@ export const useNumbersGame = () => {
   }, [nextStep]);
 
   const handleTimeUp = useCallback(() => {
+    if (!tryLockStepFinalization(isFinalizingRef)) {
+      return;
+    }
     finalizeStep(false, "timeout");
   }, [finalizeStep]);
 

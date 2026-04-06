@@ -28,6 +28,7 @@ vi.mock("@/shared/lib/auth-telemetry", () => ({
 
 import {
   bootstrapAuthSession,
+  clearPersistedAuthState,
   clearAuthSession,
   saveAuthSession,
 } from "./auth-service";
@@ -168,6 +169,37 @@ describe("auth-service telemetry instrumentation", () => {
         eventType: "auth_signed_out",
         userId: "user-signout",
       })
+    );
+  });
+
+  it("clears persisted auth state in one transaction before telemetry", async () => {
+    getFirstSyncMock.mockReturnValueOnce({
+      user_id: "user-signout",
+      display_name: "Signout User",
+    });
+
+    await clearPersistedAuthState();
+
+    expect(execSyncMock).toHaveBeenNthCalledWith(2, "BEGIN IMMEDIATE");
+    expect(runSyncMock).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining("DELETE FROM app_user_session"),
+      expect.any(String)
+    );
+    expect(runSyncMock).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining("DELETE FROM app_auth_tokens"),
+      expect.any(String)
+    );
+    expect(execSyncMock).toHaveBeenNthCalledWith(3, "COMMIT");
+    expect(emitAuthTelemetryEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "auth_signed_out",
+        userId: "user-signout",
+      })
+    );
+    expect(execSyncMock.mock.invocationCallOrder[2]).toBeLessThan(
+      emitAuthTelemetryEventMock.mock.invocationCallOrder[0] ?? Number.POSITIVE_INFINITY
     );
   });
 });

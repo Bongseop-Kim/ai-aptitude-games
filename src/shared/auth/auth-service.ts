@@ -1,5 +1,10 @@
 import { expo } from "@/shared/db/client";
 import { getApiBaseUrlFromEnv } from "../config/api";
+import {
+  initializeTokenStore,
+  TOKEN_KEY,
+  TOKEN_TABLE_NAME,
+} from "@/shared/auth/lib/token-store";
 import { emitAuthTelemetryEvent } from "@/shared/lib/auth-telemetry";
 
 export type AuthSession = {
@@ -254,6 +259,52 @@ export const clearAuthSession = async (): Promise<void> => {
     `DELETE FROM ${SESSION_TABLE_NAME} WHERE session_key = ?`,
     SESSION_KEY
   );
+
+  if (priorSession == null) {
+    return;
+  }
+
+  try {
+    await emitAuthTelemetryEvent({
+      eventType: "auth_signed_out",
+      userId: priorSession.user_id,
+      payload: {
+        displayName: priorSession.display_name,
+      },
+    });
+  } catch (error) {
+    console.error("[telemetry] failed to persist auth event", error);
+  }
+};
+
+export const clearPersistedAuthState = async (): Promise<void> => {
+  initializeSessionStore();
+  initializeTokenStore();
+
+  const priorSession = expo.getFirstSync<StoredSessionRow | null>(
+    `SELECT user_id, display_name FROM ${SESSION_TABLE_NAME} WHERE session_key = ?`,
+    SESSION_KEY
+  );
+
+  try {
+    expo.execSync("BEGIN IMMEDIATE");
+    expo.runSync(
+      `DELETE FROM ${SESSION_TABLE_NAME} WHERE session_key = ?`,
+      SESSION_KEY
+    );
+    expo.runSync(
+      `DELETE FROM ${TOKEN_TABLE_NAME} WHERE session_key = ?`,
+      TOKEN_KEY
+    );
+    expo.execSync("COMMIT");
+  } catch (error) {
+    try {
+      expo.execSync("ROLLBACK");
+    } catch {
+      // Ignore rollback failures so the original storage error is preserved.
+    }
+    throw error;
+  }
 
   if (priorSession == null) {
     return;
