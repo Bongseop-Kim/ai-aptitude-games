@@ -69,6 +69,7 @@ export const useNumbersGame = () => {
   const totalSteps = steps.length;
   const currentStep = steps[stepIndex];
 
+  // Intentionally read latest refs during unmount so abandon telemetry reflects the final state.
   useEffect(() => {
     const sessionId = sessionIdRef.current;
     return () => {
@@ -81,15 +82,18 @@ export const useNumbersGame = () => {
         sessionId,
         difficultyTier: NUMBERS_DIFFICULTY,
         blockIndex: 0,
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         trialIndex: latestStepIndexRef.current,
         hasStarted: hasStartedRef.current,
         hasCompleted: hasCompletedRef.current,
         payload: {
           reason: "hook_unmount",
+          // eslint-disable-next-line react-hooks/exhaustive-deps
           phase: latestPhaseRef.current,
         },
       });
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const nextStep = useCallback(() => {

@@ -4,11 +4,12 @@ import { ThemeInput } from "@/shared/ui/theme-input";
 import { FixedButtonView } from "@/shared/ui/fixed-button-view";
 import { getAliasTokens } from "@/shared/config/theme";
 import { useColorScheme } from "@/shared/lib/use-color-scheme";
-import { type Href, Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, StyleSheet } from "react-native";
 import { useAuth } from "@/shared/auth/auth-context";
 import { AuthServiceError } from "@/shared/auth/auth-service";
+import { resolveReturnTo } from "@/shared/auth/resolve-return-to";
 
 export default function AuthScreen() {
   const router = useRouter();
@@ -138,36 +139,7 @@ export default function AuthScreen() {
   );
 }
 
-const resolveReturnTo = (returnTo: string | string[] | undefined): Href => {
-  const fallback: Href = "/";
-  const candidate = Array.isArray(returnTo) ? returnTo[0] : returnTo;
-  if (!candidate || candidate.length === 0) {
-    return fallback;
-  }
-
-  let decoded = candidate;
-  try {
-    decoded = decodeURIComponent(candidate);
-  } catch {
-    return fallback;
-  }
-
-  if (!decoded.startsWith("/") || decoded === "/auth") {
-    return fallback;
-  }
-
-  if (
-    decoded === "/" ||
-    decoded === "/setting" ||
-    decoded.startsWith("/setting/") ||
-    decoded.startsWith("/games/") ||
-    decoded.startsWith("/pre-game/")
-  ) {
-    return decoded as Href;
-  }
-
-  return fallback;
-};
+export { resolveReturnTo } from "@/shared/auth/resolve-return-to";
 
 const resolveReason = (reason: string | string[] | undefined) => {
   const value = Array.isArray(reason) ? reason[0] : reason;

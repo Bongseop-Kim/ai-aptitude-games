@@ -29,6 +29,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const NBACK_GAME_KEY: AssessmentGameKey = "nback";
 const NBACK_DIFFICULTY: AssessmentDifficultyTier = "normal";
+const countAnsweredTrials = (trials: NbackTrial[]) =>
+  trials.filter((trial) => trial.userAnswer !== undefined).length;
 
 export const useNBackGame = ({
   sessionType = "real",
@@ -252,13 +254,14 @@ export const useNBackGame = ({
           (trial) => trial.isCorrect
         ).length;
         const totalCount = sessionTrials.length;
+        const answeredCount = countAnsweredTrials(sessionTrials);
         const completedAccuracy = totalCount > 0 ? correctCount / totalCount : 0;
         const scoring = buildSessionCompletionScoringPayload({
           gameKey: NBACK_GAME_KEY,
           difficultyTier: NBACK_DIFFICULTY,
           totalQuestions: totalCount,
           correctCount,
-          answeredCount: totalCount,
+          answeredCount,
           avgLatencyMs: latencyTracker.getAvgLatencyMs(),
         });
 

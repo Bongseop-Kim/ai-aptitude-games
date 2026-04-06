@@ -8,7 +8,12 @@ import { ThemedText } from "@/shared/ui/themed-text";
 import { ThemedView } from "@/shared/ui/themed-view";
 import { TimerProgressBar } from "@/shared/ui/timer-progressbar";
 import { usePromiseGame } from "@/features/promise-game";
-import { BorderRadius, Padding, Spacing, getAliasTokens } from "@/shared/config/theme";
+import {
+  BorderRadius,
+  Padding,
+  Spacing,
+  getSemanticTokens,
+} from "@/shared/config/theme";
 import { useColorScheme } from "@/shared/lib/use-color-scheme";
 import { useGameNavigation } from "@/shared/lib/use-game-navigation";
 import { StyleSheet } from "react-native";
@@ -20,7 +25,8 @@ const SYMBOL_LABELS: Record<string, string> = {
 
 export function PromisePlayWidget() {
   const colorScheme = useColorScheme();
-  const colors = getAliasTokens(colorScheme ?? "light");
+  const colors = getSemanticTokens(colorScheme ?? "light");
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { goHome, goPreGame, goHistory } = useGameNavigation("promise");
 
   const {
@@ -74,7 +80,7 @@ export function PromisePlayWidget() {
         onComplete={handleTimeUp}
         markerRatio={answerMarkerRatio}
         markerContent={
-          <ThemedText type="captionS" style={{ color: colors.text.inversePrimary }}>
+          <ThemedText type="captionS" style={styles.statusLabel}>
             응답완료
           </ThemedText>
         }
@@ -95,10 +101,7 @@ export function PromisePlayWidget() {
         <Spacer size="spacing16" />
         <ThemedView style={styles.promptWrap}>
           {promptTexts.map((item) => (
-            <ThemedView
-              key={item.title}
-              style={[styles.promptRow, { borderColor: colors.border.alpha }]}
-            >
+            <ThemedView key={item.title} style={styles.promptRow}>
               <ThemedText type="body1">{item.title}</ThemedText>
               <ThemedText type="body2">{item.values}</ThemedText>
             </ThemedView>
@@ -112,9 +115,10 @@ export function PromisePlayWidget() {
           options={optionItems}
           value={selectedAnswer}
           onChange={(value) => {
-            if (!isAnswerLocked) {
-              setSelectedAnswer(value);
+            if (isAnswerLocked) {
+              return;
             }
+            setSelectedAnswer(value);
             handleAnswer(value);
           }}
           columns={3}
@@ -148,24 +152,31 @@ export function PromisePlayWidget() {
   );
 }
 
-const styles = StyleSheet.create({
-  contentContainer: {
-    flex: 1,
-    padding: Padding.m,
-    gap: Spacing.spacing8,
-  },
-  promptWrap: {
-    gap: Spacing.spacing10,
-  },
-  promptRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    borderWidth: 1,
-    borderRadius: BorderRadius.s,
-    paddingVertical: Spacing.spacing10,
-    paddingHorizontal: Spacing.spacing12,
-  },
-  picker: {
-    width: "100%",
-  },
-});
+const createStyles = (
+  colors: ReturnType<typeof getSemanticTokens>
+) =>
+  StyleSheet.create({
+    contentContainer: {
+      flex: 1,
+      padding: Padding.m,
+      gap: Spacing.spacing8,
+    },
+    promptWrap: {
+      gap: Spacing.spacing10,
+    },
+    promptRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      borderWidth: 1,
+      borderRadius: BorderRadius.s,
+      borderColor: colors.interactive.borderMuted,
+      paddingVertical: Spacing.spacing10,
+      paddingHorizontal: Spacing.spacing12,
+    },
+    picker: {
+      width: "100%",
+    },
+    statusLabel: {
+      color: colors.interactive.textInverse,
+    },
+  });

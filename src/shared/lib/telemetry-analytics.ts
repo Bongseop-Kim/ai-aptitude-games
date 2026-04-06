@@ -39,6 +39,8 @@ type AggregatedSession = {
   invalidEventCount: number;
 };
 
+type SessionBucket = "current" | "previous";
+
 type KpiWindow = {
   from: number;
   to: number;
@@ -170,7 +172,7 @@ const isInvalidEvent = (eventType: string, row: RawTelemetryRow) => {
   }
 
   if (eventType === "session_completed" || eventType === "session_abandoned") {
-    return row.trialIndex != null || row.latencyMs != null;
+    return row.trialIndex != null || row.latencyMs != null || row.isCorrect != null;
   }
 
   return false;
@@ -358,14 +360,16 @@ const buildWindowSummary = (
   };
 };
 
-const mapWindow = (session: AggregatedSession, current: KpiWindow, previous: KpiWindow) => {
-  const anchor = session.startedAt ?? session.firstEventAt;
-
-  if (anchor >= current.from && anchor < current.to) {
+const mapTimestampToWindow = (
+  timestamp: number,
+  current: KpiWindow,
+  previous: KpiWindow
+): SessionBucket | null => {
+  if (timestamp >= current.from && timestamp < current.to) {
     return "current";
   }
 
-  if (anchor >= previous.from && anchor < previous.to) {
+  if (timestamp >= previous.from && timestamp < previous.to) {
     return "previous";
   }
 
@@ -415,15 +419,31 @@ export const getAssessmentTelemetryKpiSnapshot = async ({
   );
 
   const sessionMap = new Map<string, AggregatedSession>();
+  const sessionBucketMap = new Map<string, SessionBucket>();
 
   for (const row of rows) {
+    const rowBucket = mapTimestampToWindow(
+      row.createdAt,
+      currentRange,
+      previousRange
+    );
+    if (rowBucket == null) {
+      continue;
+    }
+
     const rowSession = sessionMap.get(row.sessionId);
     if (rowSession == null) {
       const session = buildSession(row);
       sessionMap.set(row.sessionId, session);
+      sessionBucketMap.set(row.sessionId, rowBucket);
       aggregateSession(session, row);
       continue;
     }
+
+    if (sessionBucketMap.get(row.sessionId) !== rowBucket) {
+      continue;
+    }
+
     aggregateSession(rowSession, row);
   }
 
@@ -431,7 +451,7 @@ export const getAssessmentTelemetryKpiSnapshot = async ({
   const previousWindowSessions: AggregatedSession[] = [];
 
   for (const session of sessionMap.values()) {
-    const bucket = mapWindow(session, currentRange, previousRange);
+    const bucket = sessionBucketMap.get(session.sessionId);
     if (bucket === "current") {
       currentWindowSessions.push(session);
       continue;
@@ -456,8 +476,7 @@ export const getAssessmentTelemetryKpiSnapshot = async ({
     previous: previous.overall.completionRatePct,
     delta: completionDrop,
     threshold: -15,
-    message:
-      "완료율이 전 주 대비 15%p 이상 하락하면 경보를 표시합니다.",
+    message: `완료율이 이전 ${windowDays}일 대비 15%p 이상 하락하면 경보를 표시합니다.`,
   };
 
   const p50Current = current.overall.p50CompletionSec;
@@ -475,7 +494,7 @@ export const getAssessmentTelemetryKpiSnapshot = async ({
     previous: p50Previous,
     delta: p50IncreaseDelta,
     threshold: 25,
-    message: "p50 완료 시간 7일 기준 25% 초과 상승 시 경보를 표시합니다.",
+    message: `p50 완료 시간이 최근 ${windowDays}일 기준 25% 초과 상승하면 경보를 표시합니다.`,
   };
 
   const invalidEventRatio: AssessmentTelemetryKpiAlert = {

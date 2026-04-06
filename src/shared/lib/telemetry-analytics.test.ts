@@ -539,4 +539,160 @@ describe("telemetry-analytics", () => {
 
     expect(firstSeenQuery.where).toHaveBeenCalledTimes(1);
   });
+
+  it("treats isCorrect on completion events as invalid", async () => {
+    const asOf = new Date("2026-01-10T00:00:00.000Z");
+    const currentSessionAt = asOf.getTime() - 12 * 60 * 60 * 1000;
+
+    mockDb.select
+      .mockImplementationOnce(() =>
+        makeQueryChain([
+          telemetryRow({
+            sessionId: "s-invalid-complete",
+            userId: "u-1",
+            createdAt: currentSessionAt + 100,
+            event: "assessment.rps.session_started",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+          telemetryRow({
+            sessionId: "s-invalid-complete",
+            userId: "u-1",
+            createdAt: currentSessionAt + 200,
+            event: "assessment.rps.session_completed",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: false,
+          }),
+        ])
+      )
+      .mockImplementationOnce(() => makeQueryChain([]));
+
+    const snapshot = await getAssessmentTelemetryKpiSnapshot({
+      asOf,
+      windowDays: 1,
+    });
+
+    expect(snapshot.current.overall.invalidEventCount).toBe(1);
+    expect(snapshot.current.overall.invalidEventRatioPct).toBe(50);
+  });
+
+  it("keeps previous-window sessions out of current metrics when later events arrive in the current window", async () => {
+    const asOf = new Date("2026-01-10T00:00:00.000Z");
+    const previousSessionAt = asOf.getTime() - 36 * 60 * 60 * 1000;
+    const currentSessionAt = asOf.getTime() - 12 * 60 * 60 * 1000;
+
+    mockDb.select
+      .mockImplementationOnce(() =>
+        makeQueryChain([
+          telemetryRow({
+            sessionId: "previous-session",
+            userId: "u-1",
+            createdAt: previousSessionAt + 100,
+            event: "assessment.rps.session_started",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+          telemetryRow({
+            sessionId: "previous-session",
+            userId: "u-1",
+            createdAt: currentSessionAt + 100,
+            event: "assessment.rps.session_completed",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+          telemetryRow({
+            sessionId: "current-session",
+            userId: "u-2",
+            createdAt: currentSessionAt + 200,
+            event: "assessment.rps.session_started",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+          telemetryRow({
+            sessionId: "current-session",
+            userId: "u-2",
+            createdAt: currentSessionAt + 300,
+            event: "assessment.rps.session_completed",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+        ])
+      )
+      .mockImplementationOnce(() => makeQueryChain([]));
+
+    const snapshot = await getAssessmentTelemetryKpiSnapshot({
+      asOf,
+      windowDays: 1,
+    });
+
+    expect(snapshot.previous.overall.sessionCount).toBe(1);
+    expect(snapshot.previous.overall.completedSessionCount).toBe(0);
+    expect(snapshot.current.overall.sessionCount).toBe(1);
+    expect(snapshot.current.overall.completedSessionCount).toBe(1);
+  });
+
+  it("formats alert messages with the requested comparison window", async () => {
+    const asOf = new Date("2026-01-10T00:00:00.000Z");
+    const currentSessionAt = asOf.getTime() - 2 * 24 * 60 * 60 * 1000;
+    const previousSessionAt = asOf.getTime() - 5 * 24 * 60 * 60 * 1000;
+
+    mockDb.select
+      .mockImplementationOnce(() =>
+        makeQueryChain([
+          telemetryRow({
+            sessionId: "current-session",
+            userId: "u-1",
+            createdAt: currentSessionAt,
+            event: "assessment.rps.session_started",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+          telemetryRow({
+            sessionId: "current-session",
+            userId: "u-1",
+            createdAt: currentSessionAt + 500,
+            event: "assessment.rps.session_completed",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+          telemetryRow({
+            sessionId: "previous-session",
+            userId: "u-2",
+            createdAt: previousSessionAt,
+            event: "assessment.rps.session_started",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+          telemetryRow({
+            sessionId: "previous-session",
+            userId: "u-2",
+            createdAt: previousSessionAt + 400,
+            event: "assessment.rps.session_completed",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+        ])
+      )
+      .mockImplementationOnce(() => makeQueryChain([]));
+
+    const snapshot = await getAssessmentTelemetryKpiSnapshot({
+      asOf,
+      windowDays: 3,
+    });
+
+    expect(snapshot.alerts.completionRateDrop.message).toContain("3일");
+    expect(snapshot.alerts.p50CompletionIncrease.message).toContain("3일");
+    expect(snapshot.alerts.completionRateDrop.message).not.toContain("전 주");
+    expect(snapshot.alerts.p50CompletionIncrease.message).not.toContain("7일 기준");
+  });
 });
