@@ -3,12 +3,14 @@ import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
 import { Option, OptionButton } from "./option-button";
 
 export type SegmentedPickerProps<T extends string> = {
-  options: { label: string; value: T }[];
+  options: readonly { label: string; value: T }[];
   value?: T;
   onChange: (value: T) => void;
   columns?: number;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
+  accessibilityHint?: string;
+  accessibilityHintSuffix?: string;
 };
 
 export function SegmentedPicker<T extends string>({
@@ -18,6 +20,8 @@ export function SegmentedPicker<T extends string>({
   columns = 3,
   disabled = false,
   style,
+  accessibilityHint,
+  accessibilityHintSuffix,
 }: SegmentedPickerProps<T>) {
   // options를 columns 크기로 나누어 2중 배열로 재구성 (메모이제이션)
   const rows = useMemo(() => {
@@ -39,13 +43,15 @@ export function SegmentedPicker<T extends string>({
       {rows.map((row, rowIndex) => (
         <View key={rowIndex} style={styles.row}>
           {row.map((option) => (
-            <OptionButton
-              key={option.value}
-              option={option}
-              isSelected={value === option.value}
-              disabled={disabled}
-              onPress={() => handlePress(option.value)}
-            />
+              <OptionButton
+                key={option.value}
+                option={option}
+                isSelected={value === option.value}
+                disabled={disabled}
+                onPress={() => handlePress(option.value)}
+                accessibilityHint={accessibilityHint}
+                accessibilityHintSuffix={accessibilityHintSuffix}
+              />
           ))}
         </View>
       ))}

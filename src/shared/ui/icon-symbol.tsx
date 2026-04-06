@@ -21,6 +21,7 @@ const MAPPING = {
   "book.fill": "book",
   "chevron.left.forwardslash.chevron.right": "code",
   "chevron.right": "chevron-right",
+  "chevron.down": "keyboard-arrow-down",
   "star.fill": "star",
   star: "star-border",
   gearshape: "settings",

@@ -9,19 +9,31 @@ export function OptionButton<T extends string>({
   isSelected,
   disabled,
   onPress,
+  accessibilityHint,
+  accessibilityHintSuffix,
 }: {
   option: Option<T>;
   isSelected: boolean;
   disabled: boolean;
   onPress: () => void;
+  accessibilityHint?: string;
+  accessibilityHintSuffix?: string;
 }) {
   const colorScheme = useColorScheme();
   const colors = getAliasTokens(colorScheme ?? "light");
+  const hint = [accessibilityHint, accessibilityHintSuffix]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
 
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={`${option.label}${isSelected ? ", 선택됨" : ""}`}
+      accessibilityHint={hint}
+      accessibilityState={{ selected: isSelected, disabled }}
       style={[
         styles.option,
         {

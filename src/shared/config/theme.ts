@@ -577,7 +577,9 @@ export const Typography = {
 
 export const Spacing = {
   spacing4: 4,
+  spacing6: 6,
   spacing8: 8,
+  spacing10: 10,
   spacing12: 12,
   spacing16: 16,
   spacing20: 20,

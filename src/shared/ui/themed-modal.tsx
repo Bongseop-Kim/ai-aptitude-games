@@ -15,6 +15,7 @@ type ModalAction = {
   label: string;
   onPress: () => void;
   variant?: BlockButtonVariant;
+  disabled?: boolean;
 };
 
 export type ThemedModalProps = {
@@ -56,11 +57,13 @@ export function ThemedModal({
         {onRequestClose && (
           <Pressable
             accessibilityRole="button"
+            accessibilityLabel="Close modal"
             onPress={onRequestClose}
             style={StyleSheet.absoluteFill}
           />
         )}
         <View
+          accessibilityViewIsModal={true}
           style={[
             styles.card,
             { backgroundColor: surfaceColor, borderColor },
@@ -90,6 +93,7 @@ export function ThemedModal({
                 <BlockButton
                   variant={primaryAction.variant ?? "primary"}
                   onPress={primaryAction.onPress}
+                  disabled={primaryAction.disabled}
                 >
                   {primaryAction.label}
                 </BlockButton>

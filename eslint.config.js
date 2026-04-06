@@ -7,4 +7,14 @@ module.exports = defineConfig([
   {
     ignores: ['dist/*'],
   },
+  {
+    files: ['**/*.test.ts', '**/*.test.tsx'],
+    settings: {
+      'import/core-modules': ['vitest'],
+    },
+    rules: {
+      'import/no-unresolved': 'off',
+      'import/first': 'off',
+    },
+  },
 ]);

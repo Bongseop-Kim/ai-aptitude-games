@@ -6,6 +6,7 @@ import { IconSymbol } from "@/shared/ui/icon-symbol";
 import { HStack, VStack } from "@/shared/ui/stack";
 import { ThemedText } from "@/shared/ui/themed-text";
 import { ThemedView } from "@/shared/ui/themed-view";
+import { formatTimeAgo } from "@/shared/lib/format-time-ago";
 import { useColorScheme } from "@/shared/lib/use-color-scheme";
 import { router } from "expo-router";
 import { useEffect } from "react";
@@ -18,17 +19,21 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
+type Colors = ReturnType<typeof getAliasTokens>;
+
 export function NbackHistoryWidget() {
   const { historyList, headerData } = useNbackHistory();
+  const colorScheme = useColorScheme();
+  const colors = getAliasTokens(colorScheme ?? "light");
 
   return (
     <ThemedView style={styles.flex1}>
-      <HeaderComponent data={headerData} />
+      <HeaderComponent data={headerData} colors={colors} />
       <FlatList
         data={historyList}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => <ListItemComponent item={item} />}
-        ListEmptyComponent={<EmptyStateComponent />}
+        renderItem={({ item }) => <ListItemComponent item={item} colors={colors} />}
+        ListEmptyComponent={<EmptyStateComponent colors={colors} />}
       />
     </ThemedView>
   );
@@ -36,12 +41,11 @@ export function NbackHistoryWidget() {
 
 const HeaderComponent = ({
   data,
+  colors,
 }: {
   data: NbackHistoryHeaderData | null;
+  colors: Colors;
 }) => {
-  const colorScheme = useColorScheme();
-  const colors = getAliasTokens(colorScheme ?? "light");
-
   return (
     <VStack spacing="spacing12" style={[styles.headerContainer]}>
       <VStack>
@@ -52,7 +56,7 @@ const HeaderComponent = ({
               : 0}
             %
           </ThemedText>
-          <TrendIconComponent trend={data?.trend ?? "same"} />
+          <TrendIconComponent trend={data?.trend ?? "same"} colors={colors} />
         </HStack>
         <ThemedText>오늘 평균 정확도</ThemedText>
       </VStack>
@@ -92,10 +96,14 @@ const HeaderComponent = ({
   );
 };
 
-const TrendIconComponent = ({ trend }: { trend: "up" | "down" | "same" }) => {
+const TrendIconComponent = ({
+  trend,
+  colors,
+}: {
+  trend: "up" | "down" | "same";
+  colors: Colors;
+}) => {
   const rotation = useSharedValue(0);
-  const colorScheme = useColorScheme();
-  const colors = getAliasTokens(colorScheme ?? "light");
 
   useEffect(() => {
     rotation.value = withRepeat(
@@ -108,7 +116,7 @@ const TrendIconComponent = ({ trend }: { trend: "up" | "down" | "same" }) => {
       1,
       false
     );
-  }, [rotation, trend]);
+  }, [trend]);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -152,35 +160,13 @@ const TrendIconComponent = ({ trend }: { trend: "up" | "down" | "same" }) => {
   );
 };
 
-const formatTimeAgo = (date: Date): string => {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / (1000 * 60));
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffMins < 1) {
-    return "방금 전";
-  }
-  if (diffMins < 60) {
-    return `${diffMins}분전`;
-  }
-  if (diffHours < 24) {
-    return `${diffHours}시간전`;
-  }
-  if (diffDays < 7) {
-    return `${diffDays}일전`;
-  }
-  return date.toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-};
-
-const ListItemComponent = ({ item }: { item: NbackHistoryItem }) => {
-  const colorScheme = useColorScheme();
-  const colors = getAliasTokens(colorScheme ?? "light");
+const ListItemComponent = ({
+  item,
+  colors,
+}: {
+  item: NbackHistoryItem;
+  colors: Colors;
+}) => {
   const accuracy =
     item.totalQuestions > 0
       ? (item.correctCount / item.totalQuestions) * 100
@@ -191,8 +177,16 @@ const ListItemComponent = ({ item }: { item: NbackHistoryItem }) => {
       onPress={() => {
         router.push(`/games/nback/detail/${item.id}`);
       }}
+      style={({ pressed }) => [
+        styles.itemPressable,
+        pressed && { backgroundColor: colors.surface.layer1 },
+      ]}
+      accessibilityRole="button"
+      accessibilityLabel={`${item.type === "real" ? "실전" : "연습"} 기록, 정확도 ${Math.round(accuracy)}%, ${item.totalQuestions}문제 중 ${item.correctCount}문제 정답, ${formatTimeAgo(item.createdAt)}`}
+      accessibilityHint="탭하면 기록 상세 화면으로 이동합니다"
+      accessibilityState={{ disabled: false }}
     >
-      <ThemedView style={[styles.itemContainer]}>
+      <ThemedView>
         <HStack align="center" justify="space-between" spacing="spacing12">
           <HStack align="center" spacing="spacing12" style={styles.flex1}>
             <ThemedView>
@@ -216,9 +210,7 @@ const ListItemComponent = ({ item }: { item: NbackHistoryItem }) => {
   );
 };
 
-const EmptyStateComponent = () => {
-  const colorScheme = useColorScheme();
-  const colors = getAliasTokens(colorScheme ?? "light");
+const EmptyStateComponent = ({ colors }: { colors: Colors }) => {
   return (
     <VStack align="center" spacing="spacing16" style={styles.emptyContainer}>
       <IconSymbol
@@ -247,9 +239,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: BorderWidth.s,
     paddingBottom: Padding.m,
   },
-  itemContainer: {
+  itemPressable: {
     paddingHorizontal: Padding.m,
     paddingVertical: Padding.s,
+    minHeight: 44,
   },
   emptyContainer: {
     paddingVertical: Padding.xxl,

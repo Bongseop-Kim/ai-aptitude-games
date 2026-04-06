@@ -1,0 +1,48 @@
+name: EAS Manual Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Build target platform
+        required: true
+        type: choice
+        default: all
+        options:
+          - all
+          - android
+          - ios
+
+jobs:
+  eas-build:
+    runs-on: ubuntu-latest
+    env:
+      CI: true
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      EXPO_NO_TELEMETRY: 1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build Android internal
+        if: ${{ inputs.platform == 'all' || inputs.platform == 'android' }}
+        run: eas build --platform android --profile android-internal --non-interactive --no-wait
+
+      - name: Build iOS simulator
+        if: ${{ inputs.platform == 'all' || inputs.platform == 'ios' }}
+        run: eas build --platform ios --profile ios-simulator --non-interactive --no-wait

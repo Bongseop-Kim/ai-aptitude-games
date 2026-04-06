@@ -1,0 +1,3 @@
+{
+  "body": "## 검증 결과 요약\n\n[GAM-242](/GAM/issues/GAM-242) 모달 카피 및 상태 검증을 완료했습니다.\n\n### 검증 항목\n1. **카피 톤**: 중립적이고 비제휴적인(non-affiliative) 표현 확인 (내부 준비용 연습 안내로 명시)\n2. **명암 대비**: Light/Dark 모드 모두 4.5:1 이상의 텍스트 명암비 확보 확인 (Semantic Tokens 기준)\n3. **스크린 리더**: 타이틀 -> 본문 -> 액션 버튼 순의 올바른 초점 이동 및 `accessibilityViewIsModal` 속성 확인\n4. **동작**: `animationType='none'` 설정을 통해 reduced-motion 요건 충족\n5. **레이아웃**: 100% 가변 폭 및 Padding 설정을 통해 좁은 화면에서의 말줄임(truncation) 및 i18n 확장성 대응 확인\n\n모든 AC가 충족되었습니다."
+}

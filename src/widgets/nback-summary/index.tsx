@@ -10,12 +10,18 @@ export function NbackSummaryWidget({ sessionId }: { sessionId: number }) {
   return (
     <FixedButtonView
       buttonProps={{
-        onPress: () => router.back(),
-        children: "한 번 더",
+        onPress: () => router.replace("/pre-game/nback"),
+        accessibilityRole: "button",
+        accessibilityLabel: "N-back 다시 시작",
+        accessibilityHint: "게임 시작 전 화면으로 이동해 다시 플레이합니다",
+        children: "다시 시작",
       }}
       secondaryButtonProps={{
         onPress: () => router.push(`/games/nback/detail/${sessionId}`),
-        children: "기록 확인",
+        accessibilityRole: "button",
+        accessibilityLabel: "세션 기록 상세 보기",
+        accessibilityHint: "문항별 기록 상세 화면으로 이동합니다",
+        children: "기록 상세 보기",
       }}
     >
       <FeedbackLayout sessionFeedback={sessionFeedback} />

@@ -1,6 +1,6 @@
 import { useNBackGame } from "@/features/nback-game";
 import { NBACK_GAME } from "@/entities/nback";
-import { Padding, WIDTH, getAliasTokens } from "@/shared/config/theme";
+import { BorderRadius, BorderWidth, Padding, Spacing, WIDTH, getAliasTokens } from "@/shared/config/theme";
 import { Badge } from "@/shared/ui/badge";
 import { Countdown } from "@/shared/ui/countdown";
 import { FixedButtonView } from "@/shared/ui/fixed-button-view";
@@ -12,7 +12,9 @@ import { ThemedText } from "@/shared/ui/themed-text";
 import { ThemedView } from "@/shared/ui/themed-view";
 import { TimerProgressBar } from "@/shared/ui/timer-progressbar";
 import { useColorScheme } from "@/shared/lib/use-color-scheme";
-import { useEffect, useState } from "react";
+import { useGameNavigation } from "@/shared/lib/use-game-navigation";
+import { router } from "expo-router";
+import { useMemo } from "react";
 import { StyleSheet } from "react-native";
 
 export function NbackPlayWidget() {
@@ -35,15 +37,17 @@ export function NbackPlayWidget() {
     remainingQuestions,
     selectedValue,
     showCountdown,
+    finishedSessionId,
+    saveStatus,
+    saveError,
+    retrySave,
   } = useNBackGame();
 
-  const [isFinishedModalVisible, setIsFinishedModalVisible] = useState(false);
-
-  useEffect(() => {
-    if (gamePhase === "finished") {
-      setIsFinishedModalVisible(true);
-    }
-  }, [gamePhase]);
+  const { goHome, goPreGame } = useGameNavigation("nback");
+  const stageNumber = useMemo(
+    () => NBACK_GAME.stages.findIndex((stage) => stage === currentStage) + 1,
+    [currentStage]
+  );
 
   if (!currentStage) {
     return null;
@@ -51,10 +55,24 @@ export function NbackPlayWidget() {
 
   const { copy } = currentStage;
   const SvgComponent = currentShape?.svg;
+  const totalQuestions = currentStage.rules.totalQuestions;
+  const answeredQuestions = Math.max(0, totalQuestions - remainingQuestions);
+  const stageCount = NBACK_GAME.stages.length;
   const accuracyText =
     finishedAccuracy !== null
       ? `정답률 ${Math.round(finishedAccuracy * 100)}%`
       : "정답률 집계중";
+  const modalDescription = [ `모든 스테이지를 완료했어요. ${accuracyText}`,
+    saveStatus === "saving"
+      ? "결과를 저장하고 있어요."
+      : saveError ?? null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const handleOpenSummary = () => {
+    if (finishedSessionId === null) return;
+    router.replace(`/games/nback/summary/${finishedSessionId}`);
+  };
 
   return (
     <FixedButtonView>
@@ -80,25 +98,42 @@ export function NbackPlayWidget() {
       {gamePhase !== "countdown" && (
         <ThemedView style={styles.contentContainer}>
           <Spacer size="spacing48" />
-          <Badge
-            variant="default"
-            type="ghost"
-            kind="text"
-            style={styles.remainingBadge}
-          >
-            남은 문항 {remainingQuestions}
-          </Badge>
+          <ThemedView style={styles.hudRow}>
+            <Badge
+              variant="default"
+              type="ghost"
+              kind="text"
+              style={styles.remainingBadge}
+            >
+              {`Stage ${stageNumber}/${stageCount}`}
+            </Badge>
+            <Badge variant="default" type="ghost" kind="text">
+              {`${answeredQuestions}/${totalQuestions} 진행`}
+            </Badge>
+          </ThemedView>
           <Spacer size="spacing8" />
 
           <ThemedText type="title1" style={styles.headerText}>
             {headerText}
           </ThemedText>
           <Spacer size="spacing32" />
-          <SvgComponent
-            width={WIDTH / 2}
-            height={WIDTH / 2}
-            color={colors.brand.tertiary}
-          />
+          <ThemedView
+            style={[
+              styles.shapeContainer,
+              {
+                backgroundColor: colors.surface.layer1,
+                borderColor: colors.border.base,
+              },
+            ]}
+            accessible
+            accessibilityLabel="현재 제시된 도형"
+          >
+            <SvgComponent
+              width={WIDTH / 2}
+              height={WIDTH / 2}
+              color={colors.brand.tertiary}
+            />
+          </ThemedView>
 
           <Spacer size="spacing40" />
           <SegmentedPicker
@@ -113,6 +148,7 @@ export function NbackPlayWidget() {
             columns={3}
             disabled={isPickerDisabled}
             style={styles.segmentedPicker}
+            accessibilityHint="보기를 탭해 정답을 선택하세요"
           />
         </ThemedView>
       )}
@@ -124,13 +160,23 @@ export function NbackPlayWidget() {
       />
 
       <ThemedModal
-        visible={isFinishedModalVisible}
-        title="시험 종료"
-        description={`모든 스테이지를 완료했어요. ${accuracyText}`}
-        onRequestClose={() => setIsFinishedModalVisible(false)}
+        visible={gamePhase === "finished"}
+        title="게임 종료"
+        description={modalDescription}
+        onRequestClose={goHome}
         primaryAction={{
-          label: "확인",
-          onPress: () => setIsFinishedModalVisible(false),
+          label:
+            finishedSessionId !== null
+              ? "결과 요약 보기"
+              : saveStatus === "saving"
+                ? "저장 중"
+                : "다시 저장",
+          onPress: finishedSessionId !== null ? handleOpenSummary : retrySave,
+          disabled: saveStatus === "saving",
+        }}
+        secondaryAction={{
+          label: "다시 시작",
+          onPress: goPreGame,
         }}
       />
     </FixedButtonView>
@@ -143,13 +189,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: Padding.m,
   },
+  hudRow: {
+    width: "100%",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: Spacing.spacing8,
+  },
   remainingBadge: {
-    alignSelf: "flex-end",
+    alignSelf: "flex-start",
   },
   headerText: {
     textAlign: "center",
     height: 80,
     textAlignVertical: "center",
+  },
+  shapeContainer: {
+    borderWidth: BorderWidth.s,
+    borderRadius: BorderRadius.m,
+    padding: Spacing.spacing12,
   },
   segmentedPicker: {
     width: "100%",
