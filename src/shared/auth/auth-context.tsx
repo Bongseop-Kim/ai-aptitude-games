@@ -16,8 +16,10 @@ import {
 import {
   buildBootstrapFailureState,
   buildRefreshFailureState,
+  cleanupDiscardedRefreshResult,
   clearPersistedAuthStateBestEffort,
 } from "@/shared/auth/model/auth-context-helpers";
+import { ThemedView } from "@/shared/ui/themed-view";
 import {
   bootstrapAuthSession,
   clearPersistedAuthState,
@@ -50,7 +52,9 @@ type AuthState = {
 const AuthContext = createContext<AuthState | null>(null);
 
 const AuthLoadingFallback = () => (
-  <ActivityIndicator size="large" style={styles.loadingFallback} />
+  <ThemedView style={styles.loadingFallback}>
+    <ActivityIndicator size="large" />
+  </ThemedView>
 );
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -99,9 +103,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
         await saveAuthTokens(refreshed);
         if (
-          !shouldApplyRefreshResult({
+          await cleanupDiscardedRefreshResult({
             startedGeneration,
             currentGeneration: sessionGenerationRef.current,
+            clearPersistedAuthState,
+            logError: console.error,
+            context: "refreshIfNeeded",
           })
         ) {
           return false;
@@ -112,6 +119,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } catch (error) {
         console.error("refreshIfNeeded: failed to refresh auth tokens", error);
         const failureState = buildRefreshFailureState({
+          session,
           startedGeneration,
           currentGeneration: sessionGenerationRef.current,
         });
@@ -175,9 +183,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
             await saveAuthTokens(refreshed);
             if (
-              !shouldApplyRefreshResult({
+              await cleanupDiscardedRefreshResult({
                 startedGeneration,
                 currentGeneration: sessionGenerationRef.current,
+                clearPersistedAuthState,
+                logError: console.error,
+                context: "bootstrap",
               })
             ) {
               return;
@@ -193,7 +204,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               return;
             }
             ({ storedSession, hasValidToken, didRefreshFail } =
-              buildBootstrapFailureState());
+              buildBootstrapFailureState(storedSession));
             await clearPersistedAuthStateBestEffort({
               clearPersistedAuthState,
               logError: console.error,
@@ -204,7 +215,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } catch (error) {
         console.error("bootstrap: unexpected auth init error", error);
         ({ storedSession, hasValidToken, didRefreshFail } =
-          buildBootstrapFailureState());
+          buildBootstrapFailureState(storedSession));
         await clearPersistedAuthStateBestEffort({
           clearPersistedAuthState,
           logError: console.error,
@@ -315,5 +326,7 @@ export const useAuth = () => {
 const styles = StyleSheet.create({
   loadingFallback: {
     flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
