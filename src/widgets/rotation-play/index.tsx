@@ -1,4 +1,5 @@
 import { getAliasTokens } from "@/shared/config/theme";
+import { BorderRadius, Padding, Spacing } from "@/shared/config/theme";
 import { Badge } from "@/shared/ui/badge";
 import { Countdown } from "@/shared/ui/countdown";
 import { FixedButtonView } from "@/shared/ui/fixed-button-view";
@@ -8,10 +9,9 @@ import { TimerProgressBar } from "@/shared/ui/timer-progressbar";
 import { ThemedModal } from "@/shared/ui/themed-modal";
 import { ThemedText } from "@/shared/ui/themed-text";
 import { ThemedView } from "@/shared/ui/themed-view";
-import { router } from "expo-router";
 import { useColorScheme } from "@/shared/lib/use-color-scheme";
+import { useGameNavigation } from "@/shared/lib/use-game-navigation";
 import { useRotationGame } from "@/features/rotation-game";
-import { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
 const CELL_SIZE = 24;
@@ -19,13 +19,12 @@ const CELL_SIZE = 24;
 const ShapeGrid = ({
   matrix,
   label,
+  colors,
 }: {
   matrix: number[][];
   label: string;
+  colors: ReturnType<typeof getAliasTokens>;
 }) => {
-  const colorScheme = useColorScheme();
-  const colors = getAliasTokens(colorScheme ?? "light");
-
   return (
     <View style={styles.shapeWrap}>
       <ThemedText type="captionS" style={styles.labelText}>
@@ -86,40 +85,16 @@ export function RotationPlayWidget() {
 
   const colorScheme = useColorScheme();
   const colors = getAliasTokens(colorScheme ?? "light");
-  const [isFinishedModalVisible, setIsFinishedModalVisible] = useState(false);
+  const { goHome, goPreGame, goHistory } = useGameNavigation("rotation");
 
   const isPlaying = phase === "playing";
+  const isFinished = phase === "finished";
   const finishedAccuracy =
     totalQuestions === 0
       ? 0
       : Math.round((correctAnswers / totalQuestions) * 100);
-  const closeAndGoHome = () => {
-    setIsFinishedModalVisible(false);
-    router.replace("/");
-  };
-  const handleRestart = () => {
-    setIsFinishedModalVisible(false);
-    router.replace("/pre-game/rotation");
-  };
-  const handleHistory = () => {
-    setIsFinishedModalVisible(false);
-    router.push("/games/rotation/history");
-  };
 
-  const transformedPuzzleWithFallback = useMemo(() => {
-    if (!transformedPuzzle.length) {
-      return [];
-    }
-    return transformedPuzzle;
-  }, [transformedPuzzle]);
-
-  useEffect(() => {
-    if (phase === "finished") {
-      setIsFinishedModalVisible(true);
-    }
-  }, [phase]);
-
-  if (!puzzleTarget.length || !transformedPuzzleWithFallback.length) {
+  if (!puzzleTarget.length || !transformedPuzzle.length) {
     return null;
   }
 
@@ -157,8 +132,8 @@ export function RotationPlayWidget() {
 
         <Spacer size="spacing20" />
         <ThemedView style={styles.panesContainer}>
-          <ShapeGrid matrix={puzzleTarget} label="목표" />
-          <ShapeGrid matrix={transformedPuzzleWithFallback} label="현재" />
+          <ShapeGrid matrix={puzzleTarget} label="목표" colors={colors} />
+          <ShapeGrid matrix={transformedPuzzle} label="현재" colors={colors} />
         </ThemedView>
 
         <Spacer size="spacing20" />
@@ -169,9 +144,7 @@ export function RotationPlayWidget() {
             accessibilityRole="button"
             accessibilityLabel="회전"
             accessibilityHint="현재 도형을 오른쪽으로 회전합니다"
-            accessibilityState={{
-              disabled: isAnswerLocked || !isPlaying,
-            }}
+            accessibilityState={{ disabled: isAnswerLocked || !isPlaying }}
             style={({ pressed }) => [
               styles.controlButton,
               {
@@ -189,9 +162,7 @@ export function RotationPlayWidget() {
             accessibilityRole="button"
             accessibilityLabel="가로반전"
             accessibilityHint="현재 도형을 가로로 반전합니다"
-            accessibilityState={{
-              disabled: isAnswerLocked || !isPlaying,
-            }}
+            accessibilityState={{ disabled: isAnswerLocked || !isPlaying }}
             style={({ pressed }) => [
               styles.controlButton,
               {
@@ -209,9 +180,7 @@ export function RotationPlayWidget() {
             accessibilityRole="button"
             accessibilityLabel="세로반전"
             accessibilityHint="현재 도형을 세로로 반전합니다"
-            accessibilityState={{
-              disabled: isAnswerLocked || !isPlaying,
-            }}
+            accessibilityState={{ disabled: isAnswerLocked || !isPlaying }}
             style={({ pressed }) => [
               styles.controlButton,
               {
@@ -229,9 +198,7 @@ export function RotationPlayWidget() {
             accessibilityRole="button"
             accessibilityLabel="초기화"
             accessibilityHint="도형 조작을 초기 상태로 되돌립니다"
-            accessibilityState={{
-              disabled: isAnswerLocked || !isPlaying,
-            }}
+            accessibilityState={{ disabled: isAnswerLocked || !isPlaying }}
             style={({ pressed }) => [
               styles.controlButton,
               {
@@ -253,9 +220,7 @@ export function RotationPlayWidget() {
           accessibilityRole="button"
           accessibilityLabel="정답 확인"
           accessibilityHint="현재 조작 내용을 정답으로 제출합니다"
-          accessibilityState={{
-            disabled: isAnswerLocked || !isPlaying,
-          }}
+          accessibilityState={{ disabled: isAnswerLocked || !isPlaying }}
           style={({ pressed }) => [
             styles.submitButton,
             {
@@ -279,17 +244,17 @@ export function RotationPlayWidget() {
       />
 
       <ThemedModal
-        visible={isFinishedModalVisible}
+        visible={isFinished}
         title="게임 종료"
         description={`전체 정답률 ${finishedAccuracy}%`}
-        onRequestClose={closeAndGoHome}
+        onRequestClose={goHome}
         primaryAction={{
           label: "다시 시작",
-          onPress: handleRestart,
+          onPress: goPreGame,
         }}
         secondaryAction={{
           label: "기록 보기",
-          onPress: handleHistory,
+          onPress: goHistory,
         }}
       />
     </FixedButtonView>
@@ -299,21 +264,21 @@ export function RotationPlayWidget() {
 const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
-    padding: 16,
+    padding: Padding.m,
   },
   panesContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    gap: 12,
+    gap: Spacing.spacing12,
   },
   shapeWrap: {
     flex: 1,
     alignItems: "center",
   },
   shapeFrame: {
-    padding: 10,
+    padding: Spacing.spacing10,
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 12,
+    borderRadius: BorderRadius.s,
     borderColor: "transparent",
     backgroundColor: "transparent",
   },
@@ -327,24 +292,24 @@ const styles = StyleSheet.create({
     margin: 2,
   },
   labelText: {
-    marginBottom: 8,
+    marginBottom: Spacing.spacing8,
   },
   controlRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: Spacing.spacing8,
     justifyContent: "space-between",
   },
   controlButton: {
     width: "48%",
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingVertical: Spacing.spacing10,
+    paddingHorizontal: Spacing.spacing12,
     borderRadius: 10,
     alignItems: "center",
   },
   submitButton: {
-    marginTop: 24,
-    borderRadius: 12,
+    marginTop: Spacing.spacing24,
+    borderRadius: BorderRadius.s,
     paddingVertical: 14,
     alignItems: "center",
   },

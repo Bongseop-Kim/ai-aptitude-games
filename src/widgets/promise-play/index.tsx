@@ -8,31 +8,21 @@ import { ThemedText } from "@/shared/ui/themed-text";
 import { ThemedView } from "@/shared/ui/themed-view";
 import { TimerProgressBar } from "@/shared/ui/timer-progressbar";
 import { usePromiseGame } from "@/features/promise-game";
-import { router } from "expo-router";
+import { BorderRadius, Padding, Spacing, getAliasTokens } from "@/shared/config/theme";
+import { useColorScheme } from "@/shared/lib/use-color-scheme";
+import { useGameNavigation } from "@/shared/lib/use-game-navigation";
 import { StyleSheet } from "react-native";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 
 const SYMBOL_LABELS: Record<string, string> = {
-  A: "A",
-  B: "B",
-  C: "C",
-  D: "D",
-  E: "E",
-  F: "F",
   none: "없음",
 };
 
-const SYMBOL_OPTIONS = [
-  { label: SYMBOL_LABELS.A, value: "A" },
-  { label: SYMBOL_LABELS.B, value: "B" },
-  { label: SYMBOL_LABELS.C, value: "C" },
-  { label: SYMBOL_LABELS.D, value: "D" },
-  { label: SYMBOL_LABELS.E, value: "E" },
-  { label: SYMBOL_LABELS.F, value: "F" },
-  { label: SYMBOL_LABELS.none, value: "none" },
-] as const;
-
 export function PromisePlayWidget() {
+  const colorScheme = useColorScheme();
+  const colors = getAliasTokens(colorScheme ?? "light");
+  const { goHome, goPreGame, goHistory } = useGameNavigation("promise");
+
   const {
     currentRound,
     currentIndex,
@@ -49,8 +39,6 @@ export function PromisePlayWidget() {
     phase,
   } = usePromiseGame();
 
-  const [isFinishedModalVisible, setIsFinishedModalVisible] = useState(false);
-
   const promptTexts = useMemo(() => {
     if (!currentRound) return [];
     return currentRound.promptCards.map((card, index) => ({
@@ -62,28 +50,10 @@ export function PromisePlayWidget() {
   const optionItems = useMemo(() => {
     if (!currentRound) return [];
     return currentRound.options.map((value) => ({
-      label: SYMBOL_LABELS[value],
+      label: SYMBOL_LABELS[value] ?? value,
       value,
     }));
   }, [currentRound]);
-  const closeAndGoHome = () => {
-    setIsFinishedModalVisible(false);
-    router.replace("/");
-  };
-  const handleRestart = () => {
-    setIsFinishedModalVisible(false);
-    router.replace("/pre-game/promise");
-  };
-  const handleHistory = () => {
-    setIsFinishedModalVisible(false);
-    router.push("/games/promise/history");
-  };
-
-  useEffect(() => {
-    if (phase === "finished") {
-      setIsFinishedModalVisible(true);
-    }
-  }, [phase]);
 
   if (!currentRound) {
     return null;
@@ -98,7 +68,7 @@ export function PromisePlayWidget() {
         onComplete={handleTimeUp}
         markerRatio={answerMarkerRatio}
         markerContent={
-          <ThemedText type="captionS" style={styles.markerText}>
+          <ThemedText type="captionS" style={{ color: colors.text.inversePrimary }}>
             응답완료
           </ThemedText>
         }
@@ -119,7 +89,10 @@ export function PromisePlayWidget() {
         <Spacer size="spacing16" />
         <ThemedView style={styles.promptWrap}>
           {promptTexts.map((item) => (
-            <ThemedView key={item.title} style={styles.promptRow}>
+            <ThemedView
+              key={item.title}
+              style={[styles.promptRow, { borderColor: colors.border.alpha }]}
+            >
               <ThemedText type="body1">{item.title}</ThemedText>
               <ThemedText type="body2">{item.values}</ThemedText>
             </ThemedView>
@@ -147,17 +120,17 @@ export function PromisePlayWidget() {
       />
 
       <ThemedModal
-        visible={isFinishedModalVisible}
+        visible={phase === "finished"}
         title="게임 종료"
         description={`정답률 ${finishedAccuracy}%`}
-        onRequestClose={closeAndGoHome}
+        onRequestClose={goHome}
         primaryAction={{
           label: "다시 시작",
-          onPress: handleRestart,
+          onPress: goPreGame,
         }}
         secondaryAction={{
           label: "기록 보기",
-          onPress: handleHistory,
+          onPress: goHistory,
         }}
       />
     </FixedButtonView>
@@ -167,25 +140,21 @@ export function PromisePlayWidget() {
 const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
-    padding: 16,
-    gap: 8,
+    padding: Padding.m,
+    gap: Spacing.spacing8,
   },
   promptWrap: {
-    gap: 10,
+    gap: Spacing.spacing10,
   },
   promptRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.08)",
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    borderRadius: BorderRadius.s,
+    paddingVertical: Spacing.spacing10,
+    paddingHorizontal: Spacing.spacing12,
   },
   picker: {
     width: "100%",
-  },
-  markerText: {
-    color: "#ffffff",
   },
 });

@@ -1,4 +1,6 @@
 export { useColorScheme } from "./use-color-scheme";
+export { formatTimeAgo } from "./format-time-ago";
+export { useGameNavigation } from "./use-game-navigation";
 export { useLatestRef } from "./use-latest-ref";
 export { generateSessionId, pick, shuffle } from "./game-utils";
 export { useLatencyTracker } from "./use-latency-tracker";

@@ -1,6 +1,6 @@
 import { useNBackGame } from "@/features/nback-game";
 import { NBACK_GAME } from "@/entities/nback";
-import { Padding, WIDTH, getAliasTokens } from "@/shared/config/theme";
+import { BorderRadius, BorderWidth, Padding, Spacing, WIDTH, getAliasTokens } from "@/shared/config/theme";
 import { Badge } from "@/shared/ui/badge";
 import { Countdown } from "@/shared/ui/countdown";
 import { FixedButtonView } from "@/shared/ui/fixed-button-view";
@@ -12,8 +12,9 @@ import { ThemedText } from "@/shared/ui/themed-text";
 import { ThemedView } from "@/shared/ui/themed-view";
 import { TimerProgressBar } from "@/shared/ui/timer-progressbar";
 import { useColorScheme } from "@/shared/lib/use-color-scheme";
+import { useGameNavigation } from "@/shared/lib/use-game-navigation";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { StyleSheet } from "react-native";
 
 export function NbackPlayWidget() {
@@ -39,13 +40,11 @@ export function NbackPlayWidget() {
     finishedSessionId,
   } = useNBackGame();
 
-  const [isFinishedModalVisible, setIsFinishedModalVisible] = useState(false);
-
-  useEffect(() => {
-    if (gamePhase === "finished") {
-      setIsFinishedModalVisible(true);
-    }
-  }, [gamePhase]);
+  const { goHome, goPreGame } = useGameNavigation("nback");
+  const stageNumber = useMemo(
+    () => NBACK_GAME.stages.findIndex((stage) => stage === currentStage) + 1,
+    [currentStage]
+  );
 
   if (!currentStage) {
     return null;
@@ -55,24 +54,14 @@ export function NbackPlayWidget() {
   const SvgComponent = currentShape?.svg;
   const totalQuestions = currentStage.rules.totalQuestions;
   const answeredQuestions = Math.max(0, totalQuestions - remainingQuestions);
-  const stageNumber = NBACK_GAME.stages.findIndex((stage) => stage === currentStage) + 1;
   const stageCount = NBACK_GAME.stages.length;
   const accuracyText =
     finishedAccuracy !== null
       ? `정답률 ${Math.round(finishedAccuracy * 100)}%`
       : "정답률 집계중";
-  const closeAndGoHome = () => {
-    setIsFinishedModalVisible(false);
-    router.replace("/");
-  };
-  const handleRestart = () => {
-    setIsFinishedModalVisible(false);
-    router.replace("/pre-game/nback");
-  };
   const handleOpenSummary = () => {
-    setIsFinishedModalVisible(false);
     if (finishedSessionId === null) {
-      router.replace("/pre-game/nback");
+      goPreGame();
       return;
     }
     router.replace(`/games/nback/summary/${finishedSessionId}`);
@@ -164,17 +153,17 @@ export function NbackPlayWidget() {
       />
 
       <ThemedModal
-        visible={isFinishedModalVisible}
+        visible={gamePhase === "finished"}
         title="게임 종료"
         description={`모든 스테이지를 완료했어요. ${accuracyText}`}
-        onRequestClose={closeAndGoHome}
+        onRequestClose={goHome}
         primaryAction={{
           label: "결과 요약 보기",
           onPress: handleOpenSummary,
         }}
         secondaryAction={{
           label: "다시 시작",
-          onPress: handleRestart,
+          onPress: goPreGame,
         }}
       />
     </FixedButtonView>
@@ -191,7 +180,7 @@ const styles = StyleSheet.create({
     width: "100%",
     flexDirection: "row",
     justifyContent: "space-between",
-    gap: 8,
+    gap: Spacing.spacing8,
   },
   remainingBadge: {
     alignSelf: "flex-start",
@@ -202,9 +191,9 @@ const styles = StyleSheet.create({
     textAlignVertical: "center",
   },
   shapeContainer: {
-    borderWidth: 1,
-    borderRadius: 16,
-    padding: 12,
+    borderWidth: BorderWidth.s,
+    borderRadius: BorderRadius.m,
+    padding: Spacing.spacing12,
   },
   segmentedPicker: {
     width: "100%",

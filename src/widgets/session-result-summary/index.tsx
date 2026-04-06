@@ -1,5 +1,5 @@
 import { GAMES_MAP } from "@/entities/game";
-import { getAliasTokens } from "@/shared/config/theme";
+import { BorderRadius, Spacing, getAliasTokens } from "@/shared/config/theme";
 import { getAssessmentSessionEventStream, type AssessmentGameKey } from "@/shared/lib";
 import { useColorScheme } from "@/shared/lib/use-color-scheme";
 import { useThemeColor } from "@/shared/lib/use-theme-color";
@@ -44,12 +44,14 @@ const roundPercent = (value: number | null) => {
 };
 
 const parseScoreSummary = (events: unknown[]): CompletionSummary => {
-  const completionEvent = [...events]
-    .reverse()
-    .find((event) => {
-      const e = event as Record<string, unknown> | null | undefined;
-      return typeof e?.event === "string" && (e.event as string).endsWith(".session_completed");
-    }) as Record<string, unknown> | undefined;
+  let completionEvent: Record<string, unknown> | undefined;
+  for (let i = events.length - 1; i >= 0; i--) {
+    const e = events[i] as Record<string, unknown> | null | undefined;
+    if (typeof e?.event === "string" && (e.event as string).endsWith(".session_completed")) {
+      completionEvent = e;
+      break;
+    }
+  }
 
   const rawPayload = completionEvent?.payload;
   if (rawPayload == null || typeof rawPayload !== "object") {
@@ -73,7 +75,6 @@ const parseScoreSummary = (events: unknown[]): CompletionSummary => {
     completionRate: toNumber(scoring.completionRate),
     speedScore: toNumber(scoring.speedScore),
     totalQuestions: toInteger(payload.totalQuestions),
-    // answeredCount is emitted under payload.scoring.answeredCount
     answeredCount: toInteger(scoring.answeredCount),
     correctCount: toInteger(payload.correctCount),
   };
@@ -217,14 +218,14 @@ export function SessionResultSummaryWidget({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    gap: 8,
+    padding: Spacing.spacing20,
+    gap: Spacing.spacing8,
   },
   metricCard: {
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: BorderRadius.s,
     padding: 14,
-    gap: 8,
+    gap: Spacing.spacing8,
     width: "100%",
   },
 });

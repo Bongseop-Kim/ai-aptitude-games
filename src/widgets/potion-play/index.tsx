@@ -1,4 +1,5 @@
 import { usePotionGame, renderSample, sampleLabel } from "@/features/potion-game";
+import { BorderRadius, BorderWidth, Padding, Spacing, getAliasTokens } from "@/shared/config/theme";
 import { Badge } from "@/shared/ui/badge";
 import { Countdown } from "@/shared/ui/countdown";
 import { FixedButtonView } from "@/shared/ui/fixed-button-view";
@@ -9,8 +10,8 @@ import { ThemedModal } from "@/shared/ui/themed-modal";
 import { ThemedText } from "@/shared/ui/themed-text";
 import { ThemedView } from "@/shared/ui/themed-view";
 import { TimerProgressBar } from "@/shared/ui/timer-progressbar";
-import { router } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useColorScheme } from "@/shared/lib/use-color-scheme";
+import { useGameNavigation } from "@/shared/lib/use-game-navigation";
 import { StyleSheet } from "react-native";
 
 const COIN_OPTIONS = [
@@ -20,6 +21,10 @@ const COIN_OPTIONS = [
 ] as const;
 
 export function PotionPlayWidget() {
+  const colorScheme = useColorScheme();
+  const colors = getAliasTokens(colorScheme ?? "light");
+  const { goHome, goPreGame, goHistory } = useGameNavigation("potion");
+
   const {
     answerMarkerRatio,
     currentIndex,
@@ -37,33 +42,6 @@ export function PotionPlayWidget() {
     handleTimeUp,
   } = usePotionGame();
 
-  const [isFinishedModalVisible, setIsFinishedModalVisible] = useState(false);
-
-  useEffect(() => {
-    if (phase === "finished") {
-      setIsFinishedModalVisible(true);
-    }
-  }, [phase]);
-
-  const progressText = useMemo(() => {
-    if (!currentStep) return "";
-    const a = renderSample(currentStep.sampleA);
-    const b = renderSample(currentStep.sampleB);
-    return `시료 A: ${a}\n시료 B: ${b}`;
-  }, [currentStep]);
-  const closeAndGoHome = () => {
-    setIsFinishedModalVisible(false);
-    router.replace("/");
-  };
-  const handleRestart = () => {
-    setIsFinishedModalVisible(false);
-    router.replace("/pre-game/potion");
-  };
-  const handleHistory = () => {
-    setIsFinishedModalVisible(false);
-    router.push("/games/potion/history");
-  };
-
   if (!currentStep || !currentCounts) {
     return null;
   }
@@ -77,7 +55,11 @@ export function PotionPlayWidget() {
         isRunning={isTimerRunning}
         onComplete={handleTimeUp}
         markerRatio={answerMarkerRatio}
-        markerContent={<Badge variant="success" type="fill" kind="text" shape="speech" tailPosition="top">응답완료</Badge>}
+        markerContent={
+          <Badge variant="success" type="fill" kind="text" shape="speech" tailPosition="top">
+            응답완료
+          </Badge>
+        }
       />
 
       <ThemedView style={styles.contentContainer}>
@@ -89,8 +71,8 @@ export function PotionPlayWidget() {
         <ThemedText type="captionM">문제 {currentIndex + 1} / {totalSteps}</ThemedText>
         <Spacer size="spacing16" />
 
-        <ThemedView style={styles.sampleCard}>
-          <ThemedText>{progressText}</ThemedText>
+        <ThemedView style={[styles.sampleCard, { borderColor: colors.border.alpha }]}>
+          <ThemedText>{`시료 A: ${renderSample(currentStep.sampleA)}\n시료 B: ${renderSample(currentStep.sampleB)}`}</ThemedText>
           <Spacer size="spacing8" />
           <ThemedText type="captionM">
             현재 빈도: 빨강 {currentCounts.red}, 파랑 {currentCounts.blue}, 초록 {currentCounts.green}
@@ -114,17 +96,17 @@ export function PotionPlayWidget() {
       <Countdown startCount={3} visible={showCountdown} onComplete={handleCountdownComplete} />
 
       <ThemedModal
-        visible={isFinishedModalVisible}
+        visible={phase === "finished"}
         title="게임 종료"
         description={`정답률 ${finishedAccuracy}%`}
-        onRequestClose={closeAndGoHome}
+        onRequestClose={goHome}
         primaryAction={{
           label: "다시 시작",
-          onPress: handleRestart,
+          onPress: goPreGame,
         }}
         secondaryAction={{
           label: "기록 보기",
-          onPress: handleHistory,
+          onPress: goHistory,
         }}
       />
     </FixedButtonView>
@@ -134,17 +116,16 @@ export function PotionPlayWidget() {
 const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
-    gap: 10,
-    paddingHorizontal: 16,
+    gap: Spacing.spacing10,
+    paddingHorizontal: Padding.m,
     alignItems: "center",
   },
   sampleCard: {
-    borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.12)",
-    borderRadius: 12,
-    padding: 12,
+    borderWidth: BorderWidth.s,
+    borderRadius: BorderRadius.s,
+    padding: Spacing.spacing12,
     width: "100%",
-    gap: 6,
+    gap: Spacing.spacing6,
   },
   picker: {
     width: "100%",

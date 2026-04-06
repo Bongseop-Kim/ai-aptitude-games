@@ -7,17 +7,19 @@ import { ThemedModal } from "@/shared/ui/themed-modal";
 import { ThemedText } from "@/shared/ui/themed-text";
 import { ThemedView } from "@/shared/ui/themed-view";
 import { useNumbersGame } from "@/features/numbers-game";
-import { getAliasTokens } from "@/shared/config/theme";
+import { BorderRadius, BorderWidth, Padding, Spacing, getAliasTokens } from "@/shared/config/theme";
 import { useColorScheme } from "@/shared/lib/use-color-scheme";
+import { useGameNavigation } from "@/shared/lib/use-game-navigation";
 import { router } from "expo-router";
 import { Pressable, StyleSheet, View } from "react-native";
-import { useEffect, useState } from "react";
+import type { RelativePathString } from "expo-router";
 
 const NUMBER_BUTTONS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 export function NumbersPlayWidget() {
   const colorScheme = useColorScheme();
   const colors = getAliasTokens(colorScheme ?? "light");
+  const { goHome, goPreGame } = useGameNavigation("numbers");
 
   const {
     phase,
@@ -38,14 +40,6 @@ export function NumbersPlayWidget() {
     handleTimeUp,
   } = useNumbersGame();
 
-  const [isFinishedModalVisible, setIsFinishedModalVisible] = useState(false);
-
-  useEffect(() => {
-    if (phase === "finished") {
-      setIsFinishedModalVisible(true);
-    }
-  }, [phase]);
-
   if (!currentStep) {
     return null;
   }
@@ -56,18 +50,9 @@ export function NumbersPlayWidget() {
       : currentStep.rule === "double"
         ? `${currentStep.value}를 2번 눌러 주세요.`
         : "건너뛰기";
-  const closeAndGoHome = () => {
-    setIsFinishedModalVisible(false);
-    router.replace("/");
-  };
-  const handleOpenResult = () => {
-    setIsFinishedModalVisible(false);
-    router.replace(`/games/numbers/result/${sessionId}`);
-  };
-  const handleRestart = () => {
-    setIsFinishedModalVisible(false);
-    router.replace("/pre-game/numbers");
-  };
+  const handleOpenResult = () =>
+    router.replace(`/games/numbers/result/${sessionId}` as RelativePathString);
+
   return (
     <FixedButtonView>
       <GameExitGuard />
@@ -115,7 +100,7 @@ export function NumbersPlayWidget() {
               accessibilityState={{ disabled: isAnswerLocked, selected: false }}
               style={({ pressed }) => [
                 styles.digitButton,
-                  {
+                {
                   borderColor: colors.border.layer2,
                   opacity: isAnswerLocked ? 0.6 : pressed ? 0.8 : 1,
                 },
@@ -155,17 +140,17 @@ export function NumbersPlayWidget() {
       />
 
       <ThemedModal
-        visible={isFinishedModalVisible}
+        visible={phase === "finished"}
         title="게임 종료"
         description={`정답률 ${finishedAccuracy}%`}
-        onRequestClose={closeAndGoHome}
+        onRequestClose={goHome}
         primaryAction={{
           label: "결과 보기",
           onPress: handleOpenResult,
         }}
         secondaryAction={{
           label: "다시 시작",
-          onPress: handleRestart,
+          onPress: goPreGame,
         }}
       />
     </FixedButtonView>
@@ -175,40 +160,40 @@ export function NumbersPlayWidget() {
 const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
-    padding: 16,
-    gap: 8,
+    padding: Padding.m,
+    gap: Spacing.spacing8,
   },
   card: {
-    borderWidth: 1,
+    borderWidth: BorderWidth.s,
     borderColor: "transparent",
-    borderRadius: 12,
+    borderRadius: BorderRadius.s,
     padding: 14,
-    gap: 6,
+    gap: Spacing.spacing6,
   },
   hintText: {
-    marginTop: 4,
+    marginTop: Spacing.spacing4,
   },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    gap: 8,
+    gap: Spacing.spacing8,
   },
   digitButton: {
     width: "30%",
     alignItems: "center",
     justifyContent: "center",
     height: 58,
-    borderRadius: 12,
-    borderWidth: 1,
+    borderRadius: BorderRadius.s,
+    borderWidth: BorderWidth.s,
     borderColor: "transparent",
   },
   skipButton: {
-    borderRadius: 12,
-    height: 52,
+    borderRadius: BorderRadius.s,
+    height: Spacing.spacing52,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
+    borderWidth: BorderWidth.s,
     borderColor: "transparent",
   },
 });

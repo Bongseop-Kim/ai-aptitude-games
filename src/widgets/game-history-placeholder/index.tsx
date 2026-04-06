@@ -1,4 +1,5 @@
 import { GAMES_MAP } from "@/entities/game";
+import { BorderRadius, Padding, Spacing } from "@/shared/config/theme";
 import { HStack, VStack } from "@/shared/ui/stack";
 import { BlockButton } from "@/shared/ui/block-button";
 import { ThemedText } from "@/shared/ui/themed-text";
@@ -76,9 +77,7 @@ export function GameHistoryPlaceholder({
 
       <View style={styles.actions}>
         <BlockButton
-          onPress={() =>
-            router.push(("/pre-game/" + gameId) as RelativePathString)
-          }
+          onPress={() => router.push(`/pre-game/${gameId}` as RelativePathString)}
           accessibilityRole="button"
           accessibilityLabel={`${game?.name ?? "게임"} 게임 시작`}
           accessibilityHint="현재 게임의 시작 화면으로 이동"
@@ -88,9 +87,7 @@ export function GameHistoryPlaceholder({
         {hasGame && (
           <BlockButton
             variant="secondary"
-            onPress={() =>
-              router.push(("/games/" + gameId + "/history") as RelativePathString)
-            }
+            onPress={() => router.push(`/games/${gameId}/history` as RelativePathString)}
             accessibilityRole="button"
             accessibilityLabel={`${game?.name ?? "게임"} 기록 보기`}
             accessibilityHint={`${game?.name ?? "게임"} 기록 화면으로 이동합니다`}
@@ -125,20 +122,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
-    padding: 20,
-    gap: 24,
+    padding: Spacing.spacing20,
+    gap: Spacing.spacing24,
   },
   card: {
-    gap: 12,
-    borderRadius: 12,
-    padding: 16,
+    gap: Spacing.spacing12,
+    borderRadius: BorderRadius.s,
+    padding: Padding.m,
     borderWidth: 1,
   },
   headerCard: {
-    gap: 12,
+    gap: Spacing.spacing12,
   },
   headerTextBlock: {
-    gap: 6,
+    gap: Spacing.spacing6,
   },
   heroImage: {
     width: "100%",
@@ -146,14 +143,14 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   metricsCard: {
-    gap: 10,
-    marginTop: 4,
+    gap: Spacing.spacing10,
+    marginTop: Spacing.spacing4,
   },
   summaryRow: {
     justifyContent: "space-between",
     alignItems: "center",
   },
   actions: {
-    gap: 12,
+    gap: Spacing.spacing12,
   },
 });

@@ -1,5 +1,5 @@
 import { useGoNoGoGame } from "@/features/gonogo-game";
-import { getAliasTokens } from "@/shared/config/theme";
+import { BorderRadius, Padding, getAliasTokens } from "@/shared/config/theme";
 import { Badge } from "@/shared/ui/badge";
 import { Countdown } from "@/shared/ui/countdown";
 import { FixedButtonView } from "@/shared/ui/fixed-button-view";
@@ -9,9 +9,8 @@ import { ThemedModal } from "@/shared/ui/themed-modal";
 import { ThemedText } from "@/shared/ui/themed-text";
 import { ThemedView } from "@/shared/ui/themed-view";
 import { TimerProgressBar } from "@/shared/ui/timer-progressbar";
-import { router } from "expo-router";
 import { useColorScheme } from "@/shared/lib/use-color-scheme";
-import { useEffect, useState } from "react";
+import { useGameNavigation } from "@/shared/lib/use-game-navigation";
 import { Pressable, StyleSheet } from "react-native";
 
 const GO_NO_GO_COPY = {
@@ -27,6 +26,7 @@ const GO_NO_GO_COPY = {
 export function GoNoGoPlayWidget() {
   const colorScheme = useColorScheme();
   const colors = getAliasTokens(colorScheme ?? "light");
+  const { goHome, goPreGame, goHistory } = useGameNavigation("gonogo");
 
   const {
     accuracyPercent,
@@ -45,32 +45,12 @@ export function GoNoGoPlayWidget() {
     trialTimeSec,
   } = useGoNoGoGame();
 
-  const [isFinishedModalVisible, setIsFinishedModalVisible] = useState(false);
-
-  useEffect(() => {
-    if (isFinished) {
-      setIsFinishedModalVisible(true);
-    }
-  }, [isFinished]);
-
   if (!currentTrial) {
     return null;
   }
 
   const trialNumber = Math.min(totalTrials, currentIndex + 1);
   const isCorrectLabel = isTapCorrect === null ? null : isTapCorrect ? "정답" : "오답";
-  const closeAndGoHome = () => {
-    setIsFinishedModalVisible(false);
-    router.replace("/");
-  };
-  const handleRestart = () => {
-    setIsFinishedModalVisible(false);
-    router.replace("/pre-game/gonogo");
-  };
-  const handleHistory = () => {
-    setIsFinishedModalVisible(false);
-    router.push("/games/gonogo/history");
-  };
 
   return (
     <FixedButtonView>
@@ -145,17 +125,17 @@ export function GoNoGoPlayWidget() {
       />
 
       <ThemedModal
-        visible={isFinishedModalVisible}
+        visible={isFinished}
         title={GO_NO_GO_COPY.finishTitle}
         description={`${GO_NO_GO_COPY.accuracyLabel}: ${accuracyPercent}%`}
-        onRequestClose={closeAndGoHome}
+        onRequestClose={goHome}
         primaryAction={{
           label: "다시 시작",
-          onPress: handleRestart,
+          onPress: goPreGame,
         }}
         secondaryAction={{
           label: "기록 보기",
-          onPress: handleHistory,
+          onPress: goHistory,
         }}
       />
     </FixedButtonView>
@@ -166,19 +146,19 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     alignItems: "center",
-    paddingHorizontal: 16,
+    paddingHorizontal: Padding.m,
   },
   stimulusBox: {
     width: 140,
     height: 140,
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 12,
+    borderRadius: BorderRadius.s,
   },
   actionButton: {
     width: "100%",
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderRadius: BorderRadius.s,
+    paddingVertical: Padding.m,
     alignItems: "center",
   },
 });

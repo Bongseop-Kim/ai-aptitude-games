@@ -15,20 +15,15 @@ import { useColorScheme } from "@/shared/lib/use-color-scheme";
 import { HStack, VStack } from "@/shared/ui/stack";
 import { ThemedText } from "@/shared/ui/themed-text";
 import { ThemedView } from "@/shared/ui/themed-view";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FlatList, StyleSheet } from "react-native";
+
+const SHAPE_MAP = new Map(SHAPE_POOL.map((shape) => [shape.id, shape.svg]));
 
 export function NbackDetailWidget({ sessionId }: { sessionId: number }) {
   const [stages, setStages] = useState<NbackDetailStage[]>([]);
   const colorScheme = useColorScheme();
-  const colors = useMemo(
-    () => getAliasTokens(colorScheme ?? "light"),
-    [colorScheme]
-  );
-  const shapeMap = useMemo(
-    () => new Map(SHAPE_POOL.map((shape) => [shape.id, shape.svg])),
-    []
-  );
+  const colors = getAliasTokens(colorScheme ?? "light");
 
   useEffect(() => {
     const fetchStages = async () => {
@@ -68,7 +63,7 @@ export function NbackDetailWidget({ sessionId }: { sessionId: number }) {
             >
               <HStack spacing={8} wrap="wrap" style={styles.grid}>
                 {stage.trials.map((trial) => {
-                  const Shape = shapeMap.get(trial.shownShapeId);
+                  const Shape = SHAPE_MAP.get(trial.shownShapeId);
                   return (
                     <VStack
                       key={trial.trialIndex}

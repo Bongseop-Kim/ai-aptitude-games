@@ -1,4 +1,5 @@
 import { useRpsGame } from "@/features/rps-game";
+import { Padding } from "@/shared/config/theme";
 import { Badge } from "@/shared/ui/badge";
 import { Countdown } from "@/shared/ui/countdown";
 import { FixedButtonView } from "@/shared/ui/fixed-button-view";
@@ -9,9 +10,8 @@ import { ThemedModal } from "@/shared/ui/themed-modal";
 import { ThemedText } from "@/shared/ui/themed-text";
 import { ThemedView } from "@/shared/ui/themed-view";
 import { TimerProgressBar } from "@/shared/ui/timer-progressbar";
-import { router } from "expo-router";
+import { useGameNavigation } from "@/shared/lib/use-game-navigation";
 import { StyleSheet } from "react-native";
-import { useEffect, useState } from "react";
 
 const RPS_OPTIONS = [
   { label: "주먹(나)", value: "rock" },
@@ -20,6 +20,7 @@ const RPS_OPTIONS = [
 ] as const;
 
 export function RpsPlayWidget() {
+  const { goHome, goPreGame, goHistory } = useGameNavigation("rps");
   const {
     currentIndex,
     currentRound,
@@ -36,13 +37,7 @@ export function RpsPlayWidget() {
     questionDurationSec,
     showCountdown,
   } = useRpsGame();
-  const [isFinishedModalVisible, setIsFinishedModalVisible] = useState(false);
-
-  useEffect(() => {
-    if (finishedAccuracy !== null && currentIndex + 1 >= totalRounds) {
-      setIsFinishedModalVisible(true);
-    }
-  }, [currentIndex, finishedAccuracy, totalRounds]);
+  const isFinished = finishedAccuracy !== null && currentIndex + 1 >= totalRounds;
 
   if (!currentRound) {
     return null;
@@ -54,18 +49,6 @@ export function RpsPlayWidget() {
   const trialNumber = currentIndex + 1;
   const isLastRound = currentIndex + 1 === totalRounds;
   const phaseText = isLastRound ? "마지막 라운드" : `라운드 ${trialNumber} / ${totalRounds}`;
-  const closeAndGoHome = () => {
-    setIsFinishedModalVisible(false);
-    router.replace("/");
-  };
-  const handleRestart = () => {
-    setIsFinishedModalVisible(false);
-    router.replace("/pre-game/rps");
-  };
-  const handleHistory = () => {
-    setIsFinishedModalVisible(false);
-    router.push("/games/rps/history");
-  };
 
   return (
     <FixedButtonView>
@@ -118,17 +101,17 @@ export function RpsPlayWidget() {
       />
 
       <ThemedModal
-        visible={isFinishedModalVisible}
+        visible={isFinished}
         title="게임 종료"
         description={`정답률 ${finishedAccuracy}%`}
-        onRequestClose={closeAndGoHome}
+        onRequestClose={goHome}
         primaryAction={{
           label: "다시 시작",
-          onPress: handleRestart,
+          onPress: goPreGame,
         }}
         secondaryAction={{
           label: "기록 보기",
-          onPress: handleHistory,
+          onPress: goHistory,
         }}
       />
     </FixedButtonView>
@@ -138,7 +121,7 @@ export function RpsPlayWidget() {
 const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: Padding.m,
     alignItems: "center",
   },
   picker: {
