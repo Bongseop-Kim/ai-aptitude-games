@@ -16,7 +16,7 @@ import { Stack, router } from "expo-router";
 import { SQLiteProvider } from "expo-sqlite";
 import { StatusBar } from "expo-status-bar";
 import { Suspense } from "react";
-import { ActivityIndicator } from "react-native";
+import { ActivityIndicator, StyleSheet } from "react-native";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import "react-native-reanimated";
 
@@ -24,16 +24,17 @@ export const unstable_settings = {
   anchor: "(tabs)",
 };
 
+let apiConfigError: Error | null = null;
+try {
+  getApiBaseUrlFromEnv();
+} catch (caughtError) {
+  apiConfigError = caughtError instanceof Error ? caughtError : new Error("Unknown API config error");
+}
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const { success, error } = useMigrations(db, migrations);
   useDrizzleStudio(expo);
-  let apiConfigError: Error | null = null;
-  try {
-    getApiBaseUrlFromEnv();
-  } catch (caughtError) {
-    apiConfigError = caughtError instanceof Error ? caughtError : new Error("Unknown API config error");
-  }
 
   if (apiConfigError) {
     return (
@@ -45,7 +46,7 @@ export default function RootLayout() {
   }
 
   if (!success && !error) {
-    return <ActivityIndicator size="large" style={{ flex: 1 }} />;
+    return <ActivityIndicator size="large" style={styles.loading} />;
   }
 
   if (error) {
@@ -81,14 +82,6 @@ export default function RootLayout() {
                   name="(tabs)"
                   options={{
                     headerLeft: undefined,
-                    headerRight: () => (
-                      <HeaderIcon
-                        name="gearshape"
-                        onPress={() =>
-                          router.push("/setting")
-                        }
-                      />
-                    ),
                   }}
                 />
               </Stack>
@@ -100,3 +93,9 @@ export default function RootLayout() {
     </Suspense>
   );
 }
+
+const styles = StyleSheet.create({
+  loading: {
+    flex: 1,
+  },
+});

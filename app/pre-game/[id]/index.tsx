@@ -49,12 +49,11 @@ export default function PreGameScreen() {
       getPracticeModalSettings(new Date(), process.env.EXPO_PUBLIC_PRACTICE_MODAL_CONFIG),
     []
   );
-  const practiceModalEnabled = practiceModalSettings.enabled;
   const [showPracticeModal, setShowPracticeModal] = useState(
-    practiceModalEnabled && practiceModalSettings.variant !== "v3"
+    practiceModalSettings.enabled && practiceModalSettings.variant !== "v3"
   );
   const [showPracticeBanner, setShowPracticeBanner] = useState(
-    practiceModalEnabled && practiceModalSettings.variant === "v3"
+    practiceModalSettings.enabled && practiceModalSettings.variant === "v3"
   );
   const [showDetails, setShowDetails] = useState(false);
 
@@ -207,7 +206,7 @@ export default function PreGameScreen() {
         options={{
           headerRight: () => (
             <GameHeaderActions
-              historyPath={id ? `/games/${id}/history` : undefined}
+              historyPath={`/games/${id}/history`}
               historyAccessibilityLabel={`${game.name} 기록 보기`}
               historyAccessibilityHint="게임 기록 화면으로 이동합니다"
             />

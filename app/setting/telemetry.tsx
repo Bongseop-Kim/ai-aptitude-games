@@ -161,8 +161,7 @@ export default function TelemetrySettingScreen() {
 
 const formatMetric = (value: number | null | undefined) => {
     if (value == null) return "N/A";
-    if (typeof value === "number") return `${value.toFixed(2)}%`;
-    return "N/A";
+    return `${value.toFixed(2)}%`;
 };
 
 const formatSeconds = (value: number | null) => {
@@ -273,8 +272,6 @@ const styles = StyleSheet.create({
         gap: Spacing.spacing16,
     },
     section: {
-        borderWidth: 1,
-        borderColor: "transparent",
         borderRadius: 14,
         padding: Spacing.spacing12,
         gap: Spacing.spacing8,
@@ -287,8 +284,6 @@ const styles = StyleSheet.create({
     },
     metricRow: {
         paddingVertical: Spacing.spacing8,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: "transparent",
         flexDirection: "row",
         justifyContent: "space-between",
     },
@@ -307,7 +302,7 @@ const styles = StyleSheet.create({
     },
     segmentItem: {
         borderWidth: 1,
-        borderColor: "rgba(0,0,0,0)",
+        borderColor: "transparent",
         borderRadius: 10,
         padding: Spacing.spacing10,
         gap: Spacing.spacing6,

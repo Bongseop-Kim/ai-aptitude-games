@@ -5,7 +5,7 @@ import { FixedButtonView } from "@/shared/ui/fixed-button-view";
 import { getAliasTokens } from "@/shared/config/theme";
 import { useColorScheme } from "@/shared/lib/use-color-scheme";
 import { type Href, Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, StyleSheet } from "react-native";
 import { useAuth } from "@/shared/auth/auth-context";
 import { AuthServiceError } from "@/shared/auth/auth-service";
@@ -24,8 +24,8 @@ export default function AuthScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const targetPath = resolveReturnTo(returnTo);
-  const authReason = resolveReason(reason);
+  const targetPath = useMemo(() => resolveReturnTo(returnTo), [returnTo]);
+  const authReason = useMemo(() => resolveReason(reason), [reason]);
 
   const handleSubmit = useCallback(async () => {
     const normalized = displayName.trim();

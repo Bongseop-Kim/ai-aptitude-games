@@ -164,11 +164,6 @@ const styles = StyleSheet.create({
     listContent: {
         paddingBottom: Padding.xl,
     },
-    header: {
-        paddingHorizontal: Padding.m,
-        paddingTop: Spacing.spacing24,
-        paddingBottom: Spacing.spacing16,
-    },
     separator: {
         height: StyleSheet.hairlineWidth,
         marginLeft: Padding.m,
