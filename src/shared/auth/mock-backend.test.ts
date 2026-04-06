@@ -50,33 +50,45 @@ describe("mock-backend auth routes", () => {
 
   it("supports POST /api/v1/auth/sign-in", async () => {
     const port = 4100 + Math.floor(Math.random() * 300);
+    const stderrChunks: string[] = [];
     const child = spawn(process.execPath, [backendScriptPath], {
       env: {
         ...process.env,
         PORT: String(port),
       },
-      stdio: "ignore",
+      stdio: ["ignore", "ignore", "pipe"],
     });
     children.push(child);
-
-    await waitForHealth(port);
-
-    const response = await fetch(`http://127.0.0.1:${port}/api/v1/auth/sign-in`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ displayName: "Tester" }),
+    child.stderr?.on("data", (chunk: Buffer | string) => {
+      stderrChunks.push(chunk.toString());
     });
 
-    const payload = (await response.json()) as {
-      userId?: string;
-      serverUserId?: string;
-      displayName?: string;
-    };
+    try {
+      await waitForHealth(port);
 
-    expect(response.status).toBe(200);
-    expect(payload.serverUserId).toBeTypeOf("string");
-    expect(payload.displayName).toBe("Tester");
+      const response = await fetch(`http://127.0.0.1:${port}/api/v1/auth/sign-in`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ displayName: "Tester" }),
+      });
+
+      expect(response.status).toBe(200);
+
+      const payload = (await response.json()) as {
+        userId?: string;
+        serverUserId?: string;
+        displayName?: string;
+      };
+
+      expect(payload.serverUserId).toBeTypeOf("string");
+      expect(payload.displayName).toBe("Tester");
+    } catch (error) {
+      if (stderrChunks.length > 0) {
+        console.error(stderrChunks.join(""));
+      }
+      throw error;
+    }
   });
 });

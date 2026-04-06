@@ -1,10 +1,23 @@
 import { getApiBaseUrlFromEnv } from "@/shared/config/api";
-import { createAuthApi } from "./api/auth-api";
-import { clearAuthTokens, loadAuthTokens, saveAuthTokens } from "./lib/token-store";
-import { getAuthStatus, shouldRefreshToken, type AuthStatus } from "./model/auth-session";
-import { bootstrapAuthSession, clearAuthSession, saveAuthSession, type AuthSession } from "./auth-service";
+import { createAuthApi } from "@/shared/auth/api/auth-api";
+import {
+  clearAuthTokens,
+  loadAuthTokens,
+  saveAuthTokens,
+} from "@/shared/auth/lib/token-store";
+import {
+  getAuthStatus,
+  shouldRefreshToken,
+  type AuthStatus,
+} from "@/shared/auth/model/auth-session";
+import {
+  bootstrapAuthSession,
+  clearAuthSession,
+  saveAuthSession,
+  type AuthSession,
+} from "@/shared/auth/auth-service";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator } from "react-native";
+import { ActivityIndicator, StyleSheet } from "react-native";
 
 type AuthState = {
   isLoading: boolean;
@@ -21,7 +34,7 @@ type AuthState = {
 const AuthContext = createContext<AuthState | null>(null);
 
 const AuthLoadingFallback = () => (
-  <ActivityIndicator size="large" style={{ flex: 1 }} />
+  <ActivityIndicator size="large" style={styles.loadingFallback} />
 );
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -128,11 +141,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   );
 
   const signOut = useCallback(async () => {
-    await clearAuthSession();
-    await clearAuthTokens();
-    setSession(null);
-    setHasValidAccessToken(false);
-    setRefreshFailed(false);
+    try {
+      await Promise.allSettled([clearAuthSession(), clearAuthTokens()]);
+    } finally {
+      setSession(null);
+      setHasValidAccessToken(false);
+      setRefreshFailed(false);
+    }
   }, []);
 
   const authStatus = getAuthStatus({
@@ -180,3 +195,9 @@ export const useAuth = () => {
   }
   return context;
 };
+
+const styles = StyleSheet.create({
+  loadingFallback: {
+    flex: 1,
+  },
+});

@@ -81,6 +81,34 @@ describe("feature-flags", () => {
     ).toBe(true);
   });
 
+  it("interprets practice modal windows in the configured timezone", () => {
+    const configValue = JSON.stringify({
+      flags: {
+        "app.delivery.t0_enabled": true,
+        "ui.modals.whats_new_enabled": true,
+        "comms.waitlist_batch_enabled": true,
+        "app.delivery.rollback_enabled": false,
+      },
+      practice_modal: {
+        variant: "v3",
+        windows: {
+          timezone: "UTC",
+          t0: {
+            start: "2026-04-07T10:00:00",
+            end: "2026-04-07T11:00:00",
+          },
+        },
+      },
+    });
+
+    expect(
+      isPracticeModalEnabled(undefined, new Date("2026-04-07T10:30:00Z"), configValue)
+    ).toBe(true);
+    expect(
+      isPracticeModalEnabled(undefined, new Date("2026-04-07T12:30:00Z"), configValue)
+    ).toBe(false);
+  });
+
   it("rejects malformed practice modal config objects", () => {
     const malformedConfig = JSON.stringify({
       flags: "enabled",
@@ -91,6 +119,25 @@ describe("feature-flags", () => {
             start: 123,
           },
         },
+      },
+    });
+
+    expect(getPracticeModalSettings(new Date("2026-04-07T01:30:00Z"), malformedConfig)).toEqual({
+      enabled: false,
+      variant: "v1",
+      windows: {},
+      flags: {},
+    });
+  });
+
+  it("rejects unexpected practice modal flag keys", () => {
+    const malformedConfig = JSON.stringify({
+      flags: {
+        "app.delivery.t0_enabled": true,
+        "unexpected.flag": true,
+      },
+      practice_modal: {
+        variant: "v1",
       },
     });
 

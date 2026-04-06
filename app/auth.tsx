@@ -5,7 +5,7 @@ import { FixedButtonView } from "@/shared/ui/fixed-button-view";
 import { getAliasTokens } from "@/shared/config/theme";
 import { useColorScheme } from "@/shared/lib/use-color-scheme";
 import { type Href, Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, StyleSheet } from "react-native";
 import { useAuth } from "@/shared/auth/auth-context";
 import { AuthServiceError } from "@/shared/auth/auth-service";
@@ -23,11 +23,16 @@ export default function AuthScreen() {
   const [displayName, setDisplayName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const submittingRef = useRef(false);
 
   const targetPath = useMemo(() => resolveReturnTo(returnTo), [returnTo]);
   const authReason = useMemo(() => resolveReason(reason), [reason]);
 
   const handleSubmit = useCallback(async () => {
+    if (submittingRef.current) {
+      return;
+    }
+
     const normalized = displayName.trim();
     if (normalized.length === 0) {
       Alert.alert("알림", "이름을 입력해 주세요.");
@@ -39,6 +44,7 @@ export default function AuthScreen() {
     }
 
     try {
+      submittingRef.current = true;
       setIsSubmitting(true);
       setSubmitError(null);
       await auth.signIn(normalized);
@@ -46,6 +52,7 @@ export default function AuthScreen() {
       const message = resolveAuthErrorMessage(error);
       setSubmitError(message);
     } finally {
+      submittingRef.current = false;
       setIsSubmitting(false);
     }
   }, [auth, displayName]);
@@ -115,7 +122,10 @@ export default function AuthScreen() {
             autoCorrect={false}
           />
           {submitError ? (
-            <ThemedText type="captionS" style={[styles.errorText, { color: colors.text.danger }]}>
+            <ThemedText
+              type="captionS"
+              style={[styles.errorText, { color: colors.feedback.errorFg }]}
+            >
               {submitError}
             </ThemedText>
           ) : null}

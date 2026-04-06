@@ -87,7 +87,7 @@ export default function TelemetrySettingScreen() {
                         <View style={styles.alerts}>
                             {summary.data?.alerts.completionRateDrop.triggered ? (
                                 <ThemedText type="captionM" style={[styles.alert, { color: negativeColor }]}>
-                                    완료율 경고: 전주 대비 완료율이 15%p 이상 하락했습니다.
+                                    완료율 경고: {summary.data.alerts.completionRateDrop.message}
                                 </ThemedText>
                             ) : (
                                 <ThemedText type="captionM" style={[styles.alert, { color: mutedColor }]}>
@@ -96,7 +96,7 @@ export default function TelemetrySettingScreen() {
                             )}
                             {summary.data?.alerts.p50CompletionIncrease.triggered ? (
                                 <ThemedText type="captionM" style={[styles.alert, { color: negativeColor }]}>
-                                    p50 완료시간 경고: 전주 대비 25% 이상 증가했습니다.
+                                    p50 완료시간 경고: {summary.data.alerts.p50CompletionIncrease.message}
                                 </ThemedText>
                             ) : (
                                 <ThemedText type="captionM" style={[styles.alert, { color: mutedColor }]}>
@@ -105,7 +105,7 @@ export default function TelemetrySettingScreen() {
                             )}
                             {summary.data?.alerts.invalidEventRatio.triggered ? (
                                 <ThemedText type="captionM" style={[styles.alert, { color: negativeColor }]}>
-                                    invalid 이벤트 경고: 비율이 2%를 초과했습니다.
+                                    invalid 이벤트 경고: {summary.data.alerts.invalidEventRatio.message}
                                 </ThemedText>
                             ) : (
                                 <ThemedText type="captionM" style={[styles.alert, { color: mutedColor }]}>

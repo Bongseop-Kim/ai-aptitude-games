@@ -22,10 +22,21 @@ import { ThemedText } from "@/shared/ui/themed-text";
 import { ThemedView } from "@/shared/ui/themed-view";
 import { GAMES_MAP } from "@/entities/game";
 import { IconSymbol } from "@/shared/ui/icon-symbol";
-import { Link, Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { type Href, Link, Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
 import { Alert, Pressable, StyleSheet, View } from "react-native";
 import { GameHeaderActions } from "@/shared/ui/game-header-actions";
+
+const GAME_PLAY_ROUTES: Partial<Record<string, Href>> = {
+  nback: "/games/nback/play",
+  rotation: "/games/rotation/play",
+  stroop: "/games/stroop/play",
+  gonogo: "/games/gonogo/play",
+  rps: "/games/rps/play",
+  promise: "/games/promise/play",
+  numbers: "/games/numbers/play",
+  potion: "/games/potion/play",
+};
 
 export default function PreGameScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -36,7 +47,7 @@ export default function PreGameScreen() {
     () => getSemanticTokens(colorScheme ?? "light"),
     [colorScheme]
   );
-  const modalLocale = useMemo(() => {
+  const modalLocale = useMemo<"ko" | "en">(() => {
     if (typeof Intl === "undefined") {
       return "ko";
     }
@@ -44,20 +55,38 @@ export default function PreGameScreen() {
     return locale.startsWith("en") ? "en" : "ko";
   }, []);
 
+  const [now, setNow] = useState(() => Date.now());
   const practiceModalSettings = useMemo(
     () =>
-      getPracticeModalSettings(new Date(), process.env.EXPO_PUBLIC_PRACTICE_MODAL_CONFIG),
-    []
+      getPracticeModalSettings(
+        new Date(now),
+        process.env.EXPO_PUBLIC_PRACTICE_MODAL_CONFIG
+      ),
+    [now]
   );
-  const [showPracticeModal, setShowPracticeModal] = useState(
-    practiceModalSettings.enabled && practiceModalSettings.variant !== "v3"
-  );
-  const [showPracticeBanner, setShowPracticeBanner] = useState(
-    practiceModalSettings.enabled && practiceModalSettings.variant === "v3"
-  );
+  const [hidePracticeModal, setHidePracticeModal] = useState(false);
+  const [hidePracticeBanner, setHidePracticeBanner] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
 
   const game = id ? GAMES_MAP[id] : undefined;
+  const showPracticeModal =
+    practiceModalSettings.enabled &&
+    practiceModalSettings.variant !== "v3" &&
+    !hidePracticeModal;
+  const showPracticeBanner =
+    practiceModalSettings.enabled &&
+    practiceModalSettings.variant === "v3" &&
+    !hidePracticeBanner;
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(Date.now());
+    }, 60_000);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
 
   const durationLabel = useMemo(() => {
     if (!game) {
@@ -89,36 +118,14 @@ export default function PreGameScreen() {
   }
 
   const handleStart = () => {
-    switch (id) {
-      case "nback":
-        router.push("/games/nback/play");
-        break;
-      case "rotation":
-        router.push("/games/rotation/play");
-        break;
-      case "stroop":
-        router.push("/games/stroop/play");
-        break;
-      case "gonogo":
-        router.push("/games/gonogo/play");
-        break;
-      case "rps":
-        router.push("/games/rps/play");
-        break;
-      case "promise":
-        router.push("/games/promise/play");
-        break;
-      case "numbers":
-        router.push("/games/numbers/play");
-        break;
-      case "potion":
-        router.push("/games/potion/play");
-        break;
-      default:
-        console.warn(`[handleStart] 미구현 게임: ${id}`);
-        Alert.alert("준비 중", "선택한 게임은 아직 구현되지 않았습니다.");
-        break;
+    const route = id ? GAME_PLAY_ROUTES[id] : undefined;
+    if (route) {
+      router.push(route);
+      return;
     }
+
+    console.warn(`[handleStart] 미구현 게임: ${id}`);
+    Alert.alert("준비 중", "선택한 게임은 아직 구현되지 않았습니다.");
   };
 
   return (
@@ -138,7 +145,7 @@ export default function PreGameScreen() {
               : PRACTICE_MODAL_I18N_KEYS.body,
             modalLocale
           )}
-          onRequestClose={() => setShowPracticeModal(false)}
+          onRequestClose={() => setHidePracticeModal(true)}
           secondaryAction={
             practiceModalSettings.variant === "v2"
               ? undefined
@@ -147,7 +154,7 @@ export default function PreGameScreen() {
                     PRACTICE_MODAL_I18N_KEYS.ctaSecondary,
                     modalLocale
                   ),
-                  onPress: () => setShowPracticeModal(false),
+                  onPress: () => setHidePracticeModal(true),
                   variant: "secondary",
                 }
           }
@@ -156,7 +163,7 @@ export default function PreGameScreen() {
               PRACTICE_MODAL_I18N_KEYS.ctaPrimary,
               modalLocale
             ),
-            onPress: () => setShowPracticeModal(false),
+            onPress: () => setHidePracticeModal(true),
             variant: "primary",
           }}
           modalProps={{ animationType: "none" }}
@@ -183,24 +190,12 @@ export default function PreGameScreen() {
           )}
         </ThemedModal>
       ) : showPracticeBanner ? (
-        <View
-          style={[
-            styles.bannerContainer,
-            { backgroundColor: semanticColors.feedback.warningBg },
-          ]}
-          accessibilityRole="alert"
-        >
-          <ThemedText type="body2" style={{ color: aliasColors.text.inversePrimary }}>
-            {getPracticeModalCopy(PRACTICE_MODAL_I18N_KEYS.bannerText, modalLocale)}
-          </ThemedText>
-          <BlockButton
-            variant="tertiary"
-            onPress={() => setShowPracticeBanner(false)}
-            accessibilityRole="button"
-          >
-            {getPracticeModalCopy(PRACTICE_MODAL_I18N_KEYS.bannerCta, modalLocale)}
-          </BlockButton>
-        </View>
+        <PracticeBanner
+          backgroundColor={aliasColors.feedback.warningBg}
+          foregroundColor={aliasColors.text.inversePrimary}
+          modalLocale={modalLocale}
+          onDismiss={() => setHidePracticeBanner(true)}
+        />
       ) : null}
       <Stack.Screen
         options={{
@@ -330,7 +325,6 @@ export default function PreGameScreen() {
   );
 }
 
-
 const ItemContainer = ({
   header,
   children,
@@ -347,6 +341,34 @@ const ItemContainer = ({
     </ThemedView>
   );
 };
+
+const PracticeBanner = ({
+  backgroundColor,
+  foregroundColor,
+  modalLocale,
+  onDismiss,
+}: {
+  backgroundColor: string;
+  foregroundColor: string;
+  modalLocale: "ko" | "en";
+  onDismiss: () => void;
+}) => (
+  <View
+    style={[styles.bannerContainer, { backgroundColor }]}
+    accessibilityRole="alert"
+  >
+    <ThemedText type="body2" style={{ color: foregroundColor }}>
+      {getPracticeModalCopy(PRACTICE_MODAL_I18N_KEYS.bannerText, modalLocale)}
+    </ThemedText>
+    <BlockButton
+      variant="tertiary"
+      onPress={onDismiss}
+      accessibilityRole="button"
+    >
+      {getPracticeModalCopy(PRACTICE_MODAL_I18N_KEYS.bannerCta, modalLocale)}
+    </BlockButton>
+  </View>
+);
 
 const styles = StyleSheet.create({
   contentContainer: {
@@ -371,7 +393,8 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   metaItem: {
-    width: "31%",
+    flex: 1,
+    flexBasis: "31%",
     minWidth: 96,
     alignItems: "center",
     padding: 12,

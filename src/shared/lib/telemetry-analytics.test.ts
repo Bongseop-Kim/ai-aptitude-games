@@ -327,4 +327,216 @@ describe("telemetry-analytics", () => {
       "gameB",
     ]);
   });
+
+  it("triggers completion drop alerts at exactly 15 percentage points", async () => {
+    const asOf = new Date("2026-01-10T00:00:00.000Z");
+    const currentSessionAt = asOf.getTime() - 12 * 60 * 60 * 1000;
+    const previousSessionAt = asOf.getTime() - 36 * 60 * 60 * 1000;
+
+    mockDb.select
+      .mockImplementationOnce(() =>
+        makeQueryChain([
+          telemetryRow({
+            sessionId: "current-complete-1",
+            userId: "u-1",
+            createdAt: currentSessionAt + 100,
+            event: "assessment.rps.session_started",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+          telemetryRow({
+            sessionId: "current-complete-1",
+            userId: "u-1",
+            createdAt: currentSessionAt + 200,
+            event: "assessment.rps.session_completed",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+          telemetryRow({
+            sessionId: "current-complete-2",
+            userId: "u-2",
+            createdAt: currentSessionAt + 300,
+            event: "assessment.rps.session_started",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+          telemetryRow({
+            sessionId: "current-complete-2",
+            userId: "u-2",
+            createdAt: currentSessionAt + 400,
+            event: "assessment.rps.session_completed",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+          telemetryRow({
+            sessionId: "current-complete-3",
+            userId: "u-3",
+            createdAt: currentSessionAt + 500,
+            event: "assessment.rps.session_started",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+          telemetryRow({
+            sessionId: "current-complete-3",
+            userId: "u-3",
+            createdAt: currentSessionAt + 600,
+            event: "assessment.rps.session_started",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+          telemetryRow({
+            sessionId: "current-complete-3",
+            userId: "u-3",
+            createdAt: currentSessionAt + 700,
+            event: "assessment.rps.session_completed",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+          telemetryRow({
+            sessionId: "current-incomplete-1",
+            userId: "u-4",
+            createdAt: currentSessionAt + 800,
+            event: "assessment.rps.session_started",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+          telemetryRow({
+            sessionId: "current-incomplete-2",
+            userId: "u-5",
+            createdAt: currentSessionAt + 900,
+            event: "assessment.rps.session_started",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+          telemetryRow({
+            sessionId: "previous-complete-1",
+            userId: "u-6",
+            createdAt: previousSessionAt + 100,
+            event: "assessment.rps.session_started",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+          telemetryRow({
+            sessionId: "previous-complete-1",
+            userId: "u-6",
+            createdAt: previousSessionAt + 200,
+            event: "assessment.rps.session_completed",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+          telemetryRow({
+            sessionId: "previous-complete-2",
+            userId: "u-7",
+            createdAt: previousSessionAt + 300,
+            event: "assessment.rps.session_started",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+          telemetryRow({
+            sessionId: "previous-complete-2",
+            userId: "u-7",
+            createdAt: previousSessionAt + 400,
+            event: "assessment.rps.session_completed",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+          telemetryRow({
+            sessionId: "previous-complete-3",
+            userId: "u-8",
+            createdAt: previousSessionAt + 500,
+            event: "assessment.rps.session_started",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+          telemetryRow({
+            sessionId: "previous-complete-3",
+            userId: "u-8",
+            createdAt: previousSessionAt + 600,
+            event: "assessment.rps.session_completed",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+          telemetryRow({
+            sessionId: "previous-incomplete-1",
+            userId: "u-9",
+            createdAt: previousSessionAt + 700,
+            event: "assessment.rps.session_started",
+            trialIndex: null,
+            latencyMs: null,
+            isCorrect: null,
+          }),
+        ])
+      )
+      .mockImplementationOnce(() => makeQueryChain([]));
+
+    const snapshot = await getAssessmentTelemetryKpiSnapshot({
+      asOf,
+      windowDays: 1,
+    });
+
+    expect(snapshot.current.overall.completionRatePct).toBe(60);
+    expect(snapshot.previous.overall.completionRatePct).toBe(75);
+    expect(snapshot.alerts.completionRateDrop.triggered).toBe(true);
+  });
+
+  it("limits first-seen aggregation to users in the active comparison windows", async () => {
+    const asOf = new Date("2026-01-10T00:00:00.000Z");
+    const currentSessionAt = asOf.getTime() - 12 * 60 * 60 * 1000;
+    const currentRowsQuery = makeQueryChain([
+      telemetryRow({
+        sessionId: "s-1",
+        userId: "u-1",
+        createdAt: currentSessionAt + 100,
+        event: "assessment.rps.session_started",
+        trialIndex: null,
+        latencyMs: null,
+        isCorrect: null,
+      }),
+      telemetryRow({
+        sessionId: "s-1",
+        userId: "u-1",
+        createdAt: currentSessionAt + 200,
+        event: "assessment.rps.session_completed",
+        trialIndex: null,
+        latencyMs: null,
+        isCorrect: null,
+      }),
+      telemetryRow({
+        sessionId: "s-2",
+        userId: "u-2",
+        createdAt: currentSessionAt + 300,
+        event: "assessment.rps.session_started",
+        trialIndex: null,
+        latencyMs: null,
+        isCorrect: null,
+      }),
+    ]);
+    const firstSeenQuery = makeQueryChain([]);
+
+    mockDb.select
+      .mockImplementationOnce(() => currentRowsQuery)
+      .mockImplementationOnce(() => firstSeenQuery);
+
+    await getAssessmentTelemetryKpiSnapshot({
+      asOf,
+      windowDays: 1,
+    });
+
+    expect(firstSeenQuery.where).toHaveBeenCalledTimes(1);
+  });
 });

@@ -1,4 +1,4 @@
-import { and, gte, lt, min } from "drizzle-orm";
+import { and, gte, inArray, lt, min } from "drizzle-orm";
 import { db } from "@/shared/db/client";
 import { assessmentTelemetryEvents } from "@/shared/db/schema/assessment-telemetry";
 
@@ -393,15 +393,19 @@ export const getAssessmentTelemetryKpiSnapshot = async ({
     .where(and(gte(assessmentTelemetryEvents.createdAt, previousRange.from), lt(assessmentTelemetryEvents.createdAt, nowMs)))
     .then((rows) => rows as RawTelemetryRow[]);
 
-  const firstSeenRows = await db
-    .select({
-      userId: assessmentTelemetryEvents.userId,
-      firstSeenAt: min(assessmentTelemetryEvents.createdAt).as(
-        "firstSeenAt"
-      ),
-    })
-    .from(assessmentTelemetryEvents)
-    .groupBy(assessmentTelemetryEvents.userId);
+  const observedUserIds = [...new Set(rows.map((row) => row.userId))];
+  const firstSeenRows = observedUserIds.length === 0
+    ? []
+    : await db
+        .select({
+          userId: assessmentTelemetryEvents.userId,
+          firstSeenAt: min(assessmentTelemetryEvents.createdAt).as(
+            "firstSeenAt"
+          ),
+        })
+        .from(assessmentTelemetryEvents)
+        .where(inArray(assessmentTelemetryEvents.userId, observedUserIds))
+        .groupBy(assessmentTelemetryEvents.userId);
 
   const firstSeenAtMap = new Map<string, number>(
     firstSeenRows.map((row) => [row.userId, Number(row.firstSeenAt)])
@@ -444,7 +448,7 @@ export const getAssessmentTelemetryKpiSnapshot = async ({
   const completionRateDrop: AssessmentTelemetryKpiAlert = {
     triggered:
       previous.overall.completionRatePct > 0 &&
-      previous.overall.completionRatePct - current.overall.completionRatePct > 15,
+      previous.overall.completionRatePct - current.overall.completionRatePct >= 15,
     current: current.overall.completionRatePct,
     previous: previous.overall.completionRatePct,
     delta: completionDrop,
