@@ -1,0 +1,110 @@
+name: Waitlist Batch Rollout
+
+on:
+  workflow_dispatch:
+    inputs:
+      phase:
+        description: Rollout phase
+        required: true
+        type: choice
+        default: t0
+        options:
+          - t0
+          - t3
+          - t7
+      dry_run:
+        description: Dry run (no webhook call)
+        required: true
+        type: boolean
+        default: true
+  schedule:
+    - cron: "0 1 7 4 *"
+    - cron: "0 1 10 4 *"
+    - cron: "0 1 14 4 *"
+
+concurrency:
+  group: waitlist-batch-rollout-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  rollout:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      WAITLIST_BATCH_WEBHOOK_URL: ${{ secrets.WAITLIST_BATCH_WEBHOOK_URL }}
+      WAITLIST_BATCH_WEBHOOK_TOKEN: ${{ secrets.WAITLIST_BATCH_WEBHOOK_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Resolve phase
+        id: phase
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            phase="${{ inputs.phase }}"
+          else
+            day="$(date -u +%d)"
+            case "$day" in
+              07) phase="t0" ;;
+              10) phase="t3" ;;
+              14) phase="t7" ;;
+              *)
+                echo "Scheduled run on unsupported day=$day; exiting"
+                echo "skip=true" >> "$GITHUB_OUTPUT"
+                exit 0
+                ;;
+            esac
+          fi
+
+          echo "phase=$phase" >> "$GITHUB_OUTPUT"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Guard target year
+        if: ${{ steps.phase.outputs.skip == 'false' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          current_year="$(date -u +%Y)"
+          if [ "$current_year" != "2026" ] && [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
+            echo "This rollout schedule is pinned to 2026. current_year=$current_year"
+            exit 1
+          fi
+
+      - name: Trigger waitlist batch
+        if: ${{ steps.phase.outputs.skip == 'false' }}
+        id: trigger
+        env:
+          WAITLIST_BATCH_PHASE: ${{ steps.phase.outputs.phase }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+        run: node scripts/waitlist/trigger-batch.mjs | tee waitlist-batch-result.json
+
+      - name: Upload execution artifact
+        if: ${{ steps.phase.outputs.skip == 'false' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: waitlist-batch-${{ steps.phase.outputs.phase }}-${{ github.run_id }}
+          path: waitlist-batch-result.json
+
+      - name: Add run summary
+        if: ${{ steps.phase.outputs.skip == 'false' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "## Waitlist Batch Rollout"
+            echo ""
+            echo "- Phase: \\`${{ steps.phase.outputs.phase }}\\`"
+            echo "- Dry run: \\`${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}\\`"
+            echo "- Idempotency key: \\`${{ steps.trigger.outputs.idempotency_key }}\\`"
+            echo "- Schedule (UTC): \\`${{ steps.trigger.outputs.scheduled_utc }}\\`"
+            echo "- Schedule (KST): \\`${{ steps.trigger.outputs.scheduled_kst }}\\`"
+            echo "- Run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          } >> "$GITHUB_STEP_SUMMARY"
