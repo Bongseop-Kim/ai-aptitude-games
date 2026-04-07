@@ -3,7 +3,6 @@ import HeaderIcon from "@/shared/ui/header-icon";
 import { db, dbName, expo } from "@/shared/db/client";
 import migrations from "@/shared/db/migrations/migrations";
 import { AuthProvider } from "@/shared/auth/auth-context";
-import { getApiBaseUrlFromEnv } from "@/shared/config";
 import { useColorScheme } from "@/shared/lib/use-color-scheme";
 import {
   DarkTheme,
@@ -24,26 +23,10 @@ export const unstable_settings = {
   anchor: "(tabs)",
 };
 
-let apiConfigError: Error | null = null;
-try {
-  getApiBaseUrlFromEnv();
-} catch (caughtError) {
-  apiConfigError = caughtError instanceof Error ? caughtError : new Error("Unknown API config error");
-}
-
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const { success, error } = useMigrations(db, migrations);
   useDrizzleStudio(expo);
-
-  if (apiConfigError) {
-    return (
-      <AppInitError
-        error={apiConfigError}
-        title="API 설정이 올바르지 않습니다"
-      />
-    );
-  }
 
   if (!success && !error) {
     return <ActivityIndicator size="large" style={styles.loading} />;

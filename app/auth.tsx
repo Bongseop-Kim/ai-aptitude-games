@@ -8,7 +8,6 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, StyleSheet } from "react-native";
 import { useAuth } from "@/shared/auth/auth-context";
-import { AuthServiceError } from "@/shared/auth/auth-service";
 import { resolveReturnTo } from "@/shared/auth/resolve-return-to";
 
 export default function AuthScreen() {
@@ -149,20 +148,7 @@ const resolveReason = (reason: string | string[] | undefined) => {
   return "unauthenticated";
 };
 
-const resolveAuthErrorMessage = (error: unknown) => {
-  if (error instanceof AuthServiceError) {
-    switch (error.code) {
-      case "offline":
-        return "오프라인 상태입니다. 네트워크 연결을 확인한 뒤 다시 시도해 주세요.";
-      case "invalid_credentials":
-        return "로그인 정보를 확인해 주세요.";
-      case "server_unavailable":
-        return "서버 응답이 지연되고 있어요. 잠시 후 다시 시도해 주세요.";
-      default:
-        return "로그인 처리 중 문제가 발생했습니다.";
-    }
-  }
-
+const resolveAuthErrorMessage = (_error: unknown) => {
   return "로그인 처리 중 문제가 발생했습니다.";
 };
 
