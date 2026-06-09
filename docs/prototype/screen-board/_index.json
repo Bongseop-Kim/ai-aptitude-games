@@ -1,0 +1,137 @@
+{
+  "source": "새움 화면 보드 (standalone).html",
+  "resources": [
+    {
+      "id": "2783a568-c311-4ed2-a17e-71978d497402",
+      "mime": "text/javascript",
+      "bytes": 1080227,
+      "file": "vendor-2783a568.js",
+      "app": false
+    },
+    {
+      "id": "870f2d85-388e-4d6b-aa99-64e0ee79aba1",
+      "mime": "text/javascript",
+      "bytes": 109931,
+      "file": "vendor-870f2d85.js",
+      "app": false
+    },
+    {
+      "id": "e477339c-46cd-4228-bd31-2065e8106ae8",
+      "mime": "text/javascript",
+      "bytes": 3137752,
+      "file": "vendor-e477339c.js",
+      "app": false
+    },
+    {
+      "id": "dabdb2e4-018e-40e0-bd7a-2183242b5a52",
+      "mime": "application/javascript",
+      "bytes": 83406,
+      "file": "vendor-dabdb2e4.js",
+      "app": false
+    },
+    {
+      "id": "6382e595-334f-4fed-8116-415e74d3957b",
+      "mime": "text/jsx",
+      "bytes": 50083,
+      "file": "entry-scaffold.jsx",
+      "app": true
+    },
+    {
+      "id": "ca39fba2-93c5-4c13-920e-f87f05ebdfe2",
+      "mime": "application/javascript",
+      "bytes": 15557,
+      "file": "ds-setup.jsx",
+      "app": true
+    },
+    {
+      "id": "2f9a1c88-79ec-495f-9a3a-eedad573c1f9",
+      "mime": "application/javascript",
+      "bytes": 9689,
+      "file": "onboarding.jsx",
+      "app": true
+    },
+    {
+      "id": "5a78bc9f-31a5-41cb-8390-1c0f2876c0d7",
+      "mime": "application/javascript",
+      "bytes": 5026,
+      "file": "me.jsx",
+      "app": true
+    },
+    {
+      "id": "3d1eb3bd-8cd8-40be-adec-086b7d1e904a",
+      "mime": "application/javascript",
+      "bytes": 8187,
+      "file": "home.jsx",
+      "app": true
+    },
+    {
+      "id": "2d3cae02-7dea-44c4-bd09-98d8285b6ba6",
+      "mime": "application/javascript",
+      "bytes": 15658,
+      "file": "retention.jsx",
+      "app": true
+    },
+    {
+      "id": "fa6afdfc-fa2b-49d9-aa80-81f6bd59b5be",
+      "mime": "application/javascript",
+      "bytes": 13568,
+      "file": "games-play-b.jsx",
+      "app": true
+    },
+    {
+      "id": "d4baa1c8-fa96-42ed-a8d6-32d680cdd387",
+      "mime": "application/javascript",
+      "bytes": 15519,
+      "file": "games-play.jsx",
+      "app": true
+    },
+    {
+      "id": "9c74b209-fef4-4c97-a49b-ef0a369a1d84",
+      "mime": "application/javascript",
+      "bytes": 5447,
+      "file": "board.jsx",
+      "app": true
+    },
+    {
+      "id": "d262eb88-685d-4f90-8b93-a7272daed2b0",
+      "mime": "application/javascript",
+      "bytes": 36651,
+      "file": "reports.jsx",
+      "app": true
+    },
+    {
+      "id": "1d9448d3-a1ea-4827-b4fb-b84e2b8cd535",
+      "mime": "application/javascript",
+      "bytes": 17458,
+      "file": "games.jsx",
+      "app": true
+    },
+    {
+      "id": "cdb66a1c-97ee-4d2f-bc2b-05fac79fd8fd",
+      "mime": "application/javascript",
+      "bytes": 20374,
+      "file": "billing.jsx",
+      "app": true
+    },
+    {
+      "id": "84823365-fe11-49aa-a7e4-2f96c232daf1",
+      "mime": "font/woff2",
+      "skipped": true
+    },
+    {
+      "id": "c44cb39c-5416-4dd3-808e-8ec3b961f5cd",
+      "mime": "font/woff2",
+      "skipped": true
+    },
+    {
+      "id": "2ab51e1a-31ac-414b-98e8-c5bc2c7aae85",
+      "mime": "font/woff2",
+      "skipped": true
+    },
+    {
+      "id": "28574427-d99c-4352-b216-e186be1229e0",
+      "mime": "font/woff2",
+      "skipped": true
+    }
+  ]
+}
