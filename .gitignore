@@ -44,3 +44,6 @@ yarn-error.*
 
 # local agent tooling
 .serena/
+.omc/
+.omx/
+.claude/
