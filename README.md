@@ -25,6 +25,10 @@ Do not put Supabase service role or secret keys in Expo public environment varia
 - Backend client: `@supabase/supabase-js`
 - Server state: `@tanstack/react-query`
 - Client state: `zustand`
+- Animation: `react-native-reanimated` + `react-native-worklets`
+- Canvas graphics: `@shopify/react-native-skia`
+
+Expo SDK 56 configures the Reanimated/Worklets Babel plugin through `babel-preset-expo`, so this project does not need a custom `babel.config.js` for Reanimated.
 
 ## Preserved app identifiers
 

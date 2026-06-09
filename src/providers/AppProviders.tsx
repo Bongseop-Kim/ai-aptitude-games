@@ -3,7 +3,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { SQLiteProvider } from 'expo-sqlite';
 
 import { DesignSystemProvider } from '../design-system/provider';
-import { LOCAL_DB_NAME, migrateLocalDb } from '../data/local';
+import { LOCAL_DB_NAME, migrateLocalDb } from '../data/local/database';
 import { queryClient } from '../lib/query-client';
 
 export function AppProviders({ children }: PropsWithChildren) {
