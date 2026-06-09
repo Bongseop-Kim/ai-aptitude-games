@@ -1,0 +1,109 @@
+{
+  "source": "새움 게임 플로우 (standalone).html",
+  "resources": [
+    {
+      "id": "52c7d59e-1a42-4ffb-bcd5-b0a539c1c2cf",
+      "mime": "text/javascript",
+      "bytes": 109931,
+      "file": "vendor-52c7d59e.js",
+      "app": false
+    },
+    {
+      "id": "49768617-8238-49a9-bd97-6179473adc99",
+      "mime": "text/javascript",
+      "bytes": 1080227,
+      "file": "vendor-49768617.js",
+      "app": false
+    },
+    {
+      "id": "f6adabaf-b851-4b93-a641-4d407d109094",
+      "mime": "text/javascript",
+      "bytes": 3137752,
+      "file": "vendor-f6adabaf.js",
+      "app": false
+    },
+    {
+      "id": "308ebad2-32d5-4a29-ac37-23a21e8f6efd",
+      "mime": "application/javascript",
+      "bytes": 15557,
+      "file": "ds-setup.jsx",
+      "app": true
+    },
+    {
+      "id": "a9df4918-f424-4c86-96a7-979690c73f8f",
+      "mime": "application/javascript",
+      "bytes": 8187,
+      "file": "home.jsx",
+      "app": true
+    },
+    {
+      "id": "16e402cf-2322-46f6-9344-8bb52aadb115",
+      "mime": "application/javascript",
+      "bytes": 17526,
+      "file": "games.jsx",
+      "app": true
+    },
+    {
+      "id": "75941cf2-8ce2-4ffc-a21e-d6e9d9510d92",
+      "mime": "text/jsx",
+      "bytes": 16174,
+      "file": "entry-scaffold.jsx",
+      "app": true
+    },
+    {
+      "id": "cae780a9-b283-49df-b62f-b59858203b81",
+      "mime": "application/javascript",
+      "bytes": 15519,
+      "file": "games-play.jsx",
+      "app": true
+    },
+    {
+      "id": "44d6d6fb-8b1e-458b-82c3-a5883faa98aa",
+      "mime": "application/javascript",
+      "bytes": 83406,
+      "file": "vendor-44d6d6fb.js",
+      "app": false
+    },
+    {
+      "id": "ea5a22c2-9d15-4426-9756-4b0fdf23f809",
+      "mime": "text/jsx",
+      "bytes": 50083,
+      "file": "entry-scaffold-2.jsx",
+      "app": true
+    },
+    {
+      "id": "5bb6fa79-2661-487d-b39a-d6e1525b78e2",
+      "mime": "application/javascript",
+      "bytes": 24624,
+      "file": "game-flows.jsx",
+      "app": true
+    },
+    {
+      "id": "c53fb978-b9f3-4dae-b66d-20b33a918b9c",
+      "mime": "application/javascript",
+      "bytes": 13568,
+      "file": "games-play-b.jsx",
+      "app": true
+    },
+    {
+      "id": "3be65d69-9a02-46d5-a201-a0d22c2f14bc",
+      "mime": "font/woff2",
+      "skipped": true
+    },
+    {
+      "id": "d4a34f31-1b24-4356-a4b1-bee2df5a7d37",
+      "mime": "font/woff2",
+      "skipped": true
+    },
+    {
+      "id": "23375873-596f-401b-8ce4-9f3cfa14d1fd",
+      "mime": "font/woff2",
+      "skipped": true
+    },
+    {
+      "id": "66270728-397c-4976-9fc0-107a4666fc9c",
+      "mime": "font/woff2",
+      "skipped": true
+    }
+  ]
+}

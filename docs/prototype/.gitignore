@@ -1,0 +1,3 @@
+# 디코드된 벤더 번들(React/Babel 등)은 용량이 커서 추적 제외.
+# 필요 시 `node _decode.mjs` 로 언제든 재생성 가능.
+*/_vendor/

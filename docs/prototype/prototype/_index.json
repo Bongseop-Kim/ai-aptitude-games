@@ -1,0 +1,137 @@
+{
+  "source": "새움 프로토타입 (standalone).html",
+  "resources": [
+    {
+      "id": "23df5402-a377-42af-9d51-121755b2526d",
+      "mime": "text/javascript",
+      "bytes": 109931,
+      "file": "vendor-23df5402.js",
+      "app": false
+    },
+    {
+      "id": "55d66d1a-021f-418b-b707-de047917dfaf",
+      "mime": "text/javascript",
+      "bytes": 1080227,
+      "file": "vendor-55d66d1a.js",
+      "app": false
+    },
+    {
+      "id": "18cee0da-1df4-4bbd-b903-fc5397da73f7",
+      "mime": "text/javascript",
+      "bytes": 3137752,
+      "file": "vendor-18cee0da.js",
+      "app": false
+    },
+    {
+      "id": "48954a6e-00f5-463d-ae55-81e47552c578",
+      "mime": "application/javascript",
+      "bytes": 8187,
+      "file": "home.jsx",
+      "app": true
+    },
+    {
+      "id": "d152ddea-b2cd-421c-aead-390af85c85c6",
+      "mime": "text/jsx",
+      "bytes": 16174,
+      "file": "entry-scaffold.jsx",
+      "app": true
+    },
+    {
+      "id": "ede90667-fa33-46d8-b8ae-8649abbdc92a",
+      "mime": "application/javascript",
+      "bytes": 9689,
+      "file": "onboarding.jsx",
+      "app": true
+    },
+    {
+      "id": "8725e655-7fc9-45d8-abd2-85eef49a614d",
+      "mime": "application/javascript",
+      "bytes": 15557,
+      "file": "ds-setup.jsx",
+      "app": true
+    },
+    {
+      "id": "3d86f949-697e-4be1-bea4-050457b939bb",
+      "mime": "application/javascript",
+      "bytes": 13568,
+      "file": "games-play-b.jsx",
+      "app": true
+    },
+    {
+      "id": "8c5df573-8d1e-4686-b030-f92d13be44b2",
+      "mime": "application/javascript",
+      "bytes": 15519,
+      "file": "games-play.jsx",
+      "app": true
+    },
+    {
+      "id": "937bdd52-548c-4f58-84ec-78dee71ce5c0",
+      "mime": "application/javascript",
+      "bytes": 17458,
+      "file": "games.jsx",
+      "app": true
+    },
+    {
+      "id": "5b500dcc-bd7d-4850-ab5f-9d25cf3f8e44",
+      "mime": "application/javascript",
+      "bytes": 15658,
+      "file": "retention.jsx",
+      "app": true
+    },
+    {
+      "id": "6d7e8632-b88c-403e-9c8a-88d85d006021",
+      "mime": "application/javascript",
+      "bytes": 4676,
+      "file": "app.jsx",
+      "app": true
+    },
+    {
+      "id": "3025b08c-31ec-4f7e-9dba-a76a927087ea",
+      "mime": "application/javascript",
+      "bytes": 5026,
+      "file": "me.jsx",
+      "app": true
+    },
+    {
+      "id": "c1221ff2-b451-44e8-8ba1-106f465e444a",
+      "mime": "application/javascript",
+      "bytes": 36651,
+      "file": "reports.jsx",
+      "app": true
+    },
+    {
+      "id": "1cf10973-cc95-4f02-bd7f-639201930e0f",
+      "mime": "application/javascript",
+      "bytes": 83406,
+      "file": "vendor-1cf10973.js",
+      "app": false
+    },
+    {
+      "id": "ddc108bf-5cfe-4653-86ab-ad09ba5a7b42",
+      "mime": "application/javascript",
+      "bytes": 20374,
+      "file": "billing.jsx",
+      "app": true
+    },
+    {
+      "id": "49996070-7774-4483-bd1d-3c75175c4e84",
+      "mime": "font/woff2",
+      "skipped": true
+    },
+    {
+      "id": "fc2c6c51-6ac1-4185-a3c0-ef77f36e70f8",
+      "mime": "font/woff2",
+      "skipped": true
+    },
+    {
+      "id": "e07908af-4fc6-4566-8ee8-43b9ae8a230e",
+      "mime": "font/woff2",
+      "skipped": true
+    },
+    {
+      "id": "0ef8eb44-2493-41fc-89f2-c22b644d98bd",
+      "mime": "font/woff2",
+      "skipped": true
+    }
+  ]
+}
