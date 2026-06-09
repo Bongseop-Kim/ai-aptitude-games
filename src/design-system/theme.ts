@@ -1,6 +1,6 @@
-import { buildFoundation, createTokenReference } from './foundation';
+import { buildFoundation, createTokenReference } from './foundation/tokens';
 import { deepMerge } from './foundation/utils';
-import type { AppThemeMode, DeepPartial } from './foundation';
+import type { AppThemeMode, DeepPartial } from './foundation/types';
 
 function buildAppTheme(mode: AppThemeMode) {
   const foundation = buildFoundation(mode);
