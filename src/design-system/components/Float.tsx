@@ -19,8 +19,8 @@ export type FloatPlacement =
 export type FloatProps = {
   children?: ReactNode;
   placement: FloatPlacement;
-  offsetX?: 0 | number | DimensionToken | (string & {});
-  offsetY?: 0 | number | DimensionToken | (string & {});
+  offsetX?: 0 | number | DimensionToken;
+  offsetY?: 0 | number | DimensionToken;
   zIndex?: number;
   style?: StyleProp<ViewStyle>;
 };

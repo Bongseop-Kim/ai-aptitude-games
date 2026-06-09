@@ -12,6 +12,7 @@ export { Text } from './Text';
 export type { TextProps, TextStyleName } from './Text';
 export type {
   AlignValue,
+  BorderWidthToken,
   BoxStyleProps,
   ColorToken,
   DimensionToken,

@@ -8,14 +8,14 @@ export const appFontFamily = {
 } as const satisfies Record<string, NonNullable<TextStyle['fontFamily']>>;
 
 export function useAppFonts() {
-  const [loaded, error] = useFonts({
+  const [loaded] = useFonts({
     [appFontFamily.regular]: require('../../assets/fonts/Pretendard-Regular.otf'),
     [appFontFamily.medium]: require('../../assets/fonts/Pretendard-Medium.otf'),
     [appFontFamily.bold]: require('../../assets/fonts/Pretendard-Bold.otf'),
   });
 
   return {
-    fontsLoaded: loaded || Boolean(error),
+    fontsLoaded: loaded,
     fontFamily: appFontFamily,
   };
 }

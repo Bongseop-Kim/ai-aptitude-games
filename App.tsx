@@ -31,7 +31,7 @@ function AppContent() {
         bg="bg.layerFloating"
         borderColor="stroke.neutralWeak"
         borderRadius="r4"
-        borderWidth={1}
+        borderWidth="thin"
         boxShadow="surface"
         gap="x4"
         p="spacingX.globalGutter"

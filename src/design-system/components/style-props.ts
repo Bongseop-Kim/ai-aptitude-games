@@ -20,6 +20,7 @@ export type DimensionToken =
 
 export type RadiusToken = Extract<keyof ThemeRadius, string>;
 export type ShadowToken = Extract<keyof ThemeShadow, string>;
+export type BorderWidthToken = 'thin';
 
 export type TokenLength = 0 | number | DimensionToken | (string & {});
 export type TokenSize = TokenLength | 'full';
@@ -48,11 +49,11 @@ export type BoxStyleProps = {
   bg?: TokenColor;
   background?: TokenColor;
   borderColor?: TokenColor;
-  borderWidth?: 0 | 1 | number | (string & {});
-  borderTopWidth?: 0 | 1 | number | (string & {});
-  borderRightWidth?: 0 | 1 | number | (string & {});
-  borderBottomWidth?: 0 | 1 | number | (string & {});
-  borderLeftWidth?: 0 | 1 | number | (string & {});
+  borderWidth?: 0 | 1 | number | BorderWidthToken;
+  borderTopWidth?: 0 | 1 | number | BorderWidthToken;
+  borderRightWidth?: 0 | 1 | number | BorderWidthToken;
+  borderBottomWidth?: 0 | 1 | number | BorderWidthToken;
+  borderLeftWidth?: 0 | 1 | number | BorderWidthToken;
   borderRadius?: TokenRadius;
   borderTopLeftRadius?: TokenRadius;
   borderTopRightRadius?: TokenRadius;
@@ -292,6 +293,7 @@ function resolveRadius(theme: AppTheme, value: TokenRadius | undefined) {
 function resolveBorderWidth(value: BoxStyleProps['borderWidth']) {
   if (value === undefined) return undefined;
   if (typeof value === 'number') return value;
+  if (value === 'thin') return 1;
   const resolved = numberOrString(value);
   return typeof resolved === 'number' ? resolved : undefined;
 }
@@ -336,13 +338,17 @@ function applySpacing(
 function applyBleed(style: MutableStyle, theme: AppTheme, props: BoxStyleProps) {
   const paddingX = props.paddingX ?? props.px ?? props.padding ?? props.p ?? 0;
   const paddingY = props.paddingY ?? props.py ?? props.padding ?? props.p ?? 0;
+  const paddingTop = props.paddingTop ?? props.pt ?? paddingY;
+  const paddingRight = props.paddingRight ?? props.pr ?? paddingX;
+  const paddingBottom = props.paddingBottom ?? props.pb ?? paddingY;
+  const paddingLeft = props.paddingLeft ?? props.pl ?? paddingX;
 
   const bleedX = props.bleedX === 'asPadding' ? paddingX : props.bleedX;
   const bleedY = props.bleedY === 'asPadding' ? paddingY : props.bleedY;
-  const bleedTop = props.bleedTop === 'asPadding' ? paddingY : props.bleedTop;
-  const bleedRight = props.bleedRight === 'asPadding' ? paddingX : props.bleedRight;
-  const bleedBottom = props.bleedBottom === 'asPadding' ? paddingY : props.bleedBottom;
-  const bleedLeft = props.bleedLeft === 'asPadding' ? paddingX : props.bleedLeft;
+  const bleedTop = props.bleedTop === 'asPadding' ? paddingTop : props.bleedTop;
+  const bleedRight = props.bleedRight === 'asPadding' ? paddingRight : props.bleedRight;
+  const bleedBottom = props.bleedBottom === 'asPadding' ? paddingBottom : props.bleedBottom;
+  const bleedLeft = props.bleedLeft === 'asPadding' ? paddingLeft : props.bleedLeft;
 
   const applyNegative = (value: TokenLength | undefined) => {
     const resolved = resolveLength(theme, value);

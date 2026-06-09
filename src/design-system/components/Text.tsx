@@ -36,6 +36,9 @@ function scaleFromToken(value: string) {
 }
 
 function weightFromTextStyle(textStyle: TextStyleName) {
+  if (textStyle === 'screenTitle') return 'bold';
+  if (textStyle === 'articleBody') return 'regular';
+  if (textStyle === 'articleNote') return 'regular';
   if (textStyle.endsWith('Bold')) return 'bold';
   if (textStyle.endsWith('Medium')) return 'medium';
   return 'regular';

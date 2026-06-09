@@ -9,6 +9,7 @@ export {
 } from './components';
 export type {
   AlignValue,
+  BorderWidthToken,
   BoxProps,
   BoxStyleProps,
   ColorToken,
