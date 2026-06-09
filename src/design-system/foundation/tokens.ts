@@ -1,0 +1,273 @@
+import type { TextStyle } from 'react-native';
+
+import { toShadow, toTimingFunction } from './utils';
+import type { AppThemeMode, TokenReference } from './types';
+
+const fontWeight = {
+  regular: '400',
+  medium: '500',
+  bold: '700',
+} as const satisfies Record<string, NonNullable<TextStyle['fontWeight']>>;
+
+const fontSize = {
+  t1: 11,
+  t2: 12,
+  t3: 13,
+  t4: 14,
+  t5: 16,
+  t6: 18,
+  t7: 20,
+  t8: 22,
+  t9: 24,
+  t10: 26,
+} as const;
+
+const lineHeight = {
+  t1: 15,
+  t2: 16,
+  t3: 18,
+  t4: 19,
+  t5: 22,
+  t6: 24,
+  t7: 27,
+  t8: 30,
+  t9: 32,
+  t10: 35,
+} as const;
+
+const dimension = {
+  x: {
+    x0_5: 2,
+    x1: 4,
+    x1_5: 6,
+    x2: 8,
+    x2_5: 10,
+    x3: 12,
+    x3_5: 14,
+    x4: 16,
+    x4_5: 18,
+    x5: 20,
+    x6: 24,
+    x7: 28,
+    x8: 32,
+    x9: 36,
+    x10: 40,
+    x12: 48,
+    x13: 52,
+    x14: 56,
+    x16: 64,
+  },
+  spacingX: {
+    betweenChips: 8,
+    globalGutter: 16,
+  },
+  spacingY: {
+    componentDefault: 12,
+    navToTitle: 20,
+    screenBottom: 56,
+    betweenText: 6,
+  },
+} as const;
+
+const radius = {
+  r0_5: 2,
+  r1: 4,
+  r1_5: 6,
+  r2: 8,
+  r2_5: 10,
+  r3: 12,
+  r3_5: 14,
+  r4: 16,
+  r5: 20,
+  r6: 24,
+  full: 9999,
+} as const;
+
+const duration = {
+  d1: 50,
+  d2: 100,
+  d3: 150,
+  d4: 200,
+  d5: 250,
+  d6: 300,
+  colorTransition: 150,
+} as const;
+
+const timingFunction = {
+  linear: toTimingFunction('cubic-bezier(0, 0, 1, 1)'),
+  easing: toTimingFunction('cubic-bezier(.35, 0, .35, 1)'),
+  enter: toTimingFunction('cubic-bezier(0, 0, .15, 1)'),
+  exit: toTimingFunction('cubic-bezier(.35, 0, 1, 1)'),
+  enterExpressive: toTimingFunction('cubic-bezier(.03, .4, .1, 1)'),
+  exitExpressive: toTimingFunction('cubic-bezier(.35, 0, .95, .55)'),
+} as const;
+
+const typography = {
+  display: { fontSize: fontSize.t10, lineHeight: lineHeight.t10, fontWeight: fontWeight.bold },
+  title: { fontSize: fontSize.t8, lineHeight: lineHeight.t8, fontWeight: fontWeight.bold },
+  heading: { fontSize: fontSize.t7, lineHeight: lineHeight.t7, fontWeight: fontWeight.bold },
+  body: { fontSize: fontSize.t5, lineHeight: lineHeight.t5, fontWeight: fontWeight.regular },
+  bodyStrong: { fontSize: fontSize.t5, lineHeight: lineHeight.t5, fontWeight: fontWeight.medium },
+  label: { fontSize: fontSize.t4, lineHeight: lineHeight.t4, fontWeight: fontWeight.medium },
+  caption: { fontSize: fontSize.t3, lineHeight: lineHeight.t3, fontWeight: fontWeight.regular },
+} as const;
+
+const palette = {
+  gray00: '#fff',
+  gray100: '#f7f8f9',
+  gray200: '#f3f4f5',
+  gray300: '#eeeff1',
+  gray400: '#dcdee3',
+  gray500: '#d1d3d8',
+  gray600: '#b0b3ba',
+  gray700: '#868b94',
+  gray800: '#555d6d',
+  gray900: '#2a3038',
+  gray1000: '#1a1c20',
+  mossy100: '#f1f7f3',
+  mossy200: '#e2efe6',
+  mossy300: '#c9e1d0',
+  mossy600: '#4a7c59',
+  mossy700: '#3f6b4d',
+  blue100: '#eff6ff',
+  blue700: '#217cf9',
+  red100: '#fdf0f0',
+  red700: '#fa342c',
+  green100: '#edfaf6',
+  green700: '#079171',
+  yellow100: '#fff7de',
+  yellow700: '#9b7821',
+  staticBlackAlpha200: '#0000000c',
+  staticBlackAlpha300: '#00000010',
+  staticBlackAlpha700: '#00000074',
+  staticWhite: '#fff',
+  staticWhiteAlpha200: '#ffffff20',
+} as const;
+
+const semanticColor = {
+  light: {
+    fg: {
+      brand: palette.mossy600,
+      critical: palette.red700,
+      disabled: palette.gray500,
+      informative: palette.blue700,
+      neutral: palette.gray1000,
+      neutralInverted: palette.gray00,
+      neutralMuted: palette.gray800,
+      neutralSubtle: palette.gray700,
+      positive: palette.green700,
+      warning: palette.yellow700,
+    },
+    bg: {
+      brandSolid: palette.mossy600,
+      brandSolidPressed: palette.mossy700,
+      brandWeak: palette.mossy100,
+      disabled: palette.gray200,
+      layerBasement: palette.gray200,
+      layerDefault: palette.gray00,
+      layerDefaultPressed: palette.gray100,
+      layerFloating: palette.gray00,
+      neutralSolid: palette.gray1000,
+      neutralWeak: palette.gray200,
+      overlay: palette.staticBlackAlpha700,
+      transparent: '#0000',
+    },
+    stroke: {
+      brandSolid: palette.mossy700,
+      brandWeak: palette.mossy300,
+      neutralContrast: palette.gray1000,
+      neutralMuted: palette.staticBlackAlpha300,
+      neutralSubtle: palette.staticBlackAlpha200,
+      neutralWeak: palette.gray400,
+    },
+  },
+  dark: {
+    fg: {
+      brand: '#a9cbaf',
+      critical: '#fe928d',
+      disabled: '#555d6d',
+      informative: '#85b8fd',
+      neutral: '#fffffff4',
+      neutralInverted: palette.gray1000,
+      neutralMuted: '#ffffffb3',
+      neutralSubtle: '#ffffff8b',
+      positive: '#42c593',
+      warning: '#e9c647',
+    },
+    bg: {
+      brandSolid: '#7fae88',
+      brandSolidPressed: '#a9cbaf',
+      brandWeak: '#17281d',
+      disabled: '#2a3038',
+      layerBasement: '#101214',
+      layerDefault: '#1a1c20',
+      layerDefaultPressed: '#2a3038',
+      layerFloating: '#2a3038',
+      neutralSolid: '#fffffff4',
+      neutralWeak: '#2a3038',
+      overlay: '#000000a2',
+      transparent: '#0000',
+    },
+    stroke: {
+      brandSolid: '#a9cbaf',
+      brandWeak: '#34583f',
+      neutralContrast: '#fffffff4',
+      neutralMuted: palette.staticWhiteAlpha200,
+      neutralSubtle: '#ffffff17',
+      neutralWeak: '#555d6d',
+    },
+  },
+} as const satisfies Record<AppThemeMode, Record<string, Record<string, string>>>;
+
+export function buildFoundation(mode: AppThemeMode) {
+  const colors = semanticColor[mode];
+
+  return {
+    source: {
+      name: 'mossy-ui',
+      role: 'adapted React Native foundation values',
+    },
+    mode,
+    color: {
+      palette,
+      fg: colors.fg,
+      bg: colors.bg,
+      stroke: colors.stroke,
+    },
+    dimension,
+    duration,
+    fontSize,
+    fontWeight,
+    lineHeight,
+    radius,
+    shadow: {
+      surface: toShadow(0, 2, 8, mode === 'light' ? '#00000021' : '#00000074', 1),
+      floating: toShadow(0, 8, 24, mode === 'light' ? '#0000002c' : '#000000a2', 1),
+    },
+    timingFunction,
+    typography,
+  } as const;
+}
+
+export type AppFoundation = ReturnType<typeof buildFoundation>;
+
+export function createTokenReference(foundation: AppFoundation): TokenReference {
+  return {
+    '$color.fg.neutral': foundation.color.fg.neutral,
+    '$color.fg.neutral-muted': foundation.color.fg.neutralMuted,
+    '$color.fg.brand': foundation.color.fg.brand,
+    '$color.bg.layer-default': foundation.color.bg.layerDefault,
+    '$color.bg.layer-basement': foundation.color.bg.layerBasement,
+    '$color.bg.brand-solid': foundation.color.bg.brandSolid,
+    '$color.stroke.neutral-weak': foundation.color.stroke.neutralWeak,
+    '$dimension.spacing-x.global-gutter': foundation.dimension.spacingX.globalGutter,
+    '$dimension.spacing-y.component-default': foundation.dimension.spacingY.componentDefault,
+    '$duration.color-transition': foundation.duration.colorTransition,
+    '$radius.r2': foundation.radius.r2,
+    '$radius.r4': foundation.radius.r4,
+    '$shadow.surface': foundation.shadow.surface,
+    '$typography.title': foundation.typography.title,
+    '$typography.body': foundation.typography.body,
+    '$typography.caption': foundation.typography.caption,
+  };
+}
