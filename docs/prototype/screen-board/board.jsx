@@ -50,7 +50,7 @@ function SaeumBoard() {
     <DesignCanvas>
       <DCSection id="onb" title="온보딩" subtitle="첫 실행 · 5단계">
         {[0, 1, 2, 3, 4].map(s => ab('onb-' + s, `${s + 1}. ${['스플래시', '가치 제안', 'AI 리포트', '분야 선택', '연습 시간'][s]}`, <Onboarding ctx={boardCtx()} initialStep={s} />))}
-        <DCPostIt top={-28} left={2030} rotate={-2} width={230}>이모지·돌출 그림자를 걷어내고 Mossy 차분한 톤으로. 마크는 잎새(eco) + 새움.</DCPostIt>
+        <DCPostIt top={-28} left={2030} rotate={-2} width={230}>이모지·돌출 그림자를 걷어내고 Mossy 차분한 톤으로. 마크는 잎새(eco) + 역검.</DCPostIt>
       </DCSection>
 
       <DCSection id="tabs" title="메인 탭" subtitle="홈 · 게임 · 기록 · 내 정보">

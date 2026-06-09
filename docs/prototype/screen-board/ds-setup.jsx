@@ -1,5 +1,5 @@
-// ds-setup.jsx — 새움 (Saeum) foundation on top of the Mossy Design System
-// Brand: 새움 — "새 + 움(싹)". 성장·준비·차분한 자신감. Forest-green, calm, trustworthy.
+// ds-setup.jsx — 역검 (Saeum) foundation on top of the Mossy Design System
+// Brand: 역검 — "새 + 움(싹)". 성장·준비·차분한 자신감. Forest-green, calm, trustworthy.
 // Reuses Mossy bundle components (window.MossyDesignSystem_2cf354) + Mossy tokens (var(--mossy-*)).
 
 const DS = window.MossyDesignSystem_2cf354 || {};
@@ -79,7 +79,7 @@ function Sym({ name, size = 24, fill = 0, weight = 500, color, style }) {
   );
 }
 
-// ── Brand wordmark — 새움 + leaf ───────────────────────────────
+// ── Brand wordmark — 역검 + leaf ───────────────────────────────
 function Logo({ size = 20, mono = false, showText = true }) {
   const markColor = mono ? 'currentColor' : '#fff';
   const markBg = mono ? 'transparent' : T.brandSolid;
@@ -96,7 +96,7 @@ function Logo({ size = 20, mono = false, showText = true }) {
         <span style={{
           fontFamily: T.font, fontWeight: 700, fontSize: size, letterSpacing: '-0.02em',
           color: mono ? 'currentColor' : T.fg,
-        }}>새움</span>
+        }}>역검</span>
       )}
     </span>
   );

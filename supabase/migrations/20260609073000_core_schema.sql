@@ -1,4 +1,4 @@
--- 새움(Saeum) core schema — profiles + games master.
+-- 역검 core schema — profiles + games master.
 -- Scope: minimum to back onboarding + home. Per-user play/report/subscription
 -- tables are added in their own flow slices.
 --

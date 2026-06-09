@@ -1,4 +1,4 @@
--- 새움(Saeum) seed data — games master catalog (9 games).
+-- 역검 seed data — games master catalog (9 games).
 -- Loaded on `supabase db reset`. Idempotent so reruns are safe.
 
 insert into public.games (id, name, skill, description, icon, default_minutes, sort_order) values

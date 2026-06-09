@@ -1,4 +1,4 @@
--- 새움(Saeum) declarative schema — profiles (1:1 with auth.users).
+-- 역검 declarative schema — profiles (1:1 with auth.users).
 -- Onboarding writes field / daily_minutes / notify_enabled / onboarded_at here.
 
 create or replace function public.set_updated_at()

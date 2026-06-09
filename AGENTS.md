@@ -1,5 +1,17 @@
 Expo web is not used in this project.
 
+## Foundation Docs
+
+When changing UI, design-system primitives, or product copy, reference these project-adapted foundation docs:
+
+- [Elevation](docs/foundation/elevation.md)
+- [Iconography](docs/foundation/iconography.md)
+- [International Design](docs/foundation/international-design.md)
+- [Loading](docs/foundation/loading.md)
+- [State](docs/foundation/state.md)
+- [Voice and Tone](docs/foundation/voice-and-tone.md)
+- [Writing](docs/foundation/writing.md)
+
 ## Layout
 
 Build layouts only with `Box`, `Flex`, `Grid`, `VStack`, `HStack`, and `Float`.

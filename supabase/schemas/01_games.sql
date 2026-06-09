@@ -1,4 +1,4 @@
--- 새움(Saeum) declarative schema — games master catalog.
+-- 역검 declarative schema — games master catalog.
 -- Structure only. Seed rows live in supabase/seed.sql (DML is not diff-captured).
 
 create table public.games (

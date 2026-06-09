@@ -23,7 +23,9 @@ import { Tabs } from './src/components/ui/Tabs';
 import { games } from './src/data/games';
 import { reportCompetencies } from './src/data/reports';
 import { subscriptionPlans } from './src/data/subscriptions';
+import { LoginScreen } from './src/components/auth/LoginScreen';
 import { AppProviders } from './src/providers/AppProviders';
+import { useAuth } from './src/providers/AuthProvider';
 import { useAppStore } from './src/state/app-store';
 
 const smokeTabs = [
@@ -35,9 +37,19 @@ const smokeTabs = [
 export default function App() {
   return (
     <AppProviders>
-      <AppContent />
+      <AuthGate />
     </AppProviders>
   );
+}
+
+function AuthGate() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return null;
+  }
+
+  return isAuthenticated ? <AppContent /> : <LoginScreen />;
 }
 
 function AppContent() {
@@ -47,7 +59,7 @@ function AppContent() {
 
   return (
     <Screen>
-      <Header title="새움" subtitle="AI 면접 게임 연습" rightIcon="bell" />
+      <Header title="역검" subtitle="AI 면접 게임 연습" rightIcon="bell" />
       <Body>
         <Tabs items={smokeTabs} value={tab} onChange={setTab} />
 

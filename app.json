@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "ai-aptitude-games",
+    "name": "역검",
     "slug": "ai-aptitude-games",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -33,7 +33,8 @@
     },
     "plugins": [
       "expo-sqlite",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-web-browser"
     ]
   }
 }

@@ -21,7 +21,7 @@ function BillingLanding({ ctx }) {
       <Header onBack={ctx.back} title="" right={<button onClick={() => ctx.showToast('복원할 구매 내역이 없어요')} style={{ border: 'none', background: 'transparent', color: T.fgSubtle, fontFamily: T.font, fontSize: 13, cursor: 'pointer', paddingRight: 8 }}>복원하기</button>} border={false} />
       <Body bottomPad={120}>
         <div style={{ textAlign: 'center', paddingTop: 4 }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 12px', borderRadius: T.full, background: T.inverted, color: T.fgInv, fontSize: 12, fontWeight: 700 }}><Sym name="eco" size={15} fill={1} color="var(--mossy-color-palette-mossy-500)" />새움 PRO</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 12px', borderRadius: T.full, background: T.inverted, color: T.fgInv, fontSize: 12, fontWeight: 700 }}><Sym name="eco" size={15} fill={1} color="var(--mossy-color-palette-mossy-500)" />역검 PRO</span>
           <div style={{ fontSize: 24, fontWeight: 700, color: T.fg, marginTop: 10, letterSpacing: '-0.02em', lineHeight: 1.3 }}>전체 리포트를<br />지금 열어보세요</div>
           <div style={{ fontSize: 13, color: T.fgMuted, marginTop: 6 }}>스트레스 복원력 · 응답 패턴 · AI 코치</div>
         </div>
@@ -110,7 +110,7 @@ function BillingCheckout({ ctx }) {
       <Header onBack={ctx.back} title="결제" />
       <Body bottomPad={130}>
         <Card pad={12}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}><span style={{ fontSize: 13, fontWeight: 700, color: T.fg }}>새움 Pro · 월간</span><span style={{ fontSize: 14, fontWeight: 700, color: T.fg }}>₩9,900</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}><span style={{ fontSize: 13, fontWeight: 700, color: T.fg }}>역검 Pro · 월간</span><span style={{ fontSize: 14, fontWeight: 700, color: T.fg }}>₩9,900</span></div>
           <div style={{ fontSize: 11, color: T.fgSubtle, marginTop: 2 }}>7일 무료 체험 · 이후 매월 자동 결제</div>
           <div style={{ marginTop: 8, padding: 8, background: T.bnGreen, borderRadius: T.r2, display: 'flex', justifyContent: 'space-between' }}><span style={{ fontSize: 12, fontWeight: 700, color: T.positive }}>오늘 결제 금액</span><span style={{ fontSize: 13, fontWeight: 700, color: T.positive }}>₩0</span></div>
         </Card>
@@ -155,7 +155,7 @@ function BillingSuccess({ ctx }) {
           <div style={{ fontSize: 13, color: T.fgMuted, marginTop: 4 }}>7일 무료 체험이 시작됐어요</div>
         </div>
         <Card pad={14} style={{ marginTop: 18 }}>
-          {[['플랜', '새움 Pro 월간'], ['오늘 결제', '₩0 (무료 체험)'], ['첫 결제일', '2026. 1. 19'], ['결제 수단', '카카오페이']].map(([l, v], i) => (
+          {[['플랜', '역검 Pro 월간'], ['오늘 결제', '₩0 (무료 체험)'], ['첫 결제일', '2026. 1. 19'], ['결제 수단', '카카오페이']].map(([l, v], i) => (
             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: i < 3 ? `1px solid ${T.line}` : 'none' }}><span style={{ fontSize: 12, color: T.fgSubtle }}>{l}</span><span style={{ fontSize: 13, fontWeight: 700, color: i === 1 ? T.positive : T.fg }}>{v}</span></div>
           ))}
         </Card>
@@ -183,7 +183,7 @@ function BillingManage({ ctx }) {
         <Card pad={14} bg={T.bnGreen} border={false} style={{ position: 'relative' }}>
           <span style={{ position: 'absolute', top: -9, right: 14 }}><Badge variant="positive">ACTIVE</Badge></span>
           <div style={{ fontSize: 11, color: T.fgSubtle }}>현재 플랜</div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: T.fg }}>새움 Pro · 월간</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: T.fg }}>역검 Pro · 월간</div>
           <div style={{ display: 'flex', gap: 24, marginTop: 8 }}>
             <div><div style={{ fontSize: 10, color: T.fgSubtle }}>무료 체험 종료</div><div style={{ fontSize: 13, fontWeight: 700, color: T.fg }}>1월 19일</div></div>
             <div><div style={{ fontSize: 10, color: T.fgSubtle }}>다음 결제일</div><div style={{ fontSize: 13, fontWeight: 700, color: T.fg }}>1월 19일</div></div>
