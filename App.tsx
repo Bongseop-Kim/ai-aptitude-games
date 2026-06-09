@@ -1,7 +1,6 @@
-import { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 
-import { DesignSystemProvider, useDesignSystemTheme } from './src/design-system/provider';
+import { useDesignSystemTheme } from './src/design-system/provider';
 import { Grid } from './src/design-system/components/Grid';
 import { HStack } from './src/design-system/components/Stack';
 import { Body } from './src/components/app/Body';
@@ -24,8 +23,8 @@ import { Tabs } from './src/components/ui/Tabs';
 import { games } from './src/data/games';
 import { reportCompetencies } from './src/data/reports';
 import { subscriptionPlans } from './src/data/subscriptions';
-
-type SmokeTab = 'home' | 'games' | 'reports';
+import { AppProviders } from './src/providers/AppProviders';
+import { useAppStore } from './src/state/app-store';
 
 const smokeTabs = [
   { label: '홈', value: 'home' },
@@ -35,16 +34,18 @@ const smokeTabs = [
 
 export default function App() {
   return (
-    <DesignSystemProvider>
+    <AppProviders>
       <AppContent />
-    </DesignSystemProvider>
+    </AppProviders>
   );
 }
 
 function AppContent() {
   const { mode } = useDesignSystemTheme();
-  const [tab, setTab] = useState<SmokeTab>('home');
-  const [nav, setNav] = useState<'home' | 'games' | 'reports' | 'me'>('home');
+  const tab = useAppStore((state) => state.tab);
+  const setTab = useAppStore((state) => state.setTab);
+  const nav = useAppStore((state) => state.nav);
+  const setNav = useAppStore((state) => state.setNav);
 
   return (
     <Screen>

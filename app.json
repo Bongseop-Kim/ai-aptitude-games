@@ -13,7 +13,8 @@
       "infoPlist": {
         "UIDesignRequiresCompatibility": true,
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "appleTeamId": "Z995BAAVG5"
     },
     "android": {
       "adaptiveIcon": {
@@ -25,14 +26,14 @@
       "package": "com.bongsub.aiaptitudegames",
       "predictiveBackGestureEnabled": false
     },
-    "web": {
-      "output": "static",
-      "favicon": "./assets/favicon.png"
-    },
     "extra": {
       "eas": {
         "projectId": "a00249ab-13c4-4a37-ad29-3bf408d2e3cc"
       }
-    }
+    },
+    "plugins": [
+      "expo-sqlite",
+      "expo-secure-store"
+    ]
   }
 }
