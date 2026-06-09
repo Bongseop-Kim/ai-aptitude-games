@@ -1,4 +1,4 @@
-import type { BadgeTone, IconName } from '../components/ui';
+import type { BadgeTone, IconName } from '../shared/types';
 
 export type GameId =
   | 'rps'

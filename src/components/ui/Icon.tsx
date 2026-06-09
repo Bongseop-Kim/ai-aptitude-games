@@ -1,25 +1,9 @@
 import type { ComponentProps } from 'react';
 
 import { Text } from '../../design-system/components/Text';
+import type { IconName } from '../../shared/types';
 
-export type IconName =
-  | 'arrow-left'
-  | 'bell'
-  | 'calendar'
-  | 'check'
-  | 'chevron-right'
-  | 'clock'
-  | 'close'
-  | 'eco'
-  | 'fire'
-  | 'game'
-  | 'lock'
-  | 'profile'
-  | 'rank'
-  | 'report'
-  | 'settings'
-  | 'share'
-  | 'star';
+export type { IconName } from '../../shared/types';
 
 export type IconProps = {
   name: IconName;

@@ -15,6 +15,8 @@ export function ProgressBar({ value, tone = 'brand', layout = 'block' }: Progres
 
   return (
     <Box
+      accessibilityRole="progressbar"
+      accessibilityValue={{ min: 0, max: 100, now: clamped }}
       bg="bg.neutralWeak"
       borderRadius="full"
       flex={isInline ? 1 : undefined}

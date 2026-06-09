@@ -9,6 +9,8 @@ export type StreakCardProps = {
 };
 
 export function StreakCard({ days }: StreakCardProps) {
+  const progress = Math.max(0, Math.min(100, days * 14));
+
   return (
     <Card gap="x3">
       <HStack align="center" justify="spaceBetween">
@@ -20,7 +22,7 @@ export function StreakCard({ days }: StreakCardProps) {
         </VStack>
         <Badge label="방패 2개" tone="warning" />
       </HStack>
-      <ProgressBar value={Math.min(100, days * 14)} tone="warning" />
+      <ProgressBar value={progress} tone="warning" />
     </Card>
   );
 }

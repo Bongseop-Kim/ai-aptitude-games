@@ -1,8 +1,9 @@
 import { Box } from '../../design-system/components/Box';
 import { Text } from '../../design-system/components/Text';
 import type { ColorToken } from '../../design-system/components/style-props';
+import type { BadgeTone } from '../../shared/types';
 
-export type BadgeTone = 'brand' | 'positive' | 'warning' | 'critical' | 'informative' | 'neutral';
+export type { BadgeTone } from '../../shared/types';
 
 export type BadgeProps = {
   label: string;

@@ -14,7 +14,7 @@ export function GameInstructionList({ items }: GameInstructionListProps) {
       <Text textStyle="t5Bold">이렇게 진행돼요</Text>
       <VStack gap="x2">
         {items.map((item, index) => (
-          <HStack key={item} align="flexStart" gap="x2">
+          <HStack key={`${item}-${index}`} align="flexStart" gap="x2">
             <Badge label={`${index + 1}`} tone="brand" size="small" />
             <Box flex={1}>
               <Text color="fg.neutralMuted" textStyle="t4Regular">

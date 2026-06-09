@@ -44,8 +44,6 @@ function AppContent() {
   const { mode } = useDesignSystemTheme();
   const tab = useAppStore((state) => state.tab);
   const setTab = useAppStore((state) => state.setTab);
-  const nav = useAppStore((state) => state.nav);
-  const setNav = useAppStore((state) => state.setNav);
 
   return (
     <Screen>
@@ -56,9 +54,10 @@ function AppContent() {
         {tab === 'home' ? <HomeSmoke /> : null}
         {tab === 'games' ? <GamesSmoke /> : null}
         {tab === 'reports' ? <ReportsSmoke /> : null}
+        {tab === 'me' ? <ProfileSmoke /> : null}
       </Body>
 
-      <BottomNav items={bottomNavItems} value={nav} onChange={setNav} />
+      <BottomNav items={bottomNavItems} value={tab} onChange={setTab} />
       <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
     </Screen>
   );
@@ -106,5 +105,16 @@ function ReportsSmoke() {
         soundEnabled
       />
     </>
+  );
+}
+
+function ProfileSmoke() {
+  return (
+    <ProfileSummary
+      name="김준비"
+      description="개발 준비 · 무료 체험 6일 남음"
+      pushEnabled
+      soundEnabled
+    />
   );
 }

@@ -31,7 +31,12 @@ export function BottomNav<Value extends string>({ items, value, onChange }: Bott
         const selected = item.value === value;
 
         return (
-          <Pressable key={item.value} accessibilityRole="tab" onPress={() => onChange(item.value)}>
+          <Pressable
+            key={item.value}
+            accessibilityRole="tab"
+            accessibilityState={{ selected }}
+            onPress={() => onChange(item.value)}
+          >
             <VStack align="center" gap="x0_5" px="x3">
               <Icon name={item.icon} color={selected ? 'fg.brand' : 'fg.neutralSubtle'} size="small" />
               <Text color={selected ? 'fg.brand' : 'fg.neutralSubtle'} textStyle="t2Medium" maxLines={1}>

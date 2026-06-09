@@ -21,7 +21,12 @@ export function Tabs<Value extends string>({ items, value, onChange }: TabsProps
         const selected = item.value === value;
 
         return (
-          <Pressable key={item.value} accessibilityRole="tab" onPress={() => onChange(item.value)}>
+          <Pressable
+            key={item.value}
+            accessibilityRole="tab"
+            accessibilityState={{ selected }}
+            onPress={() => onChange(item.value)}
+          >
             <HStack
               bg={selected ? 'bg.layerFloating' : 'bg.transparent'}
               borderRadius="r2"

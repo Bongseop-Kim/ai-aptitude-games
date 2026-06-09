@@ -12,20 +12,24 @@ export type ReadinessGaugeProps = {
 
 export function ReadinessGauge({ score, label = readinessLabel(score) }: ReadinessGaugeProps) {
   return (
-    <Card gap="x4">
-      <HStack align="center" justify="spaceBetween">
-        <VStack gap="x1">
-          <Text color="fg.neutralMuted" textStyle="t3Medium">
-            면접 준비도
+    <VStack>
+      <Card>
+        <VStack gap="x4">
+          <HStack align="center" justify="spaceBetween">
+            <VStack gap="x1">
+              <Text color="fg.neutralMuted" textStyle="t3Medium">
+                면접 준비도
+              </Text>
+              <Text textStyle="t10Bold">{score}°</Text>
+            </VStack>
+            <ReadinessChip score={score} />
+          </HStack>
+          <ProgressBar value={score} tone={readinessTone(score)} />
+          <Text color="fg.neutralMuted" textStyle="t4Regular">
+            {label}
           </Text>
-          <Text textStyle="t10Bold">{score}°</Text>
         </VStack>
-        <ReadinessChip score={score} />
-      </HStack>
-      <ProgressBar value={score} tone={readinessTone(score)} />
-      <Text color="fg.neutralMuted" textStyle="t4Regular">
-        {label}
-      </Text>
-    </Card>
+      </Card>
+    </VStack>
   );
 }

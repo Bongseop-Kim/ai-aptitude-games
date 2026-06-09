@@ -13,12 +13,19 @@ export type GameTileProps = Omit<PressableProps, 'children'> & {
   game: Game;
 };
 
-export function GameTile({ game, ...props }: GameTileProps) {
+export function GameTile({ game, accessibilityState, disabled, onPress, ...props }: GameTileProps) {
   const colors = toneColors[game.tone];
   const locked = game.status === 'locked';
+  const isDisabled = locked || Boolean(disabled);
 
   return (
-    <Pressable accessibilityRole="button" accessibilityState={{ disabled: locked }} disabled={locked} {...props}>
+    <Pressable
+      {...props}
+      accessibilityRole="button"
+      accessibilityState={{ ...accessibilityState, disabled: isDisabled }}
+      disabled={isDisabled}
+      onPress={locked ? undefined : onPress}
+    >
       <Card gap="x3" p="x3">
         <HStack align="flexStart" justify="spaceBetween">
           <Box

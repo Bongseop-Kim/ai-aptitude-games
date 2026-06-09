@@ -32,6 +32,13 @@ export async function migrateLocalDb(db: SQLiteDatabase) {
 }
 
 export async function getLocalDbVersion(db: SQLiteDatabase) {
+  await db.execAsync(`
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      version INTEGER PRIMARY KEY NOT NULL,
+      applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
   const latest = await db.getFirstAsync<SchemaVersionRow>(
     'SELECT MAX(version) AS version FROM schema_migrations',
   );

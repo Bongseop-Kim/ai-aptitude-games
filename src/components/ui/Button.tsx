@@ -61,6 +61,7 @@ export function Button({
   const py = size === 'small' ? 'x2' : 'x3';
   const px = size === 'small' ? 'x3' : 'x4';
   const textStyle = size === 'small' ? 't4Bold' : 't5Bold';
+  const contentColor = isDisabled ? 'fg.disabled' : colors.textColor;
 
   return (
     <Pressable accessibilityRole="button" accessibilityState={{ disabled: isDisabled }} disabled={disabled} {...props}>
@@ -69,18 +70,18 @@ export function Button({
         bg={isDisabled ? 'bg.disabled' : colors.bg}
         borderColor={colors.borderColor}
         borderRadius="r3"
-        borderWidth={variant === 'ghost' ? 0 : 'thin'}
+        borderWidth={variant === 'ghost' ? undefined : 'thin'}
         gap="x2"
         justify="center"
         px={px}
         py={py}
         width={fullWidth ? 'full' : undefined}
       >
-        {iconLeft ? <Icon name={iconLeft} color={colors.textColor} size="small" /> : null}
-        <Text color={isDisabled ? 'fg.disabled' : colors.textColor} textStyle={textStyle} maxLines={1}>
+        {iconLeft ? <Icon name={iconLeft} color={contentColor} size="small" /> : null}
+        <Text color={contentColor} textStyle={textStyle} maxLines={1}>
           {label}
         </Text>
-        {iconRight ? <Icon name={iconRight} color={colors.textColor} size="small" /> : null}
+        {iconRight ? <Icon name={iconRight} color={contentColor} size="small" /> : null}
       </HStack>
     </Pressable>
   );

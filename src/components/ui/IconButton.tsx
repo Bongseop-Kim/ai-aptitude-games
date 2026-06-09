@@ -35,7 +35,7 @@ export function IconButton({
         bg={variant === 'weak' ? 'bg.neutralWeak' : 'bg.transparent'}
         borderColor={isOutline ? 'stroke.neutralWeak' : 'bg.transparent'}
         borderRadius="full"
-        borderWidth={isOutline ? 'thin' : 0}
+        borderWidth={isOutline ? 'thin' : undefined}
         height="x10"
         justifyContent="center"
         width="x10"
