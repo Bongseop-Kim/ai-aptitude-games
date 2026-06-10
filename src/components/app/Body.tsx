@@ -20,6 +20,7 @@ export function Body({ bottomPad = 0, children }: BodyProps) {
     <Box flex={1}>
       <ScrollView
         style={{ flex: 1 }}
+        contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{
           flexGrow: 1,
           paddingBottom: insetBottom,
