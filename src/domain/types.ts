@@ -57,10 +57,40 @@ export type ReportCompetency = {
   tone: Tone;
 };
 
+export type MockExamRecord = {
+  round: number;
+  dateLabel: string;
+  score: number;
+  delta: number | null;
+  duration: string;
+  pro: boolean;
+};
+
 export type SubscriptionPlan = {
   id: 'free' | 'pro-monthly' | 'pro-yearly';
   name: string;
   priceLabel: string;
   description: string;
   recommended?: boolean;
+};
+
+export type UserProfile = {
+  name: string;
+  description: string;
+  handle: string;
+  jobLabel: string;
+  streakDays: number;
+  mockExamCount: number;
+  gems: number;
+  readiness: {
+    score: number;
+    percentileLabel: string;
+    strength: string;
+    weakness: string;
+  };
+  ranking: {
+    rivalInitial: string;
+    message: string;
+    detail: string;
+  };
 };

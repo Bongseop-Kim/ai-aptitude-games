@@ -1,4 +1,4 @@
-# 새움(Saeum) 프로토타입 — 디코드 & 참조 인덱스
+# 역검 프로토타입 — 디코드 & 참조 인덱스
 
 게임으로 연습하는 **AI 면접 준비** 앱. 9개 역량 게임 → 모의고사 → AI 리포트 → 구독.
 원본은 `~/Downloads`의 standalone HTML 3종(번들 안에 gzip+base64로 소스가 박혀 있음).
@@ -10,16 +10,16 @@
 node docs/prototype/_decode.mjs
 ```
 
-원본 HTML 경로는 `_decode.mjs`의 `SOURCES`에 하드코딩되어 있다(`~/Downloads/새움 *.html`).
+원본 HTML 경로는 `_decode.mjs`의 `SOURCES`에 하드코딩되어 있다(`~/Downloads/역검 *.html`).
 앱 소스는 파일명으로, 라이브러리는 `_vendor/`(gitignore)로 분리된다.
 
 ## 번들 3종
 
 | 폴더 | 원본 | 성격 | 고유 파일 |
 |------|------|------|-----------|
-| `prototype/` | 새움 프로토타입 | **실제 동작 앱**(라우터 포함). 가장 완전 | `app.jsx`, `me.jsx`, `billing.jsx`, `retention.jsx` |
-| `game-flow/` | 새움 게임 플로우 | 9개 게임 인트로→플레이→결과 **스토리보드** 캔버스 | `game-flows.jsx` |
-| `screen-board/` | 새움 화면 보드 | 전체 화면을 Figma식 캔버스에 펼친 보드 | `board.jsx` |
+| `prototype/` | 역검 프로토타입 | **실제 동작 앱**(라우터 포함). 가장 완전 | `app.jsx`, `me.jsx`, `billing.jsx`, `retention.jsx` |
+| `game-flow/` | 역검 게임 플로우 | 9개 게임 인트로→플레이→결과 **스토리보드** 캔버스 | `game-flows.jsx` |
+| `screen-board/` | 역검 화면 보드 | 전체 화면을 Figma식 캔버스에 펼친 보드 | `board.jsx` |
 
 > 세 번들의 `home/games/games-play/reports/onboarding/ds-setup` 등은 거의 동일. **`prototype/`를 정본으로 본다.**
 
@@ -96,6 +96,6 @@ report/me → retention(스트릭·랭킹·대회)
 
 ## 디자인 시스템
 
-Mossy Design System 위에 새움 토큰(`T`). 모두 `var(--mossy-color-*)` CSS 변수.
+Mossy Design System 위에 역검 토큰(`T`). 모두 `var(--mossy-color-*)` CSS 변수.
 프로토타입은 inline style + raw hex이지만, **본 프로젝트 이식 시에는 루트 `CLAUDE.md` 규칙**
 (`Box/Flex/Grid/VStack/HStack/Float` + 디자인 토큰만, raw 숫자 금지)을 따른다.

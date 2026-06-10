@@ -21,7 +21,7 @@ function MeTab({ ctx }) {
               <span style={{ fontSize: 17, fontWeight: 700, color: T.fg }}>김준비</span>
               {ctx.isPro && <Badge variant="brand">PRO</Badge>}
             </div>
-            <div style={{ fontSize: 12, color: T.fgSubtle, marginTop: 2 }}>IT · 개발 준비 · @saeum</div>
+            <div style={{ fontSize: 12, color: T.fgSubtle, marginTop: 2 }}>IT · 개발 준비 · @yeokgeom</div>
             <div style={{ marginTop: 6 }}><ReadinessChip score={74} size="small" /></div>
           </div>
           <IconButton icon="edit" aria-label="편집" variant="weak" onClick={() => ctx.showToast('프로필 편집')} />
@@ -42,13 +42,13 @@ function MeTab({ ctx }) {
         <SectionHead title="구독" />
         {ctx.isPro ? (
           <Card pad={0}>
-            <ListItem leadingIcon="workspace_premium" title="새움 Pro · 월간" description="무료 체험 6일 남음" value="관리" onClick={() => ctx.nav('billing', { step: 'manage' })} style={listRow} />
+            <ListItem leadingIcon="workspace_premium" title="역검 Pro · 월간" description="무료 체험 6일 남음" value="관리" onClick={() => ctx.nav('billing', { step: 'manage' })} style={listRow} />
           </Card>
         ) : (
           <Card pad={14} bg={T.inverted} border={false} radius={T.r4} onClick={() => ctx.nav('billing', { step: 'landing' })}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <Sym name="eco" size={26} fill={1} color="var(--mossy-color-palette-mossy-500)" />
-              <div style={{ flex: 1 }}><div style={{ fontSize: 14, fontWeight: 700, color: T.fgInv }}>새움 Pro 시작하기</div><div style={{ fontSize: 12, color: 'var(--mossy-color-palette-gray-600)' }}>전체 리포트 · 7일 무료</div></div>
+              <div style={{ flex: 1 }}><div style={{ fontSize: 14, fontWeight: 700, color: T.fgInv }}>역검 Pro 시작하기</div><div style={{ fontSize: 12, color: 'var(--mossy-color-palette-gray-600)' }}>전체 리포트 · 7일 무료</div></div>
               <Sym name="arrow_forward" size={20} color="#fff" />
             </div>
           </Card>
@@ -75,7 +75,7 @@ function MeTab({ ctx }) {
           </div>
         </Card>
 
-        <div style={{ textAlign: 'center', marginTop: 16, fontSize: 11, color: T.fgSubtle }}>새움 · 버전 1.0.0</div>
+        <div style={{ textAlign: 'center', marginTop: 16, fontSize: 11, color: T.fgSubtle }}>역검 · 버전 1.0.0</div>
       </Body>
     </Screen>
   );

@@ -162,7 +162,7 @@ function Onboarding({ ctx, initialStep = 0 }) {
         </div>
       </div>
     </>,
-    <Button variant="brand" size="large" fullWidth trailingIcon="eco" onClick={finish}>새움 시작하기</Button>
+    <Button variant="brand" size="large" fullWidth trailingIcon="eco" onClick={finish}>역검 시작하기</Button>
   );
 }
 

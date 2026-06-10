@@ -20,7 +20,7 @@ export function Logo({ showText = true }: LogoProps) {
       >
         <Icon name="eco" color="fg.neutralInverted" />
       </Box>
-      {showText ? <Text textStyle="t7Bold">새움</Text> : null}
+      {showText ? <Text textStyle="t7Bold">역검</Text> : null}
     </HStack>
   );
 }

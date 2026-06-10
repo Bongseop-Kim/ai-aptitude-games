@@ -1,4 +1,4 @@
-// app.jsx — 새움 router, tab bar, and iOS-frame mount.
+// app.jsx — 역검 router, tab bar, and iOS-frame mount.
 // Screen components are resolved from window at render time, so file load order is flexible
 // as long as ReactDOM render runs last (it does — in the main HTML inline script).
 

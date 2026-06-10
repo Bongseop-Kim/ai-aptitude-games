@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Pressable, type PressableProps } from 'react-native';
 
 import { HStack, VStack } from '../../design-system/components/Stack';
@@ -8,7 +9,7 @@ export type ListItemProps = Omit<PressableProps, 'children'> & {
   title: string;
   description?: string;
   leadingIcon?: IconName;
-  trailing?: string;
+  trailing?: ReactNode;
   showChevron?: boolean;
 };
 
@@ -34,11 +35,13 @@ export function ListItem({
             </Text>
           ) : null}
         </VStack>
-        {trailing ? (
+        {typeof trailing === 'string' ? (
           <Text color="fg.neutralMuted" textStyle="t3Medium" maxLines={1}>
             {trailing}
           </Text>
-        ) : null}
+        ) : (
+          trailing
+        )}
         {showChevron ? <Icon name="chevron-right" size="small" /> : null}
       </HStack>
     </Pressable>

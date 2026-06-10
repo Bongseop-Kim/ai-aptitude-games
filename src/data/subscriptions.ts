@@ -9,14 +9,14 @@ export const subscriptionPlans: SubscriptionPlan[] = [
   },
   {
     id: 'pro-monthly',
-    name: '새움 Pro 월간',
+    name: '역검 Pro 월간',
     priceLabel: '7일 무료',
     description: '전체 리포트, 코치 플랜, 무제한 모의고사를 열어요.',
     recommended: true,
   },
   {
     id: 'pro-yearly',
-    name: '새움 Pro 연간',
+    name: '역검 Pro 연간',
     priceLabel: '연간 할인',
     description: '꾸준한 면접 준비를 위한 장기 플랜이에요.',
   },

@@ -204,7 +204,7 @@ function RtPush({ ctx }) {
           <div style={{ padding: 12, borderRadius: T.r3, background: 'rgba(255,255,255,0.12)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ width: 20, height: 20, borderRadius: 5, background: T.brandSolid, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><Sym name="eco" size={13} fill={1} color="#fff" /></span>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>새움</span><span style={{ marginLeft: 'auto', fontSize: 11, color: '#aaa' }}>지금</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>역검</span><span style={{ marginLeft: 'auto', fontSize: 11, color: '#aaa' }}>지금</span>
             </div>
             <div style={{ color: '#fff', fontSize: 13, fontWeight: 700, marginTop: 6 }}>스트릭이 꺼질 위기예요</div>
             <div style={{ color: '#ccc', fontSize: 12, marginTop: 2 }}>오늘 가위바위보 1판이면 4일째 이어져요</div>

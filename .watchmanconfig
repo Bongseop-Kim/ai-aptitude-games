@@ -1,0 +1,3 @@
+{
+  "ignore_dirs": [".omx", ".omc", ".claude", "dist", "android", "ios"]
+}

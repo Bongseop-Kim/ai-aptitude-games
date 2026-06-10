@@ -1,4 +1,4 @@
-# ai-aptitude-games
+# 역검
 
 Expo app reset for a fresh rebuild while preserving the existing store identifiers.
 

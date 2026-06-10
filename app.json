@@ -1,17 +1,19 @@
 {
   "expo": {
-    "name": "ai-aptitude-games",
+    "name": "역검",
     "slug": "ai-aptitude-games",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "aiaptitudegames",
+    "experiments": {
+      "typedRoutes": true
+    },
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.bongsub.aiaptitudegames",
       "infoPlist": {
-        "UIDesignRequiresCompatibility": true,
         "ITSAppUsesNonExemptEncryption": false
       },
       "appleTeamId": "Z995BAAVG5"
@@ -33,7 +35,9 @@
     },
     "plugins": [
       "expo-sqlite",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-web-browser",
+      "expo-router"
     ]
   }
 }

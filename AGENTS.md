@@ -1,5 +1,17 @@
 Expo web is not used in this project.
 
+## Foundation Docs
+
+When changing UI, design-system primitives, or product copy, reference these project-adapted foundation docs:
+
+- [Elevation](docs/foundation/elevation.md)
+- [Iconography](docs/foundation/iconography.md)
+- [International Design](docs/foundation/international-design.md)
+- [Loading](docs/foundation/loading.md)
+- [State](docs/foundation/state.md)
+- [Voice and Tone](docs/foundation/voice-and-tone.md)
+- [Writing](docs/foundation/writing.md)
+
 ## Layout
 
 Build layouts only with `Box`, `Flex`, `Grid`, `VStack`, `HStack`, and `Float`.
@@ -27,3 +39,13 @@ Good:
 ```
 
 If an expression is difficult with existing Layout props or tokens, ask before adding an ad hoc implementation.
+
+## Imports
+
+Do not use barrel files (`index.ts` re-export files). Import directly from the module that defines the symbol, e.g. `import { GameTile } from '../components/games/GameTile'`.
+
+## Verification
+
+Do not run `npx expo start`, `npm run start`, or other long-lived Expo dev servers unless explicitly asked.
+
+Use fast checks like `npx tsc --noEmit`. The user runs and inspects the Expo app manually.

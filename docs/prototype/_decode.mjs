@@ -12,9 +12,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DOWNLOADS = '/Users/duegosystem/Downloads';
 
 const SOURCES = [
-  { file: '새움 게임 플로우 (standalone).html', out: 'game-flow' },
-  { file: '새움 프로토타입 (standalone).html', out: 'prototype' },
-  { file: '새움 화면 보드 (standalone).html', out: 'screen-board' },
+  { file: '역검 게임 플로우 (standalone).html', out: 'game-flow' },
+  { file: '역검 프로토타입 (standalone).html', out: 'prototype' },
+  { file: '역검 화면 보드 (standalone).html', out: 'screen-board' },
 ];
 
 const EXT = {
