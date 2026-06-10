@@ -1,25 +1,29 @@
 # 역검 프로토타입 — 디코드 & 참조 인덱스
 
 게임으로 연습하는 **AI 면접 준비** 앱. 9개 역량 게임 → 모의고사 → AI 리포트 → 구독.
-원본은 `~/Downloads`의 standalone HTML 3종(번들 안에 gzip+base64로 소스가 박혀 있음).
+원본은 standalone HTML 4종(번들 안에 gzip+base64로 소스가 박혀 있음).
 이 폴더는 그 번들을 **읽을 수 있는 소스로 디코드**한 결과 + 참조 문서다.
+원본 HTML은 용량의 90%가 내장 폰트라 저장소에 보관하지 않는다 — 참조는 디코드된 소스로 충분하다.
 
 ## 재생성 방법
 
+원본 HTML을 `_originals/`에 넣은 뒤(파일명은 `_decode.mjs`의 `SOURCES` 참조):
+
 ```bash
-node docs/prototype/_decode.mjs
+node docs/prototype/_decode.mjs            # 전체
+node docs/prototype/_decode.mjs mock-exam-flow   # 특정 번들만
 ```
 
-원본 HTML 경로는 `_decode.mjs`의 `SOURCES`에 하드코딩되어 있다(`~/Downloads/역검 *.html`).
 앱 소스는 파일명으로, 라이브러리는 `_vendor/`(gitignore)로 분리된다.
 
-## 번들 3종
+## 번들 4종
 
 | 폴더 | 원본 | 성격 | 고유 파일 |
 |------|------|------|-----------|
 | `prototype/` | 역검 프로토타입 | **실제 동작 앱**(라우터 포함). 가장 완전 | `app.jsx`, `me.jsx`, `billing.jsx`, `retention.jsx` |
 | `game-flow/` | 역검 게임 플로우 | 9개 게임 인트로→플레이→결과 **스토리보드** 캔버스 | `game-flows.jsx` |
 | `screen-board/` | 역검 화면 보드 | 전체 화면을 Figma식 캔버스에 펼친 보드 | `board.jsx` |
+| `mock-exam-flow/` | 모의고사 화면 플로우 | 모의고사(9게임 종합 테스트) 전체 화면 플로우 스토리보드. 신규 화면 4종(MockBriefing/MockInterstitial/MockPause/MockResume) 정의 | `mock-flow.jsx` |
 
 > 세 번들의 `home/games/games-play/reports/onboarding/ds-setup` 등은 거의 동일. **`prototype/`를 정본으로 본다.**
 

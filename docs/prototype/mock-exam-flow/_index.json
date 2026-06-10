@@ -1,0 +1,138 @@
+{
+  "source": "모의고사 화면 플로우 (standalone).html",
+  "resources": [
+    {
+      "id": "5e3d4dce-9e0b-4f3f-a155-22b9c7e95348",
+      "mime": "text/javascript",
+      "bytes": 109931,
+      "file": "vendor-5e3d4dce.js",
+      "app": false
+    },
+    {
+      "id": "e8ec0d69-b796-41ed-9ac8-3514421e9bc9",
+      "mime": "text/javascript",
+      "bytes": 1080227,
+      "file": "vendor-e8ec0d69.js",
+      "app": false
+    },
+    {
+      "id": "e3392c9b-bc87-4acb-b88b-4546d31d1124",
+      "mime": "text/javascript",
+      "bytes": 3137752,
+      "file": "vendor-e3392c9b.js",
+      "app": false
+    },
+    {
+      "id": "e3e12394-b95f-487f-a103-a19b68e749a7",
+      "mime": "application/javascript",
+      "bytes": 15519,
+      "file": "games-play.jsx",
+      "app": true
+    },
+    {
+      "id": "4764d3e9-5f3c-4c71-b7fb-dcf2bbc25880",
+      "mime": "application/javascript",
+      "bytes": 8187,
+      "file": "home.jsx",
+      "app": true
+    },
+    {
+      "id": "b1fa04a3-b7e0-4cdb-8946-e05810497be5",
+      "mime": "text/jsx",
+      "bytes": 16174,
+      "file": "entry-scaffold.jsx",
+      "app": true
+    },
+    {
+      "id": "5ec5263c-f089-4974-880d-c49f7d8f2f7d",
+      "mime": "application/javascript",
+      "bytes": 24829,
+      "file": "game-flows.jsx",
+      "app": true
+    },
+    {
+      "id": "66d1310d-ff3e-4641-bde5-c709a35d7dbb",
+      "mime": "application/javascript",
+      "bytes": 36651,
+      "file": "reports.jsx",
+      "app": true
+    },
+    {
+      "id": "d31b20de-9508-4914-83c4-c3ade310d4a8",
+      "mime": "application/javascript",
+      "bytes": 15557,
+      "file": "ds-setup.jsx",
+      "app": true
+    },
+    {
+      "id": "6d34c56f-3ae6-4dfa-b12b-be1399efd4e1",
+      "mime": "application/javascript",
+      "bytes": 13568,
+      "file": "games-play-b.jsx",
+      "app": true
+    },
+    {
+      "id": "67277190-5b96-4da1-9508-888f676d1b2d",
+      "mime": "application/javascript",
+      "bytes": 17526,
+      "file": "games.jsx",
+      "app": true
+    },
+    {
+      "id": "2135154d-c732-4ae1-8297-34a77d845d0e",
+      "mime": "application/javascript",
+      "bytes": 83406,
+      "file": "vendor-2135154d.js",
+      "app": false
+    },
+    {
+      "id": "f5a66cb1-7c7d-4d5e-ac5e-3601af9fe385",
+      "mime": "text/jsx",
+      "bytes": 50083,
+      "file": "entry-scaffold-2.jsx",
+      "app": true
+    },
+    {
+      "id": "3e94fe63-33ea-439d-8faa-da4cd1c0697b",
+      "mime": "application/javascript",
+      "bytes": 23555,
+      "file": "mock-flow.jsx",
+      "app": true
+    },
+    {
+      "id": "b32005e6-b051-42ee-8bfa-b8cbacc4db7a",
+      "mime": "font/woff2",
+      "skipped": true
+    },
+    {
+      "id": "ea13b15e-b030-4ba5-875e-79a518fb1a13",
+      "mime": "font/woff2",
+      "skipped": true
+    },
+    {
+      "id": "9c382ace-c2f5-48da-becf-e5c5ae860e70",
+      "mime": "font/woff2",
+      "skipped": true
+    },
+    {
+      "id": "4f2d5b72-4fee-4f09-89c3-917754e9678e",
+      "mime": "font/woff2",
+      "skipped": true
+    },
+    {
+      "id": "09338bdc-8116-4e94-8503-ee2b0f192fff",
+      "mime": "font/woff2",
+      "skipped": true
+    },
+    {
+      "id": "46ce14de-d047-42ca-a5a6-4cdeec17b7d1",
+      "mime": "font/woff2",
+      "skipped": true
+    },
+    {
+      "id": "7c3482ac-6780-4b30-8c4c-60ce488e8871",
+      "mime": "font/woff2",
+      "skipped": true
+    }
+  ]
+}
