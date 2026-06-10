@@ -4,15 +4,17 @@ import { ScrollView } from 'react-native';
 import { Box } from '../../design-system/components/Box';
 import { VStack } from '../../design-system/components/Stack';
 import { useDesignSystemTheme } from '../../design-system/provider';
-import { resolveLength } from '../../design-system/components/style-props';
+import { resolveLength, type TokenLength } from '../../design-system/components/style-props';
 
 export type BodyProps = {
+  bottomPad?: TokenLength;
   children: ReactNode;
 };
 
-export function Body({ children }: BodyProps) {
+export function Body({ bottomPad = 0, children }: BodyProps) {
   const { theme } = useDesignSystemTheme();
-  const verticalPadding = resolveLength(theme, 'spacingY.componentDefault');
+  const bottomPadding = resolveLength(theme, bottomPad);
+  const insetBottom = typeof bottomPadding === 'number' ? bottomPadding : 0;
 
   return (
     <Box flex={1}>
@@ -20,11 +22,13 @@ export function Body({ children }: BodyProps) {
         style={{ flex: 1 }}
         contentContainerStyle={{
           flexGrow: 1,
-          paddingVertical: typeof verticalPadding === 'number' ? verticalPadding : undefined,
+          paddingBottom: insetBottom,
         }}
         showsVerticalScrollIndicator={false}
       >
-        <VStack gap="spacingY.componentDefault">{children}</VStack>
+        <VStack gap="spacingY.componentDefault" py="spacingY.componentDefault">
+          {children}
+        </VStack>
       </ScrollView>
     </Box>
   );

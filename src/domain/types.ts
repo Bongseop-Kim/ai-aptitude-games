@@ -64,3 +64,21 @@ export type SubscriptionPlan = {
   description: string;
   recommended?: boolean;
 };
+
+export type UserProfile = {
+  name: string;
+  description: string;
+  streakDays: number;
+  gems: number;
+  readiness: {
+    score: number;
+    percentileLabel: string;
+    strength: string;
+    weakness: string;
+  };
+  ranking: {
+    rivalInitial: string;
+    message: string;
+    detail: string;
+  };
+};
