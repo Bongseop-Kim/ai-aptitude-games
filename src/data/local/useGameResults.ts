@@ -9,7 +9,7 @@ import { useAuth } from '../../providers/AuthProvider';
 import { pushUnsyncedGameResults } from '../sync/gameResultsSync';
 import { getBestScoreForGame, getBestScores, insertGameResult } from './gameResults';
 
-const gameResultKeys = {
+export const gameResultKeys = {
   all: ['game-results'] as const,
   best: (userId: string | null) => ['game-results', userId, 'best'] as const,
   bestFor: (userId: string | null, gameId: GameId) =>

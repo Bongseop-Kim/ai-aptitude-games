@@ -9,19 +9,29 @@ type BestScoreRow = {
   score: number;
 };
 
+type GameResultOptions = {
+  id?: string;
+  createdAt?: string;
+};
+
 export async function insertGameResult(
   db: SQLiteDatabase,
   userId: string,
   input: GameResultInput,
+  options: GameResultOptions = {},
 ) {
+  const id = options.id ?? Crypto.randomUUID();
+  const columns = ['id', 'user_id', 'game_id', 'score', 'accuracy', 'avg_response_ms'];
+  const values = [id, userId, input.gameId, input.score, input.accuracy, input.avgResponseMs];
+
+  if (options.createdAt != null) {
+    columns.push('created_at');
+    values.push(options.createdAt);
+  }
+
   await db.runAsync(
-    'INSERT INTO game_results (id, user_id, game_id, score, accuracy, avg_response_ms) VALUES (?, ?, ?, ?, ?, ?)',
-    Crypto.randomUUID(),
-    userId,
-    input.gameId,
-    input.score,
-    input.accuracy,
-    input.avgResponseMs,
+    `INSERT INTO game_results (${columns.join(', ')}) VALUES (${columns.map(() => '?').join(', ')})`,
+    ...values,
   );
 }
 
