@@ -17,6 +17,8 @@ export type IconProps = {
 };
 
 const materialIconName: Record<IconName, MaterialIconName> = {
+  add: 'add',
+  'arrow-forward': 'arrow-forward',
   'arrow-left': 'arrow-back',
   bell: 'notifications',
   check: 'check',
@@ -25,15 +27,21 @@ const materialIconName: Record<IconName, MaterialIconName> = {
   close: 'close',
   adjust: 'adjust',
   balance: 'balance',
+  controller: 'sports-esports',
   diamond: 'diamond',
   dialpad: 'dialpad',
+  doc: 'description',
   eco: 'eco',
+  edit: 'edit',
   extension: 'extension',
   fire: 'local-fire-department',
   flask: 'science',
+  'group-add': 'group-add',
   groups: 'groups',
   hand: 'front-hand',
+  help: 'help-outline',
   lock: 'lock',
+  logout: 'logout',
   paw: 'pets',
   play: 'play-arrow',
   profile: 'person',
@@ -45,6 +53,7 @@ const materialIconName: Record<IconName, MaterialIconName> = {
   timeline: 'timeline',
   'trend-up': 'trending-up',
   trophy: 'emoji-events',
+  volume: 'volume-up',
 };
 
 const iconSizeToken = {

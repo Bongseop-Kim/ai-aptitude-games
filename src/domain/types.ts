@@ -57,6 +57,15 @@ export type ReportCompetency = {
   tone: Tone;
 };
 
+export type MockExamRecord = {
+  round: number;
+  dateLabel: string;
+  score: number;
+  delta: number | null;
+  duration: string;
+  pro: boolean;
+};
+
 export type SubscriptionPlan = {
   id: 'free' | 'pro-monthly' | 'pro-yearly';
   name: string;
@@ -68,7 +77,10 @@ export type SubscriptionPlan = {
 export type UserProfile = {
   name: string;
   description: string;
+  handle: string;
+  jobLabel: string;
   streakDays: number;
+  mockExamCount: number;
   gems: number;
   readiness: {
     score: number;

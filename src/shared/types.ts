@@ -1,6 +1,8 @@
 export type BadgeTone = 'brand' | 'positive' | 'warning' | 'critical' | 'informative' | 'neutral';
 
 export type IconName =
+  | 'add'
+  | 'arrow-forward'
   | 'arrow-left'
   | 'bell'
   | 'check'
@@ -9,15 +11,21 @@ export type IconName =
   | 'close'
   | 'adjust'
   | 'balance'
+  | 'controller'
   | 'diamond'
   | 'dialpad'
+  | 'doc'
   | 'eco'
+  | 'edit'
   | 'extension'
   | 'fire'
   | 'flask'
+  | 'group-add'
   | 'groups'
   | 'hand'
+  | 'help'
   | 'lock'
+  | 'logout'
   | 'paw'
   | 'play'
   | 'profile'
@@ -28,4 +36,5 @@ export type IconName =
   | 'share'
   | 'timeline'
   | 'trend-up'
-  | 'trophy';
+  | 'trophy'
+  | 'volume';
