@@ -13,7 +13,7 @@ type UnsyncedGameResultRow = {
 };
 
 let pushInFlight = false;
-let pushQueued = false;
+let pushQueuedUserId: string | null = null;
 
 // SQLite datetime('now') stores UTC as 'YYYY-MM-DD HH:MM:SS'.
 function toIsoUtc(sqliteDatetime: string) {
@@ -27,7 +27,7 @@ function toIsoUtc(sqliteDatetime: string) {
  */
 export async function pushUnsyncedGameResults(db: SQLiteDatabase, userId: string) {
   if (pushInFlight) {
-    pushQueued = true;
+    pushQueuedUserId = userId;
     return;
   }
   pushInFlight = true;
@@ -92,9 +92,10 @@ export async function pushUnsyncedGameResults(db: SQLiteDatabase, userId: string
     }
   } finally {
     pushInFlight = false;
-    if (pushQueued) {
-      pushQueued = false;
-      void pushUnsyncedGameResults(db, userId);
+    if (pushQueuedUserId) {
+      const queuedUserId = pushQueuedUserId;
+      pushQueuedUserId = null;
+      void pushUnsyncedGameResults(db, queuedUserId);
     }
   }
 }

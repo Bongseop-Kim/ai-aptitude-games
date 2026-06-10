@@ -22,6 +22,8 @@ import { GameStageShell } from '../GameStageShell';
 import { ResponseButton, answerButtonState } from '../ResponseButton';
 import { useRoundPlay } from '../useRoundPlay';
 
+// Game-specific perceptual sizes: 9 has no exact dimension token and the pair
+// is tuned to make the "larger dots but fewer count" distraction legible.
 const SMALL_DOT_SIZE = 9;
 const LARGE_DOT_SIZE = 16;
 

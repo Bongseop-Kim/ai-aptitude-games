@@ -1,3 +1,5 @@
+import { randomInt } from './random';
+
 export type CompareSide = 'left' | 'right';
 
 export type CompareQuestion = {
@@ -21,11 +23,11 @@ export const compareSideLabel: Record<CompareSide, string> = {
 };
 
 export function createCompareQuestion(): CompareQuestion {
-  const left = 6 + Math.floor(Math.random() * 10);
-  let right = 6 + Math.floor(Math.random() * 10);
+  const left = randomInt(6, 15);
+  let right = randomInt(6, 15);
 
-  if (left === right) {
-    right = right === 15 ? 14 : right + 1;
+  while (right === left) {
+    right = randomInt(6, 15);
   }
 
   return { left, right };

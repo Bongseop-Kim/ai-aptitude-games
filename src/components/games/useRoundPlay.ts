@@ -17,6 +17,7 @@ export function useRoundPlay<TAnswer>(options: {
   const onCompleteRef = useRef(options.onComplete);
   const [round, setRound] = useState(1);
   const [picked, setPicked] = useState<TAnswer | null>(null);
+  const pickedRef = useRef<TAnswer | null>(null);
   const [correctCount, setCorrectCount] = useState(0);
   const responseTimesRef = useRef<number[]>([]);
   const questionShownAtRef = useRef(Date.now());
@@ -43,10 +44,11 @@ export function useRoundPlay<TAnswer>(options: {
   }, []);
 
   const choose = useCallback((value: TAnswer, isCorrect: boolean) => {
-    if (picked != null) return;
+    if (pickedRef.current != null) return;
 
     responseTimesRef.current.push(Date.now() - questionShownAtRef.current);
     const nextCorrectCount = correctCount + (isCorrect ? 1 : 0);
+    pickedRef.current = value;
     setPicked(value);
     setCorrectCount(nextCorrectCount);
 
@@ -60,9 +62,10 @@ export function useRoundPlay<TAnswer>(options: {
       }
 
       setRound((value) => value + 1);
+      pickedRef.current = null;
       setPicked(null);
     }, options.feedbackMs);
-  }, [correctCount, options.feedbackMs, options.totalRounds, picked, round]);
+  }, [correctCount, options.feedbackMs, options.totalRounds, round]);
 
   return {
     round,

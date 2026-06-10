@@ -87,9 +87,16 @@ export function statesMatch(a: RotateState | CanonicalRotateState, b: RotateStat
 }
 
 export function createRotateTarget(): CanonicalRotateState {
+  const maxAttempts = 100;
+  let attempts = 0;
   let target = canonicalize(initialRotateState);
 
   while (statesMatch(target, canonicalize(initialRotateState))) {
+    attempts += 1;
+    if (attempts > maxAttempts) {
+      throw new Error('Unable to create a non-initial rotate target.');
+    }
+
     const transformCount = randomInt(2, 4);
     let state = initialRotateState;
 

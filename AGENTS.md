@@ -28,6 +28,9 @@ Rules for local-first tables:
 - Every record table has `created_at` and `synced` columns.
 - Screens access data only through the repository layer, never raw SQLite.
 - Sync pushes are idempotent upserts (`onConflict: 'id'`). Mark `synced` only after a confirmed server response.
+- 현재는 개발 진행 중이므로 기존 로컬 데이터 유실을 고려한 마이그레이션은 고려하지 마세요. 해당 작업은 프로덕션 진입 이후에 고려해야 합니다.
+
+Supabase migration files are append-only after `supabase db push`. Treat pushed migrations as already applied history: never edit an existing pushed migration file to change schema or grants. Create a new migration file for follow-up changes instead.
 
 ## Layout
 

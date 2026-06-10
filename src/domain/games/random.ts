@@ -1,4 +1,8 @@
 export function pickRandom<T>(items: readonly T[]): T {
+  if (items.length === 0) {
+    throw new Error('pickRandom requires at least one item.');
+  }
+
   return items[Math.floor(Math.random() * items.length)];
 }
 
