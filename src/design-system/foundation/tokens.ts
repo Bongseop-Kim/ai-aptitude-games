@@ -65,7 +65,7 @@ const dimension = {
   spacingY: {
     componentDefault: 12,
     navToTitle: 20,
-    screenBottom: 56,
+    screenBottom: 24,
     betweenText: 6,
   },
 } as const;

@@ -14,7 +14,10 @@ import { supabase } from '../lib/supabase';
 
 type AuthContextValue = {
   session: Session | null;
+  userId: string | null;
   isAuthenticated: boolean;
+  // True while the session belongs to an anonymous (skip-login) user.
+  isAnonymous: boolean;
   isLoading: boolean;
 };
 
@@ -55,7 +58,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, [url]);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ session, isAuthenticated: session != null, isLoading }),
+    () => ({
+      session,
+      userId: session?.user.id ?? null,
+      isAuthenticated: session != null,
+      isAnonymous: session?.user.is_anonymous === true,
+      isLoading,
+    }),
     [session, isLoading],
   );
 

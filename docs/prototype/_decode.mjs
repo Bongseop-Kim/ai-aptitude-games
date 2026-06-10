@@ -9,12 +9,14 @@ import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DOWNLOADS = '/Users/duegosystem/Downloads';
+const ORIGINALS = path.join(__dirname, '_originals');
 
 const SOURCES = [
-  { file: '역검 게임 플로우 (standalone).html', out: 'game-flow' },
-  { file: '역검 프로토타입 (standalone).html', out: 'prototype' },
-  { file: '역검 화면 보드 (standalone).html', out: 'screen-board' },
+  { file: '새움 게임 플로우 (standalone).html', out: 'game-flow' },
+  { file: '새움 프로토타입 (standalone).html', out: 'prototype' },
+  { file: '새움 화면 보드 (standalone).html', out: 'screen-board' },
+  { file: '모의고사 화면 플로우 (standalone).html', out: 'mock-exam-flow' },
+  { file: '실전 면접 트랙 (오프라인).html', out: 'interview-track' },
 ];
 
 const EXT = {
@@ -37,7 +39,7 @@ function extract(html, type) {
 }
 
 function decodeBundle({ file, out }) {
-  const src = path.join(DOWNLOADS, file);
+  const src = path.join(ORIGINALS, file);
   const html = fs.readFileSync(src, 'utf8');
   const manifestRaw = extract(html, '__bundler/manifest');
   const templateRaw = extract(html, '__bundler/template');
@@ -122,4 +124,8 @@ function decodeBundle({ file, out }) {
   console.log('   ' + app.map((r) => r.file).join(', '));
 }
 
-for (const s of SOURCES) decodeBundle(s);
+const only = process.argv.slice(2);
+for (const s of SOURCES) {
+  if (only.length && !only.includes(s.out)) continue;
+  decodeBundle(s);
+}

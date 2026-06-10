@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Alert } from 'react-native';
 
 import { Header } from '../components/app/Header';
 import { SectionHead } from '../components/app/SectionHead';
@@ -10,15 +11,43 @@ import { Icon } from '../components/ui/Icon';
 import { ListItem } from '../components/ui/ListItem';
 import { Switch } from '../components/ui/Switch';
 import { games } from '../data/games';
+import { useGamesWithProgress } from '../data/local/useGameResults';
 import { user } from '../data/user';
 import { HStack, VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
+import { IdentityConflictError, linkKakao } from '../lib/auth';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../providers/AuthProvider';
 
 export function ProfileScreen() {
+  const { isAnonymous } = useAuth();
   const [pushEnabled, setPushEnabled] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const doneCount = games.filter((game) => game.status === 'done').length;
+  const [isLinking, setIsLinking] = useState(false);
+  const gamesWithProgress = useGamesWithProgress();
+  const doneCount = gamesWithProgress.filter((game) => game.status === 'done').length;
+
+  function handleLinkKakao() {
+    if (isLinking) {
+      return;
+    }
+
+    setIsLinking(true);
+    linkKakao()
+      .catch((error) => {
+        if (error instanceof IdentityConflictError) {
+          Alert.alert(
+            '이미 다른 계정에 연결된 카카오 계정이에요',
+            '지금 계정에는 이 카카오 계정을 연결할 수 없어요. 다른 카카오 계정으로 다시 시도해주세요.',
+          );
+          return;
+        }
+        Alert.alert('계정 연동에 실패했어요', '잠시 후 다시 시도해주세요.');
+      })
+      .finally(() => {
+        setIsLinking(false);
+      });
+  }
 
   return (
     <TabScreen header={<Header title="내 정보" />}>
@@ -70,11 +99,23 @@ export function ProfileScreen() {
       <Card py="x1">
         <ListItem leadingIcon="help" title="도움말 · 자주 묻는 질문" showChevron />
         <ListItem leadingIcon="doc" title="이용약관 · 개인정보처리방침" showChevron />
-        <ListItem
-          leadingIcon="logout"
-          title="로그아웃"
-          onPress={() => void supabase.auth.signOut()}
-        />
+        {isAnonymous ? (
+          // Signing out an anonymous session would orphan its server data,
+          // so the only exit for anonymous users is upgrading the account.
+          <ListItem
+            leadingIcon="profile"
+            title={isLinking ? '연동 중...' : '카카오 계정 연동하기'}
+            showChevron={!isLinking}
+            onPress={handleLinkKakao}
+            disabled={isLinking}
+          />
+        ) : (
+          <ListItem
+            leadingIcon="logout"
+            title="로그아웃"
+            onPress={() => void supabase.auth.signOut()}
+          />
+        )}
       </Card>
 
       <Text align="center" color="fg.neutralSubtle" textStyle="t2Regular">

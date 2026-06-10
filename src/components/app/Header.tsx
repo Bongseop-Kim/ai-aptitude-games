@@ -9,13 +9,15 @@ export type HeaderProps = {
   subtitle?: string;
   showBack?: boolean;
   rightIcon?: IconName;
+  onBack?: () => void;
+  onRightPress?: () => void;
 };
 
-export function Header({ title, subtitle, showBack = false, rightIcon }: HeaderProps) {
+export function Header({ title, subtitle, showBack = false, rightIcon, onBack, onRightPress }: HeaderProps) {
   return (
     <HStack align="center" gap="x3" justify="spaceBetween" py="x2">
       <HStack align="center" flex={1} gap="x2">
-        {showBack ? <IconButton name="arrow-left" label="뒤로" /> : <Logo showText={false} />}
+        {showBack ? <IconButton name="arrow-left" label="뒤로" onPress={onBack} /> : <Logo showText={false} />}
         <VStack flex={1} gap="x0_5">
           <Text textStyle="t7Bold" maxLines={1}>
             {title}
@@ -27,7 +29,7 @@ export function Header({ title, subtitle, showBack = false, rightIcon }: HeaderP
           ) : null}
         </VStack>
       </HStack>
-      {rightIcon ? <IconButton name={rightIcon} label={title} /> : null}
+      {rightIcon ? <IconButton name={rightIcon} label={title} onPress={onRightPress} /> : null}
     </HStack>
   );
 }

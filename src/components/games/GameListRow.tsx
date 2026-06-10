@@ -4,19 +4,18 @@ import { Box } from '../../design-system/components/Box';
 import { HStack, VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
 import { toneColors } from '../../domain/tone';
-import type { Game } from '../../domain/types';
+import type { GameWithProgress } from '../../domain/types';
 import { ProgressBar } from '../readiness/ProgressBar';
 import { Card } from '../ui/Card';
 import { Icon } from '../ui/Icon';
 
 export type GameListRowProps = Omit<PressableProps, 'children'> & {
-  game: Game;
+  game: GameWithProgress;
 };
 
 export function GameListRow({ game, accessibilityState, disabled, onPress, ...props }: GameListRowProps) {
   const colors = toneColors[game.tone];
-  const locked = game.status === 'locked';
-  const isDisabled = locked || Boolean(disabled);
+  const isDisabled = Boolean(disabled);
 
   return (
     <Pressable
@@ -24,24 +23,24 @@ export function GameListRow({ game, accessibilityState, disabled, onPress, ...pr
       accessibilityRole="button"
       accessibilityState={{ ...accessibilityState, disabled: isDisabled }}
       disabled={isDisabled}
-      onPress={locked ? undefined : onPress}
+      onPress={onPress}
     >
       <Card p="x3">
         <HStack align="center" gap="x3">
           <Box
             alignItems="center"
-            bg={locked ? 'bg.disabled' : colors.bg}
+            bg={colors.bg}
             borderRadius="r3"
             height="x11"
             justifyContent="center"
             width="x11"
           >
-            <Icon name={locked ? 'lock' : game.icon} color={locked ? 'fg.disabled' : colors.fg} />
+            <Icon name={game.icon} color={colors.fg} />
           </Box>
           <VStack flex={1} gap="x1_5">
             <VStack gap="x0_5">
               <HStack align="center" gap="x1_5">
-                <Text color={locked ? 'fg.disabled' : 'fg.neutral'} textStyle="t4Bold" maxLines={1}>
+                <Text color="fg.neutral" textStyle="t4Bold" maxLines={1}>
                   {game.name}
                 </Text>
                 {game.status === 'done' ? <Icon name="check" color="fg.positive" size="small" /> : null}
@@ -51,8 +50,10 @@ export function GameListRow({ game, accessibilityState, disabled, onPress, ...pr
               </Text>
             </VStack>
             <HStack align="center" gap="x2">
-              <ProgressBar value={game.score} tone={game.tone} layout="inline" />
-              <Text textStyle="t3Bold">{game.score}</Text>
+              {game.score != null ? (
+                <ProgressBar value={game.score} tone={game.tone} layout="inline" />
+              ) : null}
+              <Text textStyle="t3Bold">{game.score ?? '—'}</Text>
             </HStack>
           </VStack>
           <Icon name="chevron-right" color="fg.neutralSubtle" size="small" />

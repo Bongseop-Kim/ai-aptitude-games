@@ -58,6 +58,7 @@ enabled = true
 schema_paths = [
   "./schemas/01_games.sql",
   "./schemas/02_profiles.sql",
+  "./schemas/03_game_results.sql",
 ]
 
 [db.seed]

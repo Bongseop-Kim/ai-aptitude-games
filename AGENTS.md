@@ -12,6 +12,26 @@ When changing UI, design-system primitives, or product copy, reference these pro
 - [Voice and Tone](docs/foundation/voice-and-tone.md)
 - [Writing](docs/foundation/writing.md)
 
+## Data
+
+Classify every piece of data by its source of truth:
+
+- **Local-first records** (game results, play history): SQLite (`expo-sqlite`) is the source of truth. Write locally, read locally — never wait on the network. Supabase sync is a silent background concern (outbox pattern); sync failures must never block gameplay or surface as UI errors. Never read these from the server in the UI.
+- **Server-confirmed writes** (auth/account, payments, anything the server can reject): write to Supabase in realtime with explicit loading and error states. These are never silent.
+- **Server reads** (content, server-computed reports): plain Supabase queries via React Query. No special handling.
+
+Every in-app session is authenticated: users sign in with a social provider or get an anonymous Supabase session (skip-login), so local-first records sync for everyone. Account upgrade must use `linkIdentity` (see `linkWithProvider` in `src/lib/auth.ts`) — never `signInWithOAuth` on an anonymous session, which would create a new user and detach already-synced rows.
+
+Rules for local-first tables:
+
+- Primary keys are client-generated UUIDs. Never use auto-increment IDs.
+- Every record table has `created_at` and `synced` columns.
+- Screens access data only through the repository layer, never raw SQLite.
+- Sync pushes are idempotent upserts (`onConflict: 'id'`). Mark `synced` only after a confirmed server response.
+- 현재는 개발 진행 중이므로 기존 로컬 데이터 유실을 고려한 마이그레이션은 고려하지 마세요. 해당 작업은 프로덕션 진입 이후에 고려해야 합니다.
+
+Supabase migration files are append-only after `supabase db push`. Treat pushed migrations as already applied history: never edit an existing pushed migration file to change schema or grants. Create a new migration file for follow-up changes instead.
+
 ## Layout
 
 Build layouts only with `Box`, `Flex`, `Grid`, `VStack`, `HStack`, and `Float`.
