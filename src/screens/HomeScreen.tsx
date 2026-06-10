@@ -1,11 +1,11 @@
 import { Pressable } from 'react-native';
+import { useRouter } from 'expo-router';
 
 import { Logo } from '../components/app/Logo';
 import { SectionHead } from '../components/app/SectionHead';
 import { TabScreen } from '../components/app/TabScreen';
 import { GameTile } from '../components/games/GameTile';
 import { Badge } from '../components/ui/Badge';
-import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Icon, type IconName } from '../components/ui/Icon';
 import { Box } from '../design-system/components/Box';
@@ -13,9 +13,11 @@ import { Grid } from '../design-system/components/Grid';
 import { HStack, VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
 import { games } from '../data/games';
+import { useGamesWithProgress } from '../data/local/useGameResults';
 import { user } from '../data/user';
 import { readinessLabel } from '../domain/readiness';
 import { toneColors } from '../domain/tone';
+import type { GameId } from '../domain/types';
 import type { BadgeTone } from '../shared/types';
 
 const challengeGame = games.find((game) => game.id === 'potion') ?? games[0];
@@ -98,6 +100,8 @@ function Greeting() {
 }
 
 function ReadinessSummary() {
+  const router = useRouter();
+
   return (
     <Card gap="x4" p="x4">
       <HStack align="center" gap="x4">
@@ -124,7 +128,7 @@ function ReadinessSummary() {
         </VStack>
       </HStack>
       <Box bg="stroke.neutralWeak" height="x0_5" />
-      <Pressable accessibilityLabel="지난 리포트 보기" accessibilityRole="button">
+      <Pressable accessibilityLabel="지난 리포트 보기" accessibilityRole="button" onPress={() => router.push('/reports')}>
         <HStack align="center" justify="spaceBetween">
           <Text color="fg.neutralMuted" textStyle="t3Medium">
             지난 리포트 보기
@@ -166,41 +170,71 @@ function MetricRow({
 
 function DailyChallenge() {
   const colors = toneColors[challengeGame.tone];
+  const router = useRouter();
+  const openChallenge = () => router.push({ pathname: '/games/[id]', params: { id: challengeGame.id } });
 
   return (
     <VStack gap="x2">
-      <SectionHead icon="fire" title="오늘의 챌린지" actionLabel="전체" />
-      <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" gap="x3" p="x3">
-        <HStack align="center" gap="x3">
-          <Box alignItems="center" bg="bg.layerDefault" borderRadius="r3" height="x12" justifyContent="center" width="x12">
-            <Icon name={challengeGame.icon} color={colors.fg} size="large" />
-          </Box>
-          <VStack flex={1} gap="x1">
-            <Text textStyle="t5Bold" maxLines={1}>
-              {challengeGame.name} · 75점 이상
+      <SectionHead
+        icon="fire"
+        title="오늘의 챌린지"
+        actionLabel="전체"
+        actionAccessibilityLabel="오늘의 챌린지 전체 보기"
+        onActionPress={() => router.push('/games')}
+      />
+      <Pressable accessibilityLabel={`${challengeGame.name} 오늘의 챌린지 시작`} accessibilityRole="button" onPress={openChallenge}>
+        <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" gap="x3" p="x3">
+          <HStack align="center" gap="x3">
+            <Box alignItems="center" bg="bg.layerDefault" borderRadius="r3" height="x12" justifyContent="center" width="x12">
+              <Icon name={challengeGame.icon} color={colors.fg} size="large" />
+            </Box>
+            <VStack flex={1} gap="x1">
+              <Text textStyle="t5Bold" maxLines={1}>
+                {challengeGame.name} · 75점 이상
+              </Text>
+              <Text color="fg.neutralMuted" textStyle="t2Regular" maxLines={1}>
+                {challengeGame.skill} · 예상 {challengeGame.minutes}분
+              </Text>
+              <HStack gap="x1_5">
+                <Badge label="+20 XP" tone="brand" size="small" />
+                <Badge label="스트릭 +1일" tone="critical" size="small" />
+              </HStack>
+            </VStack>
+          </HStack>
+          <HStack
+            align="center"
+            bg="bg.brandSolid"
+            borderColor="stroke.brandSolid"
+            borderRadius="r3"
+            borderWidth="thin"
+            gap="x2"
+            justify="center"
+            px="x4"
+            py="x3"
+            width="full"
+          >
+            <Text color="fg.neutralInverted" textStyle="t5Bold" maxLines={1}>
+              지금 도전하기
             </Text>
-            <Text color="fg.neutralMuted" textStyle="t2Regular" maxLines={1}>
-              {challengeGame.skill} · 예상 {challengeGame.minutes}분
-            </Text>
-            <HStack gap="x1_5">
-              <Badge label="+20 XP" tone="brand" size="small" />
-              <Badge label="스트릭 +1일" tone="critical" size="small" />
-            </HStack>
-          </VStack>
-        </HStack>
-        <Button label="지금 도전하기" iconRight="play" fullWidth />
-      </Card>
+            <Icon name="play" color="fg.neutralInverted" size="small" />
+          </HStack>
+        </Card>
+      </Pressable>
     </VStack>
   );
 }
 
 function AllGamesSection() {
+  const router = useRouter();
+  const gamesWithProgress = useGamesWithProgress();
+  const openGame = (id: GameId) => router.push({ pathname: '/games/[id]', params: { id } });
+
   return (
     <VStack gap="x2">
       <SectionHead title="모든 게임" actionLabel="진행도순" />
       <Grid columns={3} gap="x3">
-        {games.map((game) => (
-          <GameTile key={game.id} game={game} />
+        {gamesWithProgress.map((game) => (
+          <GameTile key={game.id} game={game} onPress={() => openGame(game.id)} />
         ))}
       </Grid>
     </VStack>

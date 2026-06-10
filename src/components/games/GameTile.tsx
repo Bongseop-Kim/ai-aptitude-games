@@ -4,13 +4,13 @@ import { Box } from '../../design-system/components/Box';
 import { HStack, VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
 import { toneColors } from '../../domain/tone';
-import type { Game } from '../../domain/types';
+import type { GameWithProgress } from '../../domain/types';
 import { ProgressBar } from '../readiness/ProgressBar';
 import { Card } from '../ui/Card';
 import { Icon } from '../ui/Icon';
 
 export type GameTileProps = Omit<PressableProps, 'children'> & {
-  game: Game;
+  game: GameWithProgress;
 };
 
 export function GameTile({ game, accessibilityState, disabled, onPress, ...props }: GameTileProps) {
@@ -49,8 +49,10 @@ export function GameTile({ game, accessibilityState, disabled, onPress, ...props
           </Text>
         </VStack>
         <HStack align="center" gap="x2">
-          <ProgressBar value={game.score} tone={game.tone} layout="inline" />
-          <Text textStyle="t3Bold">{game.score}</Text>
+          {game.score != null ? (
+            <ProgressBar value={game.score} tone={game.tone} layout="inline" />
+          ) : null}
+          <Text textStyle="t3Bold">{game.score ?? '—'}</Text>
         </HStack>
       </Card>
     </Pressable>

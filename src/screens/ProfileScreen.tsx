@@ -11,6 +11,7 @@ import { Icon } from '../components/ui/Icon';
 import { ListItem } from '../components/ui/ListItem';
 import { Switch } from '../components/ui/Switch';
 import { games } from '../data/games';
+import { useGamesWithProgress } from '../data/local/useGameResults';
 import { user } from '../data/user';
 import { HStack, VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
@@ -23,7 +24,8 @@ export function ProfileScreen() {
   const [pushEnabled, setPushEnabled] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isLinking, setIsLinking] = useState(false);
-  const doneCount = games.filter((game) => game.status === 'done').length;
+  const gamesWithProgress = useGamesWithProgress();
+  const doneCount = gamesWithProgress.filter((game) => game.status === 'done').length;
 
   function handleLinkKakao() {
     if (isLinking) {

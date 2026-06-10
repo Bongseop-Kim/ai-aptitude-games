@@ -32,10 +32,13 @@ export type Game = {
   skill: CognitiveSkill;
   description: string;
   icon: IconName;
-  score: number;
   minutes: number;
-  status: GameStatus;
   tone: Tone;
+};
+
+export type GameWithProgress = Game & {
+  score: number | null;
+  status: GameStatus;
 };
 
 export type ReadinessLevel = 'seed' | 'sprout' | 'steady' | 'strong';

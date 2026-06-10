@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Pressable } from 'react-native';
+import { useRouter } from 'expo-router';
 
 import { Header } from '../components/app/Header';
 import { TabScreen } from '../components/app/TabScreen';
@@ -7,10 +8,11 @@ import { GameListRow } from '../components/games/GameListRow';
 import { Card } from '../components/ui/Card';
 import { Icon } from '../components/ui/Icon';
 import { Tag } from '../components/ui/Tag';
-import { games } from '../data/games';
+import { useGamesWithProgress } from '../data/local/useGameResults';
 import { HStack, VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
-import type { Game } from '../domain/types';
+import type { GameWithProgress } from '../domain/types';
+import { playableGameIds } from './GameFlowScreen';
 
 type GameFilter = 'all' | 'done' | 'todo';
 
@@ -20,7 +22,7 @@ const gameFilters: { value: GameFilter; label: string }[] = [
   { value: 'todo', label: '미완료' },
 ];
 
-function matchesFilter(game: Game, filter: GameFilter) {
+function matchesFilter(game: GameWithProgress, filter: GameFilter) {
   if (filter === 'all') return true;
   if (filter === 'done') return game.status === 'done';
   return game.status !== 'done';
@@ -28,6 +30,8 @@ function matchesFilter(game: Game, filter: GameFilter) {
 
 export function GamesScreen() {
   const [filter, setFilter] = useState<GameFilter>('all');
+  const router = useRouter();
+  const gamesWithProgress = useGamesWithProgress();
 
   return (
     <TabScreen header={<Header title="게임" subtitle="9개 역량 게임 · 매일 새 문항" />}>
@@ -45,10 +49,18 @@ export function GamesScreen() {
         ))}
       </HStack>
       <VStack gap="x2">
-        {games
+        {gamesWithProgress
           .filter((game) => matchesFilter(game, filter))
           .map((game) => (
-            <GameListRow key={game.id} game={game} />
+            <GameListRow
+              key={game.id}
+              game={game}
+              onPress={
+                playableGameIds.has(game.id)
+                  ? () => router.push({ pathname: '/games/[id]', params: { id: game.id } })
+                  : undefined
+              }
+            />
           ))}
       </VStack>
     </TabScreen>
