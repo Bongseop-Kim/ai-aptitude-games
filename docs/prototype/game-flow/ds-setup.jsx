@@ -1,5 +1,5 @@
-// ds-setup.jsx — 역검 (Saeum) foundation on top of the Mossy Design System
-// Brand: 역검 — "새 + 움(싹)". 성장·준비·차분한 자신감. Forest-green, calm, trustworthy.
+// ds-setup.jsx — 역검 foundation on top of the Mossy Design System
+// Brand: 역검 — 성장·준비·차분한 자신감. Forest-green, calm, trustworthy.
 // Reuses Mossy bundle components (window.MossyDesignSystem_2cf354) + Mossy tokens (var(--mossy-*)).
 
 const DS = window.MossyDesignSystem_2cf354 || {};
