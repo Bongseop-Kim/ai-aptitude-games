@@ -27,6 +27,9 @@ export async function createSessionFromUrl(url: string) {
   }
 
   if (access_token) {
+    if (!refresh_token) {
+      throw new Error('Auth redirect returned an access token without a refresh token.');
+    }
     const { data, error } = await supabase.auth.setSession({
       access_token,
       refresh_token,

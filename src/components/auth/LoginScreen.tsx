@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Alert } from 'react-native';
 
 import { Box } from '../../design-system/components/Box';
@@ -11,16 +11,20 @@ import { Icon } from '../ui/Icon';
 
 export function LoginScreen() {
   const [pending, setPending] = useState<'kakao' | 'skip' | null>(null);
+  // Synchronous lock: render-time `isBusy` can be stale on fast repeated taps.
+  const busyRef = useRef(false);
   const isBusy = pending != null;
 
   async function run(kind: 'kakao' | 'skip', action: () => Promise<unknown>) {
-    if (isBusy) return;
+    if (busyRef.current) return;
+    busyRef.current = true;
     setPending(kind);
     try {
       await action();
     } catch {
       Alert.alert('로그인에 실패했어요', '잠시 후 다시 시도해주세요.');
     } finally {
+      busyRef.current = false;
       setPending(null);
     }
   }

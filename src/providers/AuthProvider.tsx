@@ -25,10 +25,17 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setIsLoading(false);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        setSession(data.session);
+      })
+      .catch(() => {
+        setSession(null);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
 
     const { data } = supabase.auth.onAuthStateChange((_event, next) => {
       setSession(next);
