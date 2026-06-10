@@ -1,4 +1,5 @@
 import type { GameId } from '../types';
+import { clamp } from './random';
 
 export type GameResultInput = {
   gameId: GameId;
@@ -10,11 +11,18 @@ export type GameResultInput = {
 export type GameGrade = 'A' | 'A-' | 'B+' | 'B' | 'C';
 
 export function computeGameScore(correct: number, total: number): number {
-  return Math.max(20, Math.min(100, Math.round(45 + 55 * (correct / total))));
+  return clamp(Math.round(45 + 55 * (correct / total)), 20, 100);
 }
 
 export function roundScore(correctCount: number, totalRounds: number): number {
   return Math.round(correctCount * (100 / totalRounds));
+}
+
+export function averagePointsScore(points: readonly number[]): number {
+  if (points.length === 0) return 20;
+
+  const average = points.reduce((sum, point) => sum + point, 0) / points.length;
+  return clamp(Math.round(average), 20, 100);
 }
 
 export function gradeForScore(score: number): GameGrade {

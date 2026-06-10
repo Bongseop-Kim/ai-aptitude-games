@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Box } from '../../../design-system/components/Box';
 import { Grid } from '../../../design-system/components/Grid';
 import { HStack, VStack } from '../../../design-system/components/Stack';
 import { Text } from '../../../design-system/components/Text';
 import type { GamePlayProps } from '../../../domain/games/play';
-import { averageResponseMs, computeGameScore, roundScore } from '../../../domain/games/results';
+import { averageResponseMs, computeGameScore } from '../../../domain/games/results';
 import {
   RPS_FEEDBACK_MS,
   RPS_TOTAL_ROUNDS,
@@ -20,60 +20,32 @@ import {
 import { toneColors } from '../../../domain/tone';
 import { Icon } from '../../ui/Icon';
 import { GameStageShell } from '../GameStageShell';
-import { ResponseButton, type ResponseButtonState } from '../ResponseButton';
+import { ResponseButton, answerButtonState } from '../ResponseButton';
+import { useRoundPlay } from '../useRoundPlay';
 
 export function RpsPlay({ game, onFinish, onClose }: GamePlayProps) {
-  const [round, setRound] = useState(1);
   const [question, setQuestion] = useState(() => createRpsQuestion());
-  const [picked, setPicked] = useState<RpsHand | null>(null);
-  const [correctCount, setCorrectCount] = useState(0);
-  const responseTimesRef = useRef<number[]>([]);
-  const questionShownAtRef = useRef(Date.now());
-  const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { round, picked, correctCount, headerScore, choose } = useRoundPlay<RpsHand>({
+    totalRounds: RPS_TOTAL_ROUNDS,
+    feedbackMs: RPS_FEEDBACK_MS,
+    onComplete: ({ correctCount, responseTimes }) => {
+      onFinish({
+        gameId: game.id,
+        score: computeGameScore(correctCount, RPS_TOTAL_ROUNDS),
+        accuracy: correctCount / RPS_TOTAL_ROUNDS,
+        avgResponseMs: averageResponseMs(responseTimes),
+      });
+    },
+  });
 
   useEffect(() => {
-    return () => {
-      if (feedbackTimeoutRef.current) {
-        clearTimeout(feedbackTimeoutRef.current);
-      }
-    };
-  }, []);
+    if (round > 1) {
+      setQuestion(createRpsQuestion());
+    }
+  }, [round]);
 
   const colors = toneColors[game.tone];
   const answer = rpsCorrectAnswer(question);
-
-  function choose(hand: RpsHand) {
-    if (picked) return;
-
-    responseTimesRef.current.push(Date.now() - questionShownAtRef.current);
-    const isCorrect = hand === answer;
-    const nextCorrectCount = correctCount + (isCorrect ? 1 : 0);
-    setPicked(hand);
-    setCorrectCount(nextCorrectCount);
-
-    feedbackTimeoutRef.current = setTimeout(() => {
-      if (round >= RPS_TOTAL_ROUNDS) {
-        onFinish({
-          gameId: game.id,
-          score: computeGameScore(nextCorrectCount, RPS_TOTAL_ROUNDS),
-          accuracy: nextCorrectCount / RPS_TOTAL_ROUNDS,
-          avgResponseMs: averageResponseMs(responseTimesRef.current),
-        });
-        return;
-      }
-      setRound((value) => value + 1);
-      setQuestion(createRpsQuestion());
-      setPicked(null);
-      questionShownAtRef.current = Date.now();
-    }, RPS_FEEDBACK_MS);
-  }
-
-  function buttonState(hand: RpsHand): ResponseButtonState {
-    if (!picked) return 'idle';
-    if (hand === answer) return 'correct';
-    if (hand === picked) return 'wrong';
-    return 'idle';
-  }
 
   return (
     <GameStageShell
@@ -81,7 +53,7 @@ export function RpsPlay({ game, onFinish, onClose }: GamePlayProps) {
       tone={game.tone}
       round={round}
       totalRounds={RPS_TOTAL_ROUNDS}
-      score={roundScore(correctCount, RPS_TOTAL_ROUNDS)}
+      score={headerScore}
       onClose={onClose}
       instruction={
         <Text textStyle="t3Regular">
@@ -98,9 +70,9 @@ export function RpsPlay({ game, onFinish, onClose }: GamePlayProps) {
               key={hand}
               label={rpsHandLabel[hand]}
               icon={rpsHandIcon[hand]}
-              state={buttonState(hand)}
+              state={answerButtonState(picked, answer, hand)}
               disabled={picked != null}
-              onPress={() => choose(hand)}
+              onPress={() => choose(hand, hand === answer)}
             />
           ))}
         </Grid>

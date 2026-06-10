@@ -1,4 +1,6 @@
 import type { IconName } from '../../shared/types';
+import { averagePointsScore } from './results';
+import { clamp, randomInt } from './random';
 
 export const ROTATE_TOTAL_ROUNDS = 4;
 export const ROTATE_CLICK_LIMIT = 8;
@@ -41,17 +43,9 @@ export const rotateOps: readonly RotateOp[] = [
 
 const canonicalRotations: readonly CanonicalRotation[] = [0, 45, 90, 135, 180, 225, 270, 315];
 
-function clamp(value: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, value));
-}
-
 function normalizeRotation(rotation: number): CanonicalRotation {
   const normalized = ((rotation % 360) + 360) % 360;
   return canonicalRotations[Math.round(normalized / 45) % canonicalRotations.length];
-}
-
-function randomInt(min: number, max: number) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function stateKey(state: CanonicalRotateState) {
@@ -144,7 +138,5 @@ export function rotateRoundScore(correct: boolean, clicks: number, minClicks: nu
 }
 
 export function computeRotateScore(roundScores: readonly number[]): number {
-  if (roundScores.length === 0) return 20;
-  const average = roundScores.reduce((sum, score) => sum + score, 0) / roundScores.length;
-  return clamp(Math.round(average), 20, 100);
+  return averagePointsScore(roundScores);
 }

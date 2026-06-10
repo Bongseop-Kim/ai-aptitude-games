@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { StyleSheet } from 'react-native';
 
 import { Box } from '../../../design-system/components/Box';
 import { VStack } from '../../../design-system/components/Stack';
 import { Text } from '../../../design-system/components/Text';
 import type { GamePlayProps } from '../../../domain/games/play';
-import { averageResponseMs, computeGameScore, roundScore } from '../../../domain/games/results';
+import { averageResponseMs, computeGameScore } from '../../../domain/games/results';
 import {
   MEMORY_FEEDBACK_MS,
   MEMORY_TOTAL_ROUNDS,
@@ -18,60 +18,26 @@ import {
 import { toneColors } from '../../../domain/tone';
 import { Icon } from '../../ui/Icon';
 import { GameStageShell } from '../GameStageShell';
-import { ResponseButton, type ResponseButtonState } from '../ResponseButton';
+import { ResponseButton, answerButtonState } from '../ResponseButton';
+import { useRoundPlay } from '../useRoundPlay';
 
 export function MemoryPlay({ game, onFinish, onClose }: GamePlayProps) {
-  const [round, setRound] = useState(1);
   const [rounds] = useState(() => createMemoryRounds());
-  const [picked, setPicked] = useState<MemoryAnswer | null>(null);
-  const [correctCount, setCorrectCount] = useState(0);
-  const responseTimesRef = useRef<number[]>([]);
-  const questionShownAtRef = useRef(Date.now());
-  const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (feedbackTimeoutRef.current) {
-        clearTimeout(feedbackTimeoutRef.current);
-      }
-    };
-  }, []);
+  const { round, picked, headerScore, choose } = useRoundPlay<MemoryAnswer>({
+    totalRounds: MEMORY_TOTAL_ROUNDS,
+    feedbackMs: MEMORY_FEEDBACK_MS,
+    onComplete: ({ correctCount, responseTimes }) => {
+      onFinish({
+        gameId: game.id,
+        score: computeGameScore(correctCount, MEMORY_TOTAL_ROUNDS),
+        accuracy: correctCount / MEMORY_TOTAL_ROUNDS,
+        avgResponseMs: averageResponseMs(responseTimes),
+      });
+    },
+  });
 
   const colors = toneColors[game.tone];
   const currentRound = rounds[round - 1];
-
-  function choose(answer: MemoryAnswer) {
-    if (picked) return;
-
-    responseTimesRef.current.push(Date.now() - questionShownAtRef.current);
-    const isCorrect = answer === currentRound.answer;
-    const nextCorrectCount = correctCount + (isCorrect ? 1 : 0);
-    setPicked(answer);
-    setCorrectCount(nextCorrectCount);
-
-    feedbackTimeoutRef.current = setTimeout(() => {
-      if (round >= MEMORY_TOTAL_ROUNDS) {
-        onFinish({
-          gameId: game.id,
-          score: computeGameScore(nextCorrectCount, MEMORY_TOTAL_ROUNDS),
-          accuracy: nextCorrectCount / MEMORY_TOTAL_ROUNDS,
-          avgResponseMs: averageResponseMs(responseTimesRef.current),
-        });
-        return;
-      }
-
-      setRound((value) => value + 1);
-      setPicked(null);
-      questionShownAtRef.current = Date.now();
-    }, MEMORY_FEEDBACK_MS);
-  }
-
-  function buttonState(answer: MemoryAnswer): ResponseButtonState {
-    if (!picked) return 'idle';
-    if (answer === currentRound.answer) return 'correct';
-    if (answer === picked) return 'wrong';
-    return 'idle';
-  }
 
   return (
     <GameStageShell
@@ -79,7 +45,7 @@ export function MemoryPlay({ game, onFinish, onClose }: GamePlayProps) {
       tone={game.tone}
       round={round}
       totalRounds={MEMORY_TOTAL_ROUNDS}
-      score={roundScore(correctCount, MEMORY_TOTAL_ROUNDS)}
+      score={headerScore}
       onClose={onClose}
       instruction={
         <Text textStyle="t3Regular">
@@ -96,10 +62,10 @@ export function MemoryPlay({ game, onFinish, onClose }: GamePlayProps) {
             <ResponseButton
               key={answer}
               label={memoryAnswerLabel[answer]}
-              state={buttonState(answer)}
+              state={answerButtonState(picked, currentRound.answer, answer)}
               disabled={picked != null}
               accessibilityState={{ disabled: picked != null }}
-              onPress={() => choose(answer)}
+              onPress={() => choose(answer, answer === currentRound.answer)}
             />
           ))}
         </VStack>

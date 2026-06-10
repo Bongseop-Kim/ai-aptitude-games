@@ -15,8 +15,7 @@ export type GameListRowProps = Omit<PressableProps, 'children'> & {
 
 export function GameListRow({ game, accessibilityState, disabled, onPress, ...props }: GameListRowProps) {
   const colors = toneColors[game.tone];
-  const locked = game.status === 'locked';
-  const isDisabled = locked || Boolean(disabled);
+  const isDisabled = Boolean(disabled);
 
   return (
     <Pressable
@@ -24,24 +23,24 @@ export function GameListRow({ game, accessibilityState, disabled, onPress, ...pr
       accessibilityRole="button"
       accessibilityState={{ ...accessibilityState, disabled: isDisabled }}
       disabled={isDisabled}
-      onPress={locked ? undefined : onPress}
+      onPress={onPress}
     >
       <Card p="x3">
         <HStack align="center" gap="x3">
           <Box
             alignItems="center"
-            bg={locked ? 'bg.disabled' : colors.bg}
+            bg={colors.bg}
             borderRadius="r3"
             height="x11"
             justifyContent="center"
             width="x11"
           >
-            <Icon name={locked ? 'lock' : game.icon} color={locked ? 'fg.disabled' : colors.fg} />
+            <Icon name={game.icon} color={colors.fg} />
           </Box>
           <VStack flex={1} gap="x1_5">
             <VStack gap="x0_5">
               <HStack align="center" gap="x1_5">
-                <Text color={locked ? 'fg.disabled' : 'fg.neutral'} textStyle="t4Bold" maxLines={1}>
+                <Text color="fg.neutral" textStyle="t4Bold" maxLines={1}>
                   {game.name}
                 </Text>
                 {game.status === 'done' ? <Icon name="check" color="fg.positive" size="small" /> : null}

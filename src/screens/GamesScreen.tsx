@@ -12,7 +12,6 @@ import { useGamesWithProgress } from '../data/local/useGameResults';
 import { HStack, VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
 import type { GameWithProgress } from '../domain/types';
-import { playableGameIds } from './GameFlowScreen';
 
 type GameFilter = 'all' | 'done' | 'todo';
 
@@ -55,11 +54,7 @@ export function GamesScreen() {
             <GameListRow
               key={game.id}
               game={game}
-              onPress={
-                playableGameIds.has(game.id)
-                  ? () => router.push({ pathname: '/games/[id]', params: { id: game.id } })
-                  : undefined
-              }
+              onPress={() => router.push({ pathname: '/games/[id]', params: { id: game.id } })}
             />
           ))}
       </VStack>

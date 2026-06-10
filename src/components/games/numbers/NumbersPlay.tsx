@@ -14,10 +14,11 @@ import {
   createNumbersQuestion,
   numbersTargetSequence,
 } from '../../../domain/games/numbers';
-import { averageResponseMs, computeGameScore, roundScore } from '../../../domain/games/results';
+import { averageResponseMs, computeGameScore } from '../../../domain/games/results';
 import { toneColors } from '../../../domain/tone';
 import { Icon, type IconName } from '../../ui/Icon';
 import { GameStageShell } from '../GameStageShell';
+import { useRoundPlay } from '../useRoundPlay';
 
 type NumbersPhase = 'memorize' | 'recall' | 'feedback';
 
@@ -78,39 +79,42 @@ function KeypadKey({ icon, label, disabled, ...props }: KeypadKeyProps) {
 }
 
 export function NumbersPlay({ game, onFinish, onClose }: GamePlayProps) {
-  const [round, setRound] = useState(1);
   const [question, setQuestion] = useState(() => createNumbersQuestion(1));
   const [phase, setPhase] = useState<NumbersPhase>('memorize');
   const [input, setInput] = useState<number[]>([]);
-  const [correctCount, setCorrectCount] = useState(0);
-  const responseTimesRef = useRef<number[]>([]);
-  const recallStartedAtRef = useRef(Date.now());
-  const memorizeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const previousRoundRef = useRef(1);
+  const { round, picked, headerScore, choose, markQuestionShown } = useRoundPlay<number[]>({
+    totalRounds: NUMBERS_TOTAL_ROUNDS,
+    feedbackMs: NUMBERS_FEEDBACK_MS,
+    onComplete: ({ correctCount, responseTimes }) => {
+      onFinish({
+        gameId: game.id,
+        score: computeGameScore(correctCount, NUMBERS_TOTAL_ROUNDS),
+        accuracy: correctCount / NUMBERS_TOTAL_ROUNDS,
+        avgResponseMs: averageResponseMs(responseTimes),
+      });
+    },
+  });
 
   useEffect(() => {
-    memorizeTimeoutRef.current = setTimeout(() => {
-      recallStartedAtRef.current = Date.now();
+    const memorizeTimeout = setTimeout(() => {
+      markQuestionShown();
       setPhase('recall');
     }, question.sequence.length * NUMBERS_MEMORIZE_MS_PER_DIGIT);
 
-    return () => {
-      if (memorizeTimeoutRef.current) {
-        clearTimeout(memorizeTimeoutRef.current);
-      }
-    };
-  }, [question]);
+    return () => clearTimeout(memorizeTimeout);
+  }, [markQuestionShown, question]);
 
   useEffect(() => {
-    return () => {
-      if (memorizeTimeoutRef.current) {
-        clearTimeout(memorizeTimeoutRef.current);
-      }
-      if (feedbackTimeoutRef.current) {
-        clearTimeout(feedbackTimeoutRef.current);
-      }
-    };
-  }, []);
+    if (round === previousRoundRef.current) {
+      return;
+    }
+
+    previousRoundRef.current = round;
+    setQuestion(createNumbersQuestion(round));
+    setInput([]);
+    setPhase('memorize');
+  }, [round]);
 
   const colors = toneColors[game.tone];
   const target = numbersTargetSequence(question.sequence);
@@ -131,32 +135,10 @@ export function NumbersPlay({ game, onFinish, onClose }: GamePlayProps) {
   }
 
   function submit() {
-    if (!isRecall || !isInputComplete) return;
-
-    responseTimesRef.current.push(Date.now() - recallStartedAtRef.current);
-    const nextCorrectCount = correctCount + (isInputCorrect ? 1 : 0);
+    if (!isRecall || !isInputComplete || picked != null) return;
 
     setPhase('feedback');
-    setCorrectCount(nextCorrectCount);
-
-    feedbackTimeoutRef.current = setTimeout(() => {
-      if (round >= NUMBERS_TOTAL_ROUNDS) {
-        const times = responseTimesRef.current;
-        onFinish({
-          gameId: game.id,
-          score: computeGameScore(nextCorrectCount, NUMBERS_TOTAL_ROUNDS),
-          accuracy: nextCorrectCount / NUMBERS_TOTAL_ROUNDS,
-          avgResponseMs: averageResponseMs(times),
-        });
-        return;
-      }
-
-      const nextRound = round + 1;
-      setRound(nextRound);
-      setQuestion(createNumbersQuestion(nextRound));
-      setInput([]);
-      setPhase('memorize');
-    }, NUMBERS_FEEDBACK_MS);
+    choose(input, isInputCorrect);
   }
 
   return (
@@ -165,7 +147,7 @@ export function NumbersPlay({ game, onFinish, onClose }: GamePlayProps) {
       tone={game.tone}
       round={round}
       totalRounds={NUMBERS_TOTAL_ROUNDS}
-      score={roundScore(correctCount, NUMBERS_TOTAL_ROUNDS)}
+      score={headerScore}
       onClose={onClose}
       instruction={<Text textStyle="t3Regular">숫자가 사라지면 순서를 거꾸로 입력하세요.</Text>}
       footer={

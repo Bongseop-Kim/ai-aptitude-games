@@ -1,43 +1,19 @@
-import { useEffect, useState, type ComponentType } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 
 import { Body } from '../components/app/Body';
 import { Header } from '../components/app/Header';
 import { Screen } from '../components/app/Screen';
-import { CatPlay } from '../components/games/cat/CatPlay';
-import { ComparePlay } from '../components/games/compare/ComparePlay';
-import { MemoryPlay } from '../components/games/memory/MemoryPlay';
-import { NumbersPlay } from '../components/games/numbers/NumbersPlay';
-import { PathPlay } from '../components/games/path/PathPlay';
-import { PromisePlay } from '../components/games/promise/PromisePlay';
-import { PotionPlay } from '../components/games/potion/PotionPlay';
-import { RotatePlay } from '../components/games/rotate/RotatePlay';
-import { RpsPlay } from '../components/games/rps/RpsPlay';
+import { playComponents } from '../components/games/playComponents';
 import { Button } from '../components/ui/Button';
 import { games } from '../data/games';
 import { useSaveGameResult } from '../data/local/useGameResults';
 import { VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
-import type { GamePlayProps } from '../domain/games/play';
 import type { GameResultInput } from '../domain/games/results';
-import type { GameId } from '../domain/types';
 import { GameIntroScreen } from './game/GameIntroScreen';
 import { GameResultScreen } from './game/GameResultScreen';
-
-const playComponents: Partial<Record<GameId, ComponentType<GamePlayProps>>> = {
-  cat: CatPlay,
-  rps: RpsPlay,
-  rotate: RotatePlay,
-  promise: PromisePlay,
-  potion: PotionPlay,
-  path: PathPlay,
-  compare: ComparePlay,
-  memory: MemoryPlay,
-  numbers: NumbersPlay,
-};
-
-export const playableGameIds: ReadonlySet<GameId> = new Set(Object.keys(playComponents) as GameId[]);
 
 type GamePhase = 'intro' | 'play' | 'result';
 
@@ -50,7 +26,6 @@ export function GameFlowScreen() {
   const saveGameResult = useSaveGameResult();
 
   const game = games.find((item) => item.id === id);
-  const PlayComponent = game ? playComponents[game.id] : undefined;
 
   useEffect(() => {
     if (phase !== 'play') {
@@ -74,7 +49,7 @@ export function GameFlowScreen() {
     router.back();
   }
 
-  if (!game || !PlayComponent) {
+  if (!game) {
     return (
       <Screen>
         <Header title="게임" showBack onBack={close} />
@@ -90,6 +65,8 @@ export function GameFlowScreen() {
     );
   }
 
+  const PlayComponent = playComponents[game.id];
+
   function handleFinish(input: GameResultInput) {
     saveGameResult.mutate(input);
     setResult(input);
@@ -97,7 +74,8 @@ export function GameFlowScreen() {
   }
 
   if (phase === 'play') {
-    return <PlayComponent game={game} onFinish={handleFinish} onClose={close} />;
+    const GamePlay = PlayComponent;
+    return <GamePlay game={game} onFinish={handleFinish} onClose={close} />;
   }
 
   if (phase === 'result' && result) {

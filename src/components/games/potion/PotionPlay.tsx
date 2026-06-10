@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Box } from '../../../design-system/components/Box';
 import { Grid } from '../../../design-system/components/Grid';
@@ -13,11 +13,12 @@ import {
   potionColorLabel,
   type PotionColor,
 } from '../../../domain/games/potion';
-import { averageResponseMs, computeGameScore, roundScore } from '../../../domain/games/results';
+import { averageResponseMs, computeGameScore } from '../../../domain/games/results';
 import { toneColors } from '../../../domain/tone';
 import { Icon } from '../../ui/Icon';
 import { GameStageShell } from '../GameStageShell';
-import { ResponseButton, type ResponseButtonState } from '../ResponseButton';
+import { ResponseButton, answerButtonState } from '../ResponseButton';
+import { useRoundPlay } from '../useRoundPlay';
 
 const potionAnswerColor = {
   blue: toneColors.informative.fg,
@@ -26,58 +27,29 @@ const potionAnswerColor = {
 
 export function PotionPlay({ game, onFinish, onClose }: GamePlayProps) {
   const [session] = useState(() => createPotionSession());
-  const [round, setRound] = useState(1);
   const [question, setQuestion] = useState(() => createPotionQuestion(session));
-  const [picked, setPicked] = useState<PotionColor | null>(null);
-  const [correctCount, setCorrectCount] = useState(0);
-  const responseTimesRef = useRef<number[]>([]);
-  const questionShownAtRef = useRef(Date.now());
-  const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { round, picked, headerScore, choose } = useRoundPlay<PotionColor>({
+    totalRounds: POTION_TOTAL_ROUNDS,
+    feedbackMs: POTION_FEEDBACK_MS,
+    onComplete: ({ correctCount, responseTimes }) => {
+      onFinish({
+        gameId: game.id,
+        score: computeGameScore(correctCount, POTION_TOTAL_ROUNDS),
+        accuracy: correctCount / POTION_TOTAL_ROUNDS,
+        avgResponseMs: averageResponseMs(responseTimes),
+      });
+    },
+  });
 
   useEffect(() => {
-    return () => {
-      if (feedbackTimeoutRef.current) {
-        clearTimeout(feedbackTimeoutRef.current);
-      }
-    };
-  }, []);
+    if (round > 1) {
+      setQuestion(createPotionQuestion(session));
+    }
+  }, [round, session]);
 
   const colors = toneColors[game.tone];
   const answer = question.result;
   const isRevealed = picked != null;
-
-  function choose(color: PotionColor) {
-    if (picked) return;
-
-    responseTimesRef.current.push(Date.now() - questionShownAtRef.current);
-    const isCorrect = color === answer;
-    const nextCorrectCount = correctCount + (isCorrect ? 1 : 0);
-    setPicked(color);
-    setCorrectCount(nextCorrectCount);
-
-    feedbackTimeoutRef.current = setTimeout(() => {
-      if (round >= POTION_TOTAL_ROUNDS) {
-        onFinish({
-          gameId: game.id,
-          score: computeGameScore(nextCorrectCount, POTION_TOTAL_ROUNDS),
-          accuracy: nextCorrectCount / POTION_TOTAL_ROUNDS,
-          avgResponseMs: averageResponseMs(responseTimesRef.current),
-        });
-        return;
-      }
-      setRound((value) => value + 1);
-      setQuestion(createPotionQuestion(session));
-      setPicked(null);
-      questionShownAtRef.current = Date.now();
-    }, POTION_FEEDBACK_MS);
-  }
-
-  function buttonState(color: PotionColor): ResponseButtonState {
-    if (!picked) return 'idle';
-    if (color === answer) return 'correct';
-    if (color === picked) return 'wrong';
-    return 'idle';
-  }
 
   return (
     <GameStageShell
@@ -85,7 +57,7 @@ export function PotionPlay({ game, onFinish, onClose }: GamePlayProps) {
       tone={game.tone}
       round={round}
       totalRounds={POTION_TOTAL_ROUNDS}
-      score={roundScore(correctCount, POTION_TOTAL_ROUNDS)}
+      score={headerScore}
       onClose={onClose}
       instruction={
         <Text textStyle="t3Regular">
@@ -100,17 +72,17 @@ export function PotionPlay({ game, onFinish, onClose }: GamePlayProps) {
         <Grid columns={2} gap="x2">
           <ResponseButton
             label={potionColorLabel.blue}
-            state={buttonState('blue')}
+            state={answerButtonState(picked, answer, 'blue')}
             disabled={isRevealed}
             accessibilityState={{ disabled: isRevealed }}
-            onPress={() => choose('blue')}
+            onPress={() => choose('blue', answer === 'blue')}
           />
           <ResponseButton
             label={potionColorLabel.red}
-            state={buttonState('red')}
+            state={answerButtonState(picked, answer, 'red')}
             disabled={isRevealed}
             accessibilityState={{ disabled: isRevealed }}
-            onPress={() => choose('red')}
+            onPress={() => choose('red', answer === 'red')}
           />
         </Grid>
       }

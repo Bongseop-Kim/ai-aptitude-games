@@ -22,7 +22,7 @@ export type CognitiveSkill =
   | '메타인지'
   | 'Subitizing';
 
-export type GameStatus = 'done' | 'ready' | 'locked';
+export type GameStatus = 'done' | 'ready';
 
 export type Tone = BadgeTone;
 
