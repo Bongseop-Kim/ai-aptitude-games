@@ -1,7 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 export const LOCAL_DB_NAME = 'ai-aptitude-games.db';
-export const LOCAL_DB_SCHEMA_VERSION = 4;
+export const LOCAL_DB_SCHEMA_VERSION = 5;
 
 type SchemaVersionRow = {
   version: number;
@@ -55,6 +55,21 @@ const migrations: ReadonlyArray<{ version: number; sql: string }> = [
       );
       CREATE INDEX IF NOT EXISTS idx_game_results_game_id ON game_results (game_id);
       CREATE INDEX IF NOT EXISTS idx_game_results_unsynced ON game_results (user_id) WHERE synced = 0;
+    `,
+  },
+  {
+    version: 5,
+    sql: `
+      CREATE TABLE mock_exam_results (
+        id TEXT PRIMARY KEY NOT NULL,
+        user_id TEXT NOT NULL,
+        score INTEGER NOT NULL,
+        duration_ms INTEGER NOT NULL,
+        pro INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        synced INTEGER NOT NULL DEFAULT 0
+      );
+      CREATE INDEX IF NOT EXISTS idx_mock_exam_results_unsynced ON mock_exam_results (user_id) WHERE synced = 0;
     `,
   },
 ];

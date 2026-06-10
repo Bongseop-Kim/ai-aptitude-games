@@ -4,11 +4,13 @@ import { useSQLiteContext } from 'expo-sqlite';
 
 import { useAuth } from '../../providers/AuthProvider';
 import { pushUnsyncedGameResults } from './gameResultsSync';
+import { pushUnsyncedMockExamResults } from './mockExamResultsSync';
 
 /**
  * Mounts the silent background sync triggers: pushes the outbox when the
  * user logs in (or app starts with a session) and when the app returns
- * to the foreground. Per-save pushes happen in useSaveGameResult.
+ * to the foreground. Per-save pushes happen in useSaveGameResult
+ * and useSaveMockExamResult.
  */
 export function GameResultsSyncBridge() {
   const db = useSQLiteContext();
@@ -20,10 +22,12 @@ export function GameResultsSyncBridge() {
     }
 
     void pushUnsyncedGameResults(db, userId);
+    void pushUnsyncedMockExamResults(db, userId);
 
     const subscription = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
         void pushUnsyncedGameResults(db, userId);
+        void pushUnsyncedMockExamResults(db, userId);
       }
     });
     return () => subscription.remove();

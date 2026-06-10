@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import { Alert } from 'react-native';
 
 import { Header } from '../components/app/Header';
@@ -6,12 +6,14 @@ import { SectionHead } from '../components/app/SectionHead';
 import { TabScreen } from '../components/app/TabScreen';
 import { ProfileSummary } from '../components/profile/ProfileSummary';
 import { StatTile } from '../components/profile/StatTile';
+import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Icon } from '../components/ui/Icon';
 import { ListItem } from '../components/ui/ListItem';
 import { Switch } from '../components/ui/Switch';
 import { games } from '../data/games';
 import { useGamesWithProgress } from '../data/local/useGameResults';
+import { useClearDevData, useSeedDevData } from '../data/seed/useSeedDevData';
 import { user } from '../data/user';
 import { HStack, VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
@@ -68,27 +70,17 @@ export function ProfileScreen() {
 
       <SectionHead title="설정" />
       <Card py="x1">
-        <ListItem
+        <SwitchListItem
           leadingIcon="bell"
           title="푸시 알림"
-          trailing={
-            <Switch
-              label="푸시 알림"
-              value={pushEnabled}
-              onPress={() => setPushEnabled((enabled) => !enabled)}
-            />
-          }
+          value={pushEnabled}
+          setValue={setPushEnabled}
         />
-        <ListItem
+        <SwitchListItem
           leadingIcon="volume"
           title="효과음"
-          trailing={
-            <Switch
-              label="효과음"
-              value={soundEnabled}
-              onPress={() => setSoundEnabled((enabled) => !enabled)}
-            />
-          }
+          value={soundEnabled}
+          setValue={setSoundEnabled}
         />
         <ListItem leadingIcon="clock" title="리마인드 시간" trailing="오후 9:00" showChevron />
         <ListItem leadingIcon="rank" title="주간 랭킹" trailing="친구" showChevron />
@@ -118,10 +110,88 @@ export function ProfileScreen() {
         )}
       </Card>
 
+      {__DEV__ ? <DevSeedSection /> : null}
+
       <Text align="center" color="fg.neutralSubtle" textStyle="t2Regular">
         역검 · 버전 1.0.0
       </Text>
     </TabScreen>
+  );
+}
+
+type SwitchListItemProps = {
+  leadingIcon: Parameters<typeof ListItem>[0]['leadingIcon'];
+  title: string;
+  value: boolean;
+  setValue: Dispatch<SetStateAction<boolean>>;
+};
+
+function SwitchListItem({ leadingIcon, title, value, setValue }: SwitchListItemProps) {
+  const onPress = useCallback(() => {
+    setValue((enabled) => !enabled);
+  }, [setValue]);
+  const trailing = useMemo(
+    () => <Switch label={title} value={value} onPress={onPress} />,
+    [onPress, title, value],
+  );
+
+  return <ListItem leadingIcon={leadingIcon} title={title} trailing={trailing} />;
+}
+
+function DevSeedSection() {
+  const seedDevData = useSeedDevData();
+  const clearDevData = useClearDevData();
+  const [feedback, setFeedback] = useState<
+    | { type: 'seed'; gameResults: number; mockExams: number }
+    | { type: 'clear' }
+    | null
+  >(null);
+  const isPending = seedDevData.isPending || clearDevData.isPending;
+
+  function handleSeedDevData() {
+    seedDevData.mutate(undefined, {
+      onSuccess: (summary) => {
+        setFeedback({ type: 'seed', ...summary });
+      },
+    });
+  }
+
+  function handleClearDevData() {
+    clearDevData.mutate(undefined, {
+      onSuccess: () => {
+        setFeedback({ type: 'clear' });
+      },
+    });
+  }
+
+  return (
+    <>
+      <SectionHead title="개발" />
+      <Card gap="x3">
+        <Button
+          label={seedDevData.isPending ? '넣는 중...' : '더미데이터 넣기'}
+          variant="outline"
+          fullWidth
+          disabled={isPending}
+          onPress={handleSeedDevData}
+        />
+        <Button
+          label={clearDevData.isPending ? '초기화 중...' : '데이터 초기화'}
+          variant="weak"
+          tone="critical"
+          fullWidth
+          disabled={isPending}
+          onPress={handleClearDevData}
+        />
+        {feedback ? (
+          <Text color="fg.neutralSubtle" textStyle="t2Regular">
+            {feedback.type === 'seed'
+              ? `게임 결과 ${feedback.gameResults}개 · 모의고사 ${feedback.mockExams}회차 추가됨.`
+              : '로컬 데이터를 모두 삭제했어요.'}
+          </Text>
+        ) : null}
+      </Card>
+    </>
   );
 }
 
