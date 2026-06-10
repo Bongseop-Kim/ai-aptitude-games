@@ -16,6 +16,7 @@ const SOURCES = [
   { file: '새움 프로토타입 (standalone).html', out: 'prototype' },
   { file: '새움 화면 보드 (standalone).html', out: 'screen-board' },
   { file: '모의고사 화면 플로우 (standalone).html', out: 'mock-exam-flow' },
+  { file: '실전 면접 트랙 (오프라인).html', out: 'interview-track' },
 ];
 
 const EXT = {
