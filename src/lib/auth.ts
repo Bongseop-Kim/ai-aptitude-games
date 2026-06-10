@@ -8,6 +8,13 @@ import { supabase } from './supabase';
 // Completes any pending auth session left in the browser (web/dev safety).
 WebBrowser.maybeCompleteAuthSession();
 
+export class IdentityConflictError extends Error {
+  constructor() {
+    super('This identity is already linked to another account.');
+    this.name = 'IdentityConflictError';
+  }
+}
+
 // Custom-scheme redirect (e.g. aiaptitudegames://). Must be registered in the
 // Supabase dashboard auth URL configuration and each provider's redirect list.
 export const authRedirectTo = makeRedirectUri();
@@ -60,6 +67,34 @@ export async function signInWithProvider(provider: Provider) {
 
 export function signInWithKakao() {
   return signInWithProvider('kakao');
+}
+
+// Upgrade the current anonymous session to a permanent account by linking a
+// social identity. Keeps the same user id, so rows already synced to the
+// server stay attached. When the identity already belongs to another account,
+// report a conflict instead of replacing the current anonymous user.
+export async function linkWithProvider(provider: Provider) {
+  const { data, error } = await supabase.auth.linkIdentity({
+    provider,
+    options: { redirectTo: authRedirectTo, skipBrowserRedirect: true },
+  });
+  if (error) throw error;
+  if (!data?.url) throw new Error('OAuth URL was not returned by Supabase.');
+
+  const result = await WebBrowser.openAuthSessionAsync(data.url, authRedirectTo);
+  if (result.type !== 'success') {
+    return null;
+  }
+  // GoTrue reports link conflicts via redirect error params, not a thrown error.
+  const { errorCode } = QueryParams.getQueryParams(result.url);
+  if (errorCode === 'identity_already_exists') {
+    throw new IdentityConflictError();
+  }
+  return createSessionFromUrl(result.url);
+}
+
+export function linkKakao() {
+  return linkWithProvider('kakao');
 }
 
 // Skip social login: start an anonymous session. The auth.users insert trigger
