@@ -41,7 +41,7 @@ function placementStyle(
     'start' | 'center' | 'end',
   ];
   const style: ViewStyle = { position: 'absolute' };
-  const transform: Array<{ translateX: number } | { translateY: number }> = [];
+  const transform: ({ translateX: number } | { translateY: number })[] = [];
 
   if (vertical === 'top') style.top = offsetY;
   if (vertical === 'middle') {

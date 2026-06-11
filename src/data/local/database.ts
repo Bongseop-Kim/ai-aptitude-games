@@ -7,7 +7,7 @@ type SchemaVersionRow = {
   version: number;
 };
 
-const migrations: ReadonlyArray<{ version: number; sql: string }> = [
+const migrations: readonly { version: number; sql: string }[] = [
   { version: 1, sql: '' },
   {
     version: 2,

@@ -112,7 +112,7 @@ export function createRotateTarget(): CanonicalRotateState {
 }
 
 export function minClicksFor(target: CanonicalRotateState): number {
-  const queue: Array<{ state: RotateState; clicks: number }> = [
+  const queue: { state: RotateState; clicks: number }[] = [
     { state: initialRotateState, clicks: 0 },
   ];
   const visited = new Set<string>([stateKey(canonicalize(initialRotateState))]);
