@@ -35,10 +35,10 @@ export const initialRotateState: RotateState = {
 };
 
 export const rotateOps: readonly RotateOp[] = [
-  { id: 'rotateLeft', label: '왼쪽 45°', icon: 'rotate-left' },
-  { id: 'rotateRight', label: '오른쪽 45°', icon: 'rotate' },
-  { id: 'flipH', label: '좌우 반전', icon: 'flip' },
-  { id: 'flipV', label: '상하 반전', icon: 'flip', iconRotation: 90 },
+  { id: 'rotateLeft', label: '왼쪽 45°', icon: 'RotateCcw' },
+  { id: 'rotateRight', label: '오른쪽 45°', icon: 'RotateCw' },
+  { id: 'flipH', label: '좌우 반전', icon: 'FlipHorizontal2' },
+  { id: 'flipV', label: '상하 반전', icon: 'FlipHorizontal2', iconRotation: 90 },
 ];
 
 const canonicalRotations: readonly CanonicalRotation[] = [0, 45, 90, 135, 180, 225, 270, 315];
@@ -112,7 +112,7 @@ export function createRotateTarget(): CanonicalRotateState {
 }
 
 export function minClicksFor(target: CanonicalRotateState): number {
-  const queue: Array<{ state: RotateState; clicks: number }> = [
+  const queue: { state: RotateState; clicks: number }[] = [
     { state: initialRotateState, clicks: 0 },
   ];
   const visited = new Set<string>([stateKey(canonicalize(initialRotateState))]);

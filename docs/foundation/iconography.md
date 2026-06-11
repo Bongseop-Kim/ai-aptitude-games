@@ -6,7 +6,7 @@
 
 - **공용 스케일 사용** - 아이콘 전용 숫자를 만들지 않고 `dimension.x` 스케일을 사용한다.
 - **시맨틱 색상 사용** - 아이콘 색상은 텍스트와 같은 `fg.*` 토큰을 따른다.
-- **프로젝트 Icon 컴포넌트 우선** - 앱 UI에서는 `src/components/ui/Icon.tsx`의 `Icon`을 우선 사용한다. 현재 구현은 `@expo/vector-icons/MaterialIcons`를 감싼다.
+- **프로젝트 Icon 컴포넌트 우선** - 앱 UI에서는 `src/components/ui/Icon.tsx`의 `Icon`을 우선 사용한다. 현재 구현은 `lucide-react-native`를 감싼다.
 
 ## Size
 
@@ -38,9 +38,9 @@
 
 ## Variants
 
-현재 공용 `Icon`은 제한된 앱 아이콘 이름만 받는다. 새 아이콘이 필요하면 `IconName`과 `materialIconName` 매핑을 함께 추가한다.
+현재 공용 `Icon`은 제한된 Lucide 아이콘 이름만 받는다. 새 아이콘이 필요하면 `IconName`과 `lucideIconByName` 매핑을 함께 추가한다.
 
-- 네비게이션과 툴바에서는 선형에 가까운 Material icon을 우선한다.
+- 네비게이션과 툴바에서는 선형 Lucide icon을 우선한다.
 - 선택됨, 완료, 즐겨찾기처럼 상태가 강한 아이콘은 채워진 형태를 사용할 수 있다.
 - 작은 크기에서 복잡한 아이콘을 쓰지 않는다.
 
@@ -50,7 +50,7 @@
 
 ```tsx
 <HStack align="center" gap="x2">
-  <Icon name="clock" size="small" color="fg.neutralSubtle" />
+  <Icon name="Clock" size="small" color="fg.neutralSubtle" />
   <Text variant="caption" color="fg.neutralSubtle">
     3분
   </Text>

@@ -3,6 +3,7 @@ import { HStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
 import type { MockExamRecord } from '../../domain/types';
 import { Card } from '../ui/Card';
+import { MockExamTrendLine } from './MockExamTrendLine';
 
 export type MockExamSummaryCardProps = {
   records: MockExamRecord[];
@@ -12,9 +13,10 @@ export function MockExamSummaryCard({ records }: MockExamSummaryCardProps) {
   const latest = records[0];
   const first = records[records.length - 1];
   const delta = latest && first ? latest.score - first.score : 0;
+  const scores = records.map((record) => record.score).reverse();
 
   return (
-    <Card bg="bg.brandWeak" borderColor="stroke.brandWeak">
+    <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" gap="x1_5">
       <HStack align="center" gap="x1_5">
         <Text color="fg.brand" textStyle="t8Bold" maxLines={1}>
           {records.length}회차
@@ -28,6 +30,7 @@ export function MockExamSummaryCard({ records }: MockExamSummaryCardProps) {
           {delta >= 0 ? `+${delta}` : delta}
         </Text>
       </HStack>
+      {records.length >= 2 ? <MockExamTrendLine scores={scores} /> : null}
     </Card>
   );
 }

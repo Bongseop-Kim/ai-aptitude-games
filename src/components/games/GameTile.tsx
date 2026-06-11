@@ -37,7 +37,7 @@ export function GameTile({ game, accessibilityState, disabled, onPress, ...props
           >
             <Icon name={game.icon} color={colors.fg} />
           </Box>
-          {game.status === 'done' ? <Icon name="check" color="fg.positive" size="small" /> : null}
+          {game.status === 'done' ? <Icon name="Check" color="fg.positive" size="small" /> : null}
         </HStack>
         <VStack gap="x0_5">
           <Text color="fg.neutral" textStyle="t4Bold" maxLines={1}>

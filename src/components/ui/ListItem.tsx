@@ -42,7 +42,7 @@ export function ListItem({
         ) : (
           trailing
         )}
-        {showChevron ? <Icon name="chevron-right" size="small" /> : null}
+        {showChevron ? <Icon name="ChevronRight" size="small" /> : null}
       </HStack>
     </Pressable>
   );

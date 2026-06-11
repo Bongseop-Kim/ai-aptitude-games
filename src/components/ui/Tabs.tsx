@@ -9,7 +9,7 @@ export type TabItem<Value extends string> = {
 };
 
 export type TabsProps<Value extends string> = {
-  items: ReadonlyArray<TabItem<Value>>;
+  items: readonly TabItem<Value>[];
   value: Value;
   onChange: (value: Value) => void;
 };

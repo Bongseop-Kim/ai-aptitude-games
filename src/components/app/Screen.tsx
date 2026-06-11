@@ -10,10 +10,10 @@ export type ScreenSafeEdge = 'top' | 'bottom' | 'left' | 'right';
 export type ScreenProps = {
   bg?: ColorToken;
   children: ReactNode;
-  safeEdges?: ReadonlyArray<ScreenSafeEdge>;
+  safeEdges?: readonly ScreenSafeEdge[];
 };
 
-const defaultSafeEdges: ReadonlyArray<ScreenSafeEdge> = ['top', 'bottom', 'left', 'right'];
+const defaultSafeEdges: readonly ScreenSafeEdge[] = ['top', 'bottom', 'left', 'right'];
 
 export function Screen({ bg = 'bg.layerBasement', children, safeEdges = defaultSafeEdges }: ScreenProps) {
   const insets = useSafeAreaInsets();

@@ -21,7 +21,7 @@ export function PaymentMethodRow({ label, selected = false }: PaymentMethodRowPr
       <Text color={selected ? 'fg.brand' : 'fg.neutral'} textStyle="t4Bold">
         {label}
       </Text>
-      {selected ? <Icon name="check" color="fg.brand" /> : null}
+      {selected ? <Icon name="Check" color="fg.brand" /> : null}
     </HStack>
   );
 }

@@ -42,7 +42,7 @@ export function LoginScreen() {
             justifyContent="center"
             width="x16"
           >
-            <Icon name="eco" color="fg.neutralInverted" size="large" />
+            <Icon name="Leaf" color="fg.neutralInverted" size="large" />
           </Box>
 
           <VStack align="center" gap="x3">
@@ -64,7 +64,7 @@ export function LoginScreen() {
                 justifyContent="center"
                 width="x6"
               >
-                <Icon name="eco" color="fg.neutralInverted" size="small" />
+                <Icon name="Leaf" color="fg.neutralInverted" size="small" />
               </Box>
               <Text textStyle="t5Bold">역검</Text>
             </HStack>
@@ -76,7 +76,7 @@ export function LoginScreen() {
             label="카카오로 시작하기"
             variant="solid"
             tone="brand"
-            iconRight="chevron-right"
+            iconRight="ChevronRight"
             fullWidth
             disabled={isBusy}
             onPress={() => run('kakao', signInWithKakao)}

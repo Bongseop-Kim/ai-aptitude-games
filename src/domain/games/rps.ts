@@ -35,9 +35,9 @@ export const rpsHandLabel: Record<RpsHand, string> = {
 };
 
 export const rpsHandIcon: Record<RpsHand, IconName> = {
-  scissors: 'scissors',
-  rock: 'rock',
-  paper: 'hand',
+  scissors: 'Scissors',
+  rock: 'HandFist',
+  paper: 'Hand',
 };
 
 export const rpsRuleLabel: Record<RpsRule, string> = {

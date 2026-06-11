@@ -64,8 +64,8 @@ function CatCell({ cell, phase, question }: CatCellProps) {
       justifyContent="center"
       style={{ aspectRatio: 1 }}
     >
-      {showsMouse ? <Icon name="mouse" color="fg.neutralSubtle" size="small" /> : null}
-      {showsCat ? <Icon name="paw" color={toneColors.critical.fg} size="small" /> : null}
+      {showsMouse ? <Icon name="Rat" color="fg.neutralSubtle" size="small" /> : null}
+      {showsCat ? <Icon name="PawPrint" color={toneColors.critical.fg} size="small" /> : null}
     </Box>
   );
 }
@@ -152,13 +152,18 @@ function createQuestionForRound(plan: readonly boolean[], round: number) {
 }
 
 export function CatPlay({ game, onFinish, onClose }: GamePlayProps) {
-  const foundPlanRef = useRef(createCatFoundPlan());
+  const [foundPlan] = useState(() => createCatFoundPlan());
   const [phase, setPhase] = useState<CatPhase>('memorize');
-  const [question, setQuestion] = useState(() => createQuestionForRound(foundPlanRef.current, 1));
+  const [question, setQuestion] = useState(() => createQuestionForRound(foundPlan, 1));
+  const [displayedScore, setDisplayedScore] = useState(0);
   const pointsRef = useRef<number[]>([]);
   const { round, picked, choose: chooseRound, markQuestionShown } = useRoundPlay<number>({
     totalRounds: CAT_TOTAL_ROUNDS,
     feedbackMs: CAT_FEEDBACK_MS,
+    onAdvanceRound: (nextRound) => {
+      setQuestion(createQuestionForRound(foundPlan, nextRound));
+      setPhase('memorize');
+    },
     onComplete: ({ correctCount, responseTimes }) => {
       onFinish({
         gameId: game.id,
@@ -180,14 +185,6 @@ export function CatPlay({ game, onFinish, onClose }: GamePlayProps) {
     return () => clearTimeout(memorizeTimeout);
   }, [markQuestionShown, phase, question]);
 
-  useEffect(() => {
-    if (round > 1) {
-      setQuestion(createQuestionForRound(foundPlanRef.current, round));
-      setPhase('memorize');
-    }
-  }, [round]);
-
-  const displayedScore = pointsRef.current.length > 0 ? computeCatScore(pointsRef.current) : 0;
   const instruction =
     phase === 'memorize' ? '생쥐들이 숨습니다 — 위치를 외우세요' : '이 칸의 고양이는 생쥐를 찾았을까요?';
 
@@ -199,6 +196,7 @@ export function CatPlay({ game, onFinish, onClose }: GamePlayProps) {
     const strength = catConfidenceStrength(index);
 
     pointsRef.current.push(catRoundPoints(isCorrect, strength));
+    setDisplayedScore(computeCatScore(pointsRef.current));
     setPhase('feedback');
     chooseRound(index, isCorrect);
   }

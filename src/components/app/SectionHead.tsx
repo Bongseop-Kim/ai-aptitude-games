@@ -18,7 +18,7 @@ export function SectionHead({ icon, title, actionLabel, actionAccessibilityLabel
       <Text color="fg.neutralSubtle" textStyle="t3Medium">
         {actionLabel}
       </Text>
-      <Icon name="chevron-right" color="fg.neutralSubtle" size="small" />
+      <Icon name="ChevronRight" color="fg.neutralSubtle" size="small" />
     </HStack>
   ) : null;
 

@@ -162,7 +162,7 @@ export function NumbersPlay({ game, onFinish, onClose }: GamePlayProps) {
           ))}
           <KeypadKey
             label="지우기"
-            icon="backspace"
+            icon="Delete"
             disabled={!isRecall || input.length === 0}
             onPress={removeDigit}
           />
@@ -173,7 +173,7 @@ export function NumbersPlay({ game, onFinish, onClose }: GamePlayProps) {
           />
           <KeypadKey
             label="제출"
-            icon="check"
+            icon="Check"
             disabled={!isRecall || !isInputComplete}
             onPress={submit}
           />

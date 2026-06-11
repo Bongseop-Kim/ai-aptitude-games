@@ -9,7 +9,7 @@ import { useColorScheme } from 'react-native';
 import { appThemes } from './theme';
 import { useAppFonts } from './fonts';
 import type { AppTheme } from './theme';
-import type { AppThemeMode } from './foundation';
+import type { AppThemeMode } from './foundation/types';
 
 type DesignSystemContextValue = {
   fontFamily?: ReturnType<typeof useAppFonts>['fontFamily'];

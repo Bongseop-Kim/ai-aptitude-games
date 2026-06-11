@@ -38,7 +38,7 @@ function ElapsedClock() {
 
   return (
     <HStack align="center" gap="x1">
-      <Icon name="clock" color="fg.neutralSubtle" size="small" />
+      <Icon name="Clock" color="fg.neutralSubtle" size="small" />
       <Text color="fg.neutralMuted" textStyle="t3Bold">
         {formatElapsed(elapsedSecs)}
       </Text>
@@ -62,7 +62,7 @@ export function GameStageShell({
       <VStack flex={1} gap="x3">
         <VStack gap="x2">
           <HStack align="center" gap="x3">
-            <IconButton name="close" label="게임 나가기" onPress={onClose} />
+            <IconButton name="X" label="게임 나가기" onPress={onClose} />
             <ProgressBar value={(round / totalRounds) * 100} tone={tone} layout="inline" />
             <ElapsedClock />
           </HStack>

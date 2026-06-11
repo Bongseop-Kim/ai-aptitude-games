@@ -1,6 +1,7 @@
 export {
   Easing,
   useAnimatedStyle,
+  useDerivedValue,
   useSharedValue,
   withSpring,
   withTiming,
@@ -12,5 +13,6 @@ export {
   Group,
   Path,
   Rect,
+  RoundedRect,
   Skia,
 } from '@shopify/react-native-skia';

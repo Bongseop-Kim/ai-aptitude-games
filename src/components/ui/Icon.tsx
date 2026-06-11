@@ -1,5 +1,63 @@
-import type { ComponentProps } from 'react';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import type { LucideIcon } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Bell,
+  Bus,
+  Car,
+  ChartNoAxesColumnIncreasing,
+  Check,
+  ChevronRight,
+  Circle,
+  CircleDot,
+  CircleHelp,
+  Clock,
+  Delete,
+  Droplet,
+  Fence,
+  FileText,
+  Flame,
+  FlaskConical,
+  FlipHorizontal2,
+  Flower,
+  Flower2,
+  Footprints,
+  Gamepad2,
+  Gem,
+  Grid3x3,
+  Hand,
+  HandFist,
+  Leaf,
+  Lock,
+  LogOut,
+  Map,
+  PawPrint,
+  Pencil,
+  Pentagon,
+  Play,
+  Plus,
+  Puzzle,
+  Rat,
+  RotateCcw,
+  RotateCw,
+  Scale,
+  Scissors,
+  Settings,
+  Share,
+  Square,
+  Timeline,
+  Trees,
+  TrendingUp,
+  Triangle,
+  Trophy,
+  User,
+  UserRoundPlus,
+  UsersRound,
+  Utensils,
+  Volume2,
+  Wheat,
+  X,
+} from 'lucide-react-native';
 
 import { useDesignSystemTheme } from '../../design-system/provider';
 import { resolveColor } from '../../design-system/components/style-props';
@@ -8,73 +66,70 @@ import type { IconName } from '../../shared/types';
 
 export type { IconName } from '../../shared/types';
 
-type MaterialIconName = ComponentProps<typeof MaterialIcons>['name'];
-
 export type IconProps = {
   name: IconName;
   color?: ColorToken;
   size?: 'small' | 'medium' | 'large';
 };
 
-const materialIconName: Record<IconName, MaterialIconName> = {
-  add: 'add',
-  'arrow-forward': 'arrow-forward',
-  'arrow-left': 'arrow-back',
-  bell: 'notifications',
-  bus: 'directions-bus',
-  check: 'check',
-  'chevron-right': 'chevron-right',
-  clock: 'schedule',
-  close: 'close',
-  adjust: 'adjust',
-  balance: 'balance',
-  backspace: 'backspace',
-  controller: 'sports-esports',
-  diamond: 'diamond',
-  dialpad: 'dialpad',
-  doc: 'description',
-  eco: 'eco',
-  edit: 'edit',
-  extension: 'extension',
-  fire: 'local-fire-department',
-  fence: 'fence',
-  flask: 'science',
-  car: 'directions-car',
-  grass: 'grass',
-  'group-add': 'group-add',
-  groups: 'groups',
-  hand: 'front-hand',
-  help: 'help-outline',
-  lock: 'lock',
-  logout: 'logout',
-  map: 'map',
-  'local-florist': 'local-florist',
-  mouse: 'pest-control-rodent',
-  paw: 'pets',
-  park: 'park',
-  play: 'play-arrow',
-  profile: 'person',
-  rank: 'leaderboard',
-  report: 'insights',
-  restaurant: 'restaurant',
-  rock: 'sports-mma',
-  'rotate-left': 'rotate-left',
-  rotate: 'rotate-right',
-  flip: 'flip',
-  scissors: 'content-cut',
-  settings: 'settings',
-  share: 'ios-share',
-  spa: 'spa',
-  triangle: 'change-history',
-  square: 'square',
-  circle: 'circle',
-  pentagon: 'pentagon',
-  timeline: 'timeline',
-  'trend-up': 'trending-up',
-  trophy: 'emoji-events',
-  volume: 'volume-up',
-  walk: 'directions-walk',
-  'water-drop': 'water-drop',
+const lucideIconByName: Record<IconName, LucideIcon> = {
+  ArrowLeft,
+  ArrowRight,
+  Bell,
+  Bus,
+  Car,
+  ChartNoAxesColumnIncreasing,
+  Check,
+  ChevronRight,
+  Circle,
+  CircleDot,
+  CircleHelp,
+  Clock,
+  Delete,
+  Droplet,
+  Fence,
+  FileText,
+  Flame,
+  FlaskConical,
+  FlipHorizontal2,
+  Flower,
+  Flower2,
+  Footprints,
+  Gamepad2,
+  Gem,
+  Grid3x3,
+  Hand,
+  HandFist,
+  Leaf,
+  Lock,
+  LogOut,
+  Map,
+  PawPrint,
+  Pencil,
+  Pentagon,
+  Play,
+  Plus,
+  Puzzle,
+  Rat,
+  RotateCcw,
+  RotateCw,
+  Scale,
+  Scissors,
+  Settings,
+  Share,
+  Square,
+  Timeline,
+  Trees,
+  TrendingUp,
+  Triangle,
+  Trophy,
+  User,
+  UserRoundPlus,
+  UsersRound,
+  Utensils,
+  Volume2,
+  Wheat,
+  X,
 };
 
 const iconSizeToken = {
@@ -86,12 +141,14 @@ const iconSizeToken = {
 export function Icon({ name, color = 'fg.neutralMuted', size = 'medium' }: IconProps) {
   const { theme } = useDesignSystemTheme();
   const resolvedColor = resolveColor(theme, color) ?? color;
+  const LucideIcon = lucideIconByName[name];
 
   return (
-    <MaterialIcons
+    <LucideIcon
       color={resolvedColor}
-      name={materialIconName[name]}
       size={theme.dimension.x[iconSizeToken[size]]}
+      strokeWidth={2}
+      absoluteStrokeWidth
     />
   );
 }

@@ -1,4 +1,15 @@
-Expo web is not used in this project.
+## Tech Stack
+
+- Expo SDK 56 (expo-router) on React Native 0.85, React 19, TypeScript. Native only — Expo web is not used.
+- Supabase (auth, Postgres, background sync) + `expo-sqlite` for local-first data. React Query for server reads, Zustand for client state.
+- Package manager: npm.
+
+## Commands
+
+- Typecheck: `npx tsc --noEmit` — must pass before claiming any task complete.
+- Lint: `npm run lint` — must report zero errors before claiming any task complete. Barrel-file imports are enforced as lint errors.
+
+Do not run `npx expo start`, `npm run start`, or other long-lived Expo dev servers unless explicitly asked. The user runs and inspects the Expo app manually.
 
 ## Foundation Docs
 
@@ -28,7 +39,7 @@ Rules for local-first tables:
 - Every record table has `created_at` and `synced` columns.
 - Screens access data only through the repository layer, never raw SQLite.
 - Sync pushes are idempotent upserts (`onConflict: 'id'`). Mark `synced` only after a confirmed server response.
-- 현재는 개발 진행 중이므로 기존 로컬 데이터 유실을 고려한 마이그레이션은 고려하지 마세요. 해당 작업은 프로덕션 진입 이후에 고려해야 합니다.
+- This project is in active development — do not implement backwards-compatible migrations that preserve existing local data. That concern applies only after entering production.
 
 Supabase migration files are append-only after `supabase db push`. Treat pushed migrations as already applied history: never edit an existing pushed migration file to change schema or grants. Create a new migration file for follow-up changes instead.
 
@@ -60,12 +71,18 @@ Good:
 
 If an expression is difficult with existing Layout props or tokens, ask before adding an ad hoc implementation.
 
+## React
+
+React Compiler is enabled (Expo SDK default, opt-out only). Do not add manual `useMemo`, `useCallback`, or `React.memo` for performance — the compiler memoizes render computations automatically, including Skia object creation. Hoist pure computations to module-level functions for readability, not memoization.
+
+This project is on React 19. Use the modern syntax:
+
+- `ref` is a regular prop — never use `forwardRef`.
+- Render context providers as `<MyContext value={...}>`, not `<MyContext.Provider value={...}>`.
+- Read context with `use(MyContext)`, not `useContext(MyContext)`. `use` may be called conditionally.
+
+Form Actions (`useActionState`, `useOptimistic`, `<form action>`) are web-centric — do not reach for them in this React Native codebase.
+
 ## Imports
 
 Do not use barrel files (`index.ts` re-export files). Import directly from the module that defines the symbol, e.g. `import { GameTile } from '../components/games/GameTile'`.
-
-## Verification
-
-Do not run `npx expo start`, `npm run start`, or other long-lived Expo dev servers unless explicitly asked.
-
-Use fast checks like `npx tsc --noEmit`. The user runs and inspects the Expo app manually.

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { Box } from '../../../design-system/components/Box';
 import { Grid } from '../../../design-system/components/Grid';
@@ -31,6 +31,9 @@ export function PotionPlay({ game, onFinish, onClose }: GamePlayProps) {
   const { round, picked, headerScore, choose } = useRoundPlay<PotionColor>({
     totalRounds: POTION_TOTAL_ROUNDS,
     feedbackMs: POTION_FEEDBACK_MS,
+    onAdvanceRound: () => {
+      setQuestion(createPotionQuestion(session));
+    },
     onComplete: ({ correctCount, responseTimes }) => {
       onFinish({
         gameId: game.id,
@@ -40,12 +43,6 @@ export function PotionPlay({ game, onFinish, onClose }: GamePlayProps) {
       });
     },
   });
-
-  useEffect(() => {
-    if (round > 1) {
-      setQuestion(createPotionQuestion(session));
-    }
-  }, [round, session]);
 
   const colors = toneColors[game.tone];
   const answer = question.result;
@@ -108,7 +105,7 @@ export function PotionPlay({ game, onFinish, onClose }: GamePlayProps) {
 
         {isRevealed ? (
           <VStack align="center" gap="x1_5">
-            <Icon name="flask" color={potionAnswerColor[answer]} size="large" />
+            <Icon name="FlaskConical" color={potionAnswerColor[answer]} size="large" />
             <Text color={potionAnswerColor[answer]} textStyle="t4Bold">
               {potionColorLabel[answer]} 완성
             </Text>

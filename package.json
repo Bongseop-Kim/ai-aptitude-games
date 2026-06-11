@@ -3,32 +3,35 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
-    "@expo/vector-icons": "^15.0.2",
     "@shopify/react-native-skia": "2.6.2",
     "@supabase/supabase-js": "^2.108.0",
     "@tanstack/react-query": "^5.101.0",
-    "expo": "~56.0.9",
-    "expo-auth-session": "~56.0.13",
+    "expo": "~56.0.11",
+    "expo-auth-session": "~56.0.14",
     "expo-constants": "~56.0.16",
     "expo-crypto": "~56.0.4",
     "expo-font": "~56.0.5",
-    "expo-linking": "~56.0.13",
-    "expo-router": "~56.2.9",
+    "expo-linking": "~56.0.14",
+    "expo-router": "~56.2.10",
     "expo-secure-store": "~56.0.4",
-    "expo-sqlite": "~56.0.4",
+    "expo-sqlite": "~56.0.5",
     "expo-status-bar": "~56.0.4",
     "expo-web-browser": "~56.0.5",
+    "lucide-react-native": "^1.17.0",
     "react": "19.2.3",
     "react-native": "0.85.3",
     "react-native-reanimated": "4.3.1",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "4.25.2",
+    "react-native-svg": "15.15.4",
     "react-native-url-polyfill": "^3.0.0",
     "react-native-worklets": "0.8.3",
     "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~56.0.4",
     "knip": "^6.16.1",
     "typescript": "~6.0.3"
   },
@@ -38,7 +41,9 @@
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
-    "ios": "expo run:ios"
+    "ios": "expo run:ios",
+    "lint": "expo lint",
+    "typecheck": "npx tsc --noEmit"
   },
   "engines": {
     "node": "^20.19.4 || ^22.13.0 || ^24.3.0 || >=25.0.0"

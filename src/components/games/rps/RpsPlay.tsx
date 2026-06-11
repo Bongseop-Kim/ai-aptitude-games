@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { Box } from '../../../design-system/components/Box';
 import { Grid } from '../../../design-system/components/Grid';
@@ -25,9 +25,12 @@ import { useRoundPlay } from '../useRoundPlay';
 
 export function RpsPlay({ game, onFinish, onClose }: GamePlayProps) {
   const [question, setQuestion] = useState(() => createRpsQuestion());
-  const { round, picked, correctCount, headerScore, choose } = useRoundPlay<RpsHand>({
+  const { round, picked, headerScore, choose } = useRoundPlay<RpsHand>({
     totalRounds: RPS_TOTAL_ROUNDS,
     feedbackMs: RPS_FEEDBACK_MS,
+    onAdvanceRound: () => {
+      setQuestion(createRpsQuestion());
+    },
     onComplete: ({ correctCount, responseTimes }) => {
       onFinish({
         gameId: game.id,
@@ -37,12 +40,6 @@ export function RpsPlay({ game, onFinish, onClose }: GamePlayProps) {
       });
     },
   });
-
-  useEffect(() => {
-    if (round > 1) {
-      setQuestion(createRpsQuestion());
-    }
-  }, [round]);
 
   const colors = toneColors[game.tone];
   const answer = rpsCorrectAnswer(question);

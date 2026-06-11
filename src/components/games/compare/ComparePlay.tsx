@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable } from 'react-native';
 
 import { Box } from '../../../design-system/components/Box';
@@ -113,6 +113,9 @@ export function ComparePlay({ game, onFinish, onClose }: GamePlayProps) {
   const { round, picked, headerScore, choose } = useRoundPlay<CompareSide>({
     totalRounds: COMPARE_TOTAL_ROUNDS,
     feedbackMs: COMPARE_FEEDBACK_MS,
+    onAdvanceRound: () => {
+      setQuestion(createCompareQuestion());
+    },
     onComplete: ({ correctCount, responseTimes }) => {
       onFinish({
         gameId: game.id,
@@ -122,12 +125,6 @@ export function ComparePlay({ game, onFinish, onClose }: GamePlayProps) {
       });
     },
   });
-
-  useEffect(() => {
-    if (round > 1) {
-      setQuestion(createCompareQuestion());
-    }
-  }, [round]);
 
   const colors = toneColors[game.tone];
   const answer = compareCorrectAnswer(question);

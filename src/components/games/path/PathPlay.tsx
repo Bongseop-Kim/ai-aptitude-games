@@ -70,9 +70,9 @@ function PathCell({ cell, disabled, fenced, tone, onPress }: PathCellProps) {
         justifyContent="center"
         style={{ aspectRatio: 1 }}
       >
-        {fenced ? <Icon name="fence" color={iconColor} size="small" /> : null}
-        {!fenced && cell === 'person' ? <Icon name="walk" color={iconColor} size="small" /> : null}
-        {!fenced && cell === 'car' ? <Icon name="car" color={iconColor} size="small" /> : null}
+        {fenced ? <Icon name="Fence" color={iconColor} size="small" /> : null}
+        {!fenced && cell === 'person' ? <Icon name="Footprints" color={iconColor} size="small" /> : null}
+        {!fenced && cell === 'car' ? <Icon name="Car" color={iconColor} size="small" /> : null}
       </Box>
     </Pressable>
   );
@@ -110,8 +110,12 @@ export function PathPlay({ game, onFinish, onClose }: GamePlayProps) {
   const [feedback, setFeedback] = useState<FeedbackState>(null);
   const [correctCount, setCorrectCount] = useState(0);
   const responseTimesRef = useRef<number[]>([]);
-  const questionShownAtRef = useRef(Date.now());
+  const questionShownAtRef = useRef<number | null>(null);
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    questionShownAtRef.current = Date.now();
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -146,7 +150,9 @@ export function PathPlay({ game, onFinish, onClose }: GamePlayProps) {
   function submit() {
     if (isSubmitted) return;
 
-    responseTimesRef.current.push(Date.now() - questionShownAtRef.current);
+    const answeredAt = Date.now();
+
+    responseTimesRef.current.push(answeredAt - (questionShownAtRef.current ?? answeredAt));
     const isCorrect = isPathSeparated(puzzle, fences);
     const nextCorrectCount = correctCount + (isCorrect ? 1 : 0);
 

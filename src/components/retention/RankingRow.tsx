@@ -10,7 +10,7 @@ export type RankingRowProps = {
 export function RankingRow({ rank, name, score, current = false }: RankingRowProps) {
   return (
     <ListItem
-      leadingIcon="rank"
+      leadingIcon="Trophy"
       title={`${rank}위 · ${name}`}
       description={current ? '내 순위' : undefined}
       trailing={`${score}점`}

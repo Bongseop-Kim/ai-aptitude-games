@@ -16,12 +16,12 @@ export const POTION_TOTAL_ROUNDS = 5;
 export const POTION_FEEDBACK_MS = 850;
 
 export const potionIngredients: readonly IconName[] = [
-  'eco',
-  'spa',
-  'grass',
-  'water-drop',
-  'local-florist',
-  'park',
+  'Leaf',
+  'Flower',
+  'Wheat',
+  'Droplet',
+  'Flower2',
+  'Trees',
 ];
 
 export const potionColorLabel: Record<PotionColor, string> = {

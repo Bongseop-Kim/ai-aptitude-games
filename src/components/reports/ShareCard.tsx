@@ -16,7 +16,7 @@ export function ShareCard({ title, summary }: ShareCardProps) {
       <Text color="fg.neutralMuted" textStyle="t4Regular">
         {summary}
       </Text>
-      <Button label="공유" iconLeft="share" variant="outline" />
+      <Button label="공유" iconLeft="Share" variant="outline" />
     </Card>
   );
 }

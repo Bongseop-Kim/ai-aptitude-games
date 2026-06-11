@@ -62,7 +62,7 @@ export function GameIntroScreen({ game, onStart, onClose }: GameIntroScreenProps
         ) : null}
       </Body>
       <Box pt="x2">
-        <Button label="연습 시작" iconRight="play" fullWidth onPress={onStart} />
+        <Button label="연습 시작" iconRight="Play" fullWidth onPress={onStart} />
       </Box>
     </Screen>
   );

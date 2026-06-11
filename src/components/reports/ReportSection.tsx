@@ -17,7 +17,7 @@ export function ReportSection({ title, description, locked = false }: ReportSect
         <Text color={locked ? 'fg.disabled' : 'fg.neutral'} textStyle="t5Bold">
           {title}
         </Text>
-        {locked ? <Icon name="lock" color="fg.disabled" /> : <Badge label="열림" tone="positive" />}
+        {locked ? <Icon name="Lock" color="fg.disabled" /> : <Badge label="열림" tone="positive" />}
       </HStack>
       <Text color="fg.neutralMuted" textStyle="t4Regular">
         {description}
