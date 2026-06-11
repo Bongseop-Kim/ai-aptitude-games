@@ -9,14 +9,15 @@ import { ReadinessGauge } from '../components/readiness/ReadinessGauge';
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
 import { Icon, type IconName } from '../components/ui/Icon';
+import { Tag } from '../components/ui/Tag';
 import { Box } from '../design-system/components/Box';
 import { Grid } from '../design-system/components/Grid';
 import { HStack, VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
 import { games } from '../data/games';
+import { ncsJob, recentMock } from '../data/interview';
 import { useGamesWithProgress } from '../data/local/useGameResults';
 import { user } from '../data/user';
-import { readinessLabel } from '../domain/readiness';
 import { toneColors } from '../domain/tone';
 import type { GameId } from '../domain/types';
 import type { BadgeTone } from '../shared/types';
@@ -28,7 +29,10 @@ export function HomeScreen() {
     <TabScreen header={<HomeHeader />}>
       <Greeting />
       <ReadinessSummary />
-      <DailyChallenge />
+      <Grid columns={2} gap="x3">
+        <DailyChallenge />
+        <InterviewHero />
+      </Grid>
       <AllGamesSection />
       <MockExamCard />
       <RankingTeaser />
@@ -114,11 +118,13 @@ function ReadinessSummary() {
             </Text>
             <Badge label={user.readiness.percentileLabel} tone="positive" size="small" />
           </HStack>
-          <Text color="fg.brand" textStyle="t5Bold" maxLines={1}>
-            {readinessLabel(user.readiness.score)}
+          <HStack>
+            <Tag label={`${ncsJob.name} · NCS 기반`} tone="brand" selected />
+          </HStack>
+          <Text color="fg.neutralMuted" textStyle="t3Regular">
+            최근 모의 면접 <Text color="fg.neutral" textStyle="t3Bold">{recentMock.score}점</Text> · {recentMock.company}{' '}
+            {recentMock.role}
           </Text>
-          <MetricRow icon="TrendingUp" iconTone="positive" label="강한 역량" value={user.readiness.strength} />
-          <MetricRow icon="CircleDot" iconTone="critical" label="보완 역량" value={user.readiness.weakness} />
         </VStack>
       </HStack>
       <Box bg="stroke.neutralWeak" height="x0_5" />
@@ -134,31 +140,36 @@ function ReadinessSummary() {
   );
 }
 
-function MetricRow({
-  icon,
-  iconTone,
-  label,
-  value,
-}: {
-  icon: IconName;
-  iconTone: 'positive' | 'critical';
-  label: string;
-  value: string;
-}) {
+function InterviewHero() {
+  const router = useRouter();
+
   return (
-    <HStack align="center" gap="x2">
-      <Icon name={icon} color={toneColors[iconTone].fg} size="small" />
-      <Box flex={1}>
-        <Text color="fg.neutralSubtle" textStyle="t2Regular" maxLines={1}>
-          {label}
-        </Text>
-      </Box>
-      <Box flexShrink={0}>
-        <Text textStyle="t3Bold" maxLines={1}>
-          {value}
-        </Text>
-      </Box>
-    </HStack>
+    <VStack flex={1} gap="x2">
+      <SectionHead title="실전 면접" />
+      <Pressable
+        accessibilityLabel="실전 면접 시작하기"
+        accessibilityRole="button"
+        style={{ flex: 1 }}
+        onPress={() => router.push('/interview')}
+      >
+        <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" flex={1} gap="x3" p="x3">
+          <Box alignItems="center" bg="bg.layerDefault" borderRadius="r3" height="x12" justifyContent="center" width="x12">
+            <Icon name="Video" color="fg.brand" size="large" />
+          </Box>
+          <VStack flex={1} gap="x1">
+            <Text textStyle="t5Bold" maxLines={2}>
+              내 직무에 딱 맞는{'\n'}면접을 연습해요
+            </Text>
+            <Text color="fg.neutralMuted" textStyle="t2Regular" maxLines={1}>
+              면접 데이터 8만 건 분석
+            </Text>
+          </VStack>
+          <HStack>
+            <Badge label="NCS 기반" tone="brandSolid" size="small" />
+          </HStack>
+        </Card>
+      </Pressable>
+    </VStack>
   );
 }
 
@@ -168,49 +179,29 @@ function DailyChallenge() {
   const openChallenge = () => router.push({ pathname: '/games/[id]', params: { id: challengeGame.id } });
 
   return (
-    <VStack gap="x2">
-      <SectionHead
-        icon="Flame"
-        title="오늘의 챌린지"
-        actionLabel="전체"
-        actionAccessibilityLabel="오늘의 챌린지 전체 보기"
-        onActionPress={() => router.push('/games')}
-      />
-      <Pressable accessibilityLabel={`${challengeGame.name} 오늘의 챌린지 시작`} accessibilityRole="button" onPress={openChallenge}>
-        <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" gap="x3" p="x3">
-          <HStack align="center" gap="x3">
-            <Box alignItems="center" bg="bg.layerDefault" borderRadius="r3" height="x12" justifyContent="center" width="x12">
-              <Icon name={challengeGame.icon} color={colors.fg} size="large" />
-            </Box>
-            <VStack flex={1} gap="x1">
-              <Text textStyle="t5Bold" maxLines={1}>
-                {challengeGame.name} · 75점 이상
-              </Text>
-              <Text color="fg.neutralMuted" textStyle="t2Regular" maxLines={1}>
-                {challengeGame.skill} · 예상 {challengeGame.minutes}분
-              </Text>
-              <HStack gap="x1_5">
-                <Badge label="+20 XP" tone="brand" size="small" />
-                <Badge label="스트릭 +1일" tone="critical" size="small" />
-              </HStack>
-            </VStack>
-          </HStack>
-          <HStack
-            align="center"
-            bg="bg.brandSolid"
-            borderColor="stroke.brandSolid"
-            borderRadius="r3"
-            borderWidth="thin"
-            gap="x2"
-            justify="center"
-            px="x4"
-            py="x3"
-            width="full"
-          >
-            <Text color="fg.neutralInverted" textStyle="t5Bold" maxLines={1}>
-              지금 도전하기
+    <VStack flex={1} gap="x2">
+      <SectionHead title="오늘의 챌린지" />
+      <Pressable
+        accessibilityLabel={`${challengeGame.name} 오늘의 챌린지 시작`}
+        accessibilityRole="button"
+        style={{ flex: 1 }}
+        onPress={openChallenge}
+      >
+        <Card bg="bg.layerDefault" flex={1} gap="x3" p="x3">
+          <Box alignItems="center" bg={colors.bg} borderRadius="r3" height="x12" justifyContent="center" width="x12">
+            <Icon name={challengeGame.icon} color={colors.fg} size="large" />
+          </Box>
+          <VStack flex={1} gap="x1">
+            <Text textStyle="t5Bold" maxLines={2}>
+              {challengeGame.name} · 75점 이상
             </Text>
-            <Icon name="Play" color="fg.neutralInverted" size="small" />
+            <Text color="fg.neutralMuted" textStyle="t2Regular" maxLines={1}>
+              {challengeGame.skill} · 예상 {challengeGame.minutes}분
+            </Text>
+          </VStack>
+          <HStack gap="x1_5">
+            <Badge label="+20 XP" tone="brand" size="small" />
+            <Badge label="스트릭 +1일" tone="critical" size="small" />
           </HStack>
         </Card>
       </Pressable>

@@ -3,6 +3,8 @@ export type BadgeTone = 'brand' | 'positive' | 'warning' | 'critical' | 'informa
 export type IconName =
   | 'ArrowLeft'
   | 'ArrowRight'
+  | 'Award'
+  | 'BadgeCheck'
   | 'Bell'
   | 'Bus'
   | 'Car'
@@ -10,6 +12,7 @@ export type IconName =
   | 'Check'
   | 'ChevronRight'
   | 'Circle'
+  | 'CircleCheck'
   | 'CircleDot'
   | 'CircleHelp'
   | 'Clock'
@@ -28,6 +31,7 @@ export type IconName =
   | 'Grid3x3'
   | 'Hand'
   | 'HandFist'
+  | 'Info'
   | 'Leaf'
   | 'Lock'
   | 'LogOut'
@@ -55,6 +59,8 @@ export type IconName =
   | 'UserRoundPlus'
   | 'UsersRound'
   | 'Utensils'
+  | 'Video'
   | 'Volume2'
   | 'Wheat'
-  | 'X';
+  | 'X'
+  | 'Zap';
