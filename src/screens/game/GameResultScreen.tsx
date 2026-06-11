@@ -80,7 +80,7 @@ export function GameResultScreen({ game, result, onRetry, onExit }: GameResultSc
           <Button label="다시" variant="outline" tone="neutral" fullWidth onPress={onRetry} />
         </Box>
         <Box flex={1.4}>
-          <Button label="게임 목록" iconRight="arrow-forward" fullWidth onPress={onExit} />
+          <Button label="게임 목록" iconRight="ArrowRight" fullWidth onPress={onExit} />
         </Box>
       </HStack>
     </Screen>

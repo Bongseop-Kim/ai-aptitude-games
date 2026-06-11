@@ -43,7 +43,7 @@ export function MockExamRecordRow({ record, isLatest = false, ...props }: MockEx
               </HStack>
               <HStack align="center" gap="x2">
                 <HStack align="center" gap="x1">
-                  <Icon name="clock" color="fg.neutralSubtle" size="small" />
+                  <Icon name="Clock" color="fg.neutralSubtle" size="small" />
                   <Text color="fg.neutralSubtle" textStyle="t2Regular" maxLines={1}>
                     {record.duration}
                   </Text>
@@ -59,7 +59,7 @@ export function MockExamRecordRow({ record, isLatest = false, ...props }: MockEx
                 ) : null}
               </HStack>
             </VStack>
-            <Icon name="chevron-right" color="fg.neutralSubtle" size="small" />
+            <Icon name="ChevronRight" color="fg.neutralSubtle" size="small" />
           </HStack>
         </Card>
         {isLatest ? (

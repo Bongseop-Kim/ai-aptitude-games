@@ -43,7 +43,7 @@ export function GameListRow({ game, accessibilityState, disabled, onPress, ...pr
                 <Text color="fg.neutral" textStyle="t4Bold" maxLines={1}>
                   {game.name}
                 </Text>
-                {game.status === 'done' ? <Icon name="check" color="fg.positive" size="small" /> : null}
+                {game.status === 'done' ? <Icon name="Check" color="fg.positive" size="small" /> : null}
               </HStack>
               <Text color="fg.neutralMuted" textStyle="t2Regular" maxLines={1}>
                 {game.skill} · {game.minutes}분
@@ -56,7 +56,7 @@ export function GameListRow({ game, accessibilityState, disabled, onPress, ...pr
               <Text textStyle="t3Bold">{game.score ?? '—'}</Text>
             </HStack>
           </VStack>
-          <Icon name="chevron-right" color="fg.neutralSubtle" size="small" />
+          <Icon name="ChevronRight" color="fg.neutralSubtle" size="small" />
         </HStack>
       </Card>
     </Pressable>

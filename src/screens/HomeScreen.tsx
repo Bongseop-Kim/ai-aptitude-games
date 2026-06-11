@@ -43,19 +43,19 @@ function HomeHeader() {
       <HStack align="center" gap="x1">
         <HeaderChip
           accessibilityLabel={`스트릭 ${user.streakDays}일`}
-          icon="fire"
+          icon="Flame"
           label={String(user.streakDays)}
           tone="critical"
         />
         <HeaderChip
           accessibilityLabel={`보석 ${user.gems}개`}
-          icon="diamond"
+          icon="Gem"
           label={String(user.gems)}
           tone="informative"
         />
         <Pressable accessibilityLabel="알림" accessibilityRole="button">
           <Box alignItems="center" height="x10" justifyContent="center" position="relative" width="x10">
-            <Icon name="bell" color="fg.neutral" />
+            <Icon name="Bell" color="fg.neutral" />
             <Box bg="palette.red700" borderRadius="full" height="x1_5" position="absolute" right="x1_5" top="x1" width="x1_5" />
           </Box>
         </Pressable>
@@ -117,8 +117,8 @@ function ReadinessSummary() {
           <Text color="fg.brand" textStyle="t5Bold" maxLines={1}>
             {readinessLabel(user.readiness.score)}
           </Text>
-          <MetricRow icon="trend-up" iconTone="positive" label="강한 역량" value={user.readiness.strength} />
-          <MetricRow icon="adjust" iconTone="critical" label="보완 역량" value={user.readiness.weakness} />
+          <MetricRow icon="TrendingUp" iconTone="positive" label="강한 역량" value={user.readiness.strength} />
+          <MetricRow icon="CircleDot" iconTone="critical" label="보완 역량" value={user.readiness.weakness} />
         </VStack>
       </HStack>
       <Box bg="stroke.neutralWeak" height="x0_5" />
@@ -127,7 +127,7 @@ function ReadinessSummary() {
           <Text color="fg.neutralMuted" textStyle="t3Medium">
             지난 리포트 보기
           </Text>
-          <Icon name="chevron-right" color="fg.neutralSubtle" size="small" />
+          <Icon name="ChevronRight" color="fg.neutralSubtle" size="small" />
         </HStack>
       </Pressable>
     </Card>
@@ -170,7 +170,7 @@ function DailyChallenge() {
   return (
     <VStack gap="x2">
       <SectionHead
-        icon="fire"
+        icon="Flame"
         title="오늘의 챌린지"
         actionLabel="전체"
         actionAccessibilityLabel="오늘의 챌린지 전체 보기"
@@ -210,7 +210,7 @@ function DailyChallenge() {
             <Text color="fg.neutralInverted" textStyle="t5Bold" maxLines={1}>
               지금 도전하기
             </Text>
-            <Icon name="play" color="fg.neutralInverted" size="small" />
+            <Icon name="Play" color="fg.neutralInverted" size="small" />
           </HStack>
         </Card>
       </Pressable>
@@ -241,7 +241,7 @@ function MockExamCard() {
       <Card bg="bg.neutralSolid" borderColor="stroke.neutralContrast" borderRadius="r5" p="x4">
         <HStack align="center" gap="x3">
           <Box alignItems="center" bg="bg.brandSolid" borderRadius="r4" height="x13" justifyContent="center" width="x13">
-            <Icon name="trophy" color="fg.neutralInverted" size="large" />
+            <Icon name="Trophy" color="fg.neutralInverted" size="large" />
           </Box>
           <VStack flex={1} gap="x0_5">
             <Text color="fg.brand" textStyle="t3Bold" maxLines={1}>
@@ -254,7 +254,7 @@ function MockExamCard() {
               완주하면 5대 역량 리포트가 열려요
             </Text>
           </VStack>
-          <Icon name="chevron-right" color="fg.neutralInverted" />
+          <Icon name="ChevronRight" color="fg.neutralInverted" />
         </HStack>
       </Card>
     </Pressable>

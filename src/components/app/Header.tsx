@@ -17,7 +17,7 @@ export function Header({ title, subtitle, showBack = false, rightIcon, onBack, o
   return (
     <HStack align="center" gap="x3" justify="spaceBetween" py="x2">
       <HStack align="center" flex={1} gap="x2">
-        {showBack ? <IconButton name="arrow-left" label="뒤로" onPress={onBack} /> : <Logo showText={false} />}
+        {showBack ? <IconButton name="ArrowLeft" label="뒤로" onPress={onBack} /> : <Logo showText={false} />}
         <VStack flex={1} gap="x0_5">
           <Text textStyle="t7Bold" maxLines={1}>
             {title}

@@ -59,7 +59,7 @@ export function ReportsScreen() {
       {hasNoRecords ? (
         <EmptyMockExamRecords />
       ) : null}
-      <Button label="새 모의고사 시작" variant="outline" iconLeft="add" fullWidth />
+      <Button label="새 모의고사 시작" variant="outline" iconLeft="Plus" fullWidth />
     </TabScreen>
   );
 }

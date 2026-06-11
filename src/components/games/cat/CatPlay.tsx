@@ -64,8 +64,8 @@ function CatCell({ cell, phase, question }: CatCellProps) {
       justifyContent="center"
       style={{ aspectRatio: 1 }}
     >
-      {showsMouse ? <Icon name="mouse" color="fg.neutralSubtle" size="small" /> : null}
-      {showsCat ? <Icon name="paw" color={toneColors.critical.fg} size="small" /> : null}
+      {showsMouse ? <Icon name="Rat" color="fg.neutralSubtle" size="small" /> : null}
+      {showsCat ? <Icon name="PawPrint" color={toneColors.critical.fg} size="small" /> : null}
     </Box>
   );
 }

@@ -70,9 +70,9 @@ function PathCell({ cell, disabled, fenced, tone, onPress }: PathCellProps) {
         justifyContent="center"
         style={{ aspectRatio: 1 }}
       >
-        {fenced ? <Icon name="fence" color={iconColor} size="small" /> : null}
-        {!fenced && cell === 'person' ? <Icon name="walk" color={iconColor} size="small" /> : null}
-        {!fenced && cell === 'car' ? <Icon name="car" color={iconColor} size="small" /> : null}
+        {fenced ? <Icon name="Fence" color={iconColor} size="small" /> : null}
+        {!fenced && cell === 'person' ? <Icon name="Footprints" color={iconColor} size="small" /> : null}
+        {!fenced && cell === 'car' ? <Icon name="Car" color={iconColor} size="small" /> : null}
       </Box>
     </Pressable>
   );

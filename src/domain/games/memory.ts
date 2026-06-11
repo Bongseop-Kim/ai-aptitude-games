@@ -17,10 +17,10 @@ const n2Candidates = [2, 3, 4, 5] as const;
 const n3Candidates = [3, 4, 5] as const;
 
 export const memoryShapeIcon: Record<MemoryShape, IconName> = {
-  triangle: 'triangle',
-  square: 'square',
-  circle: 'circle',
-  pentagon: 'pentagon',
+  triangle: 'Triangle',
+  square: 'Square',
+  circle: 'Circle',
+  pentagon: 'Pentagon',
 };
 
 export const memoryAnswerLabel: Record<MemoryAnswer, string> = {

@@ -40,7 +40,7 @@ export function ProfileSummary({ name, subtitle, readinessScore }: ProfileSummar
             <ReadinessChip score={readinessScore} />
           </HStack>
         </VStack>
-        <IconButton name="edit" label="프로필 편집" variant="weak" />
+        <IconButton name="Pencil" label="프로필 편집" variant="weak" />
       </HStack>
     </Card>
   );

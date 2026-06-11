@@ -60,9 +60,9 @@ export function ProfileScreen() {
       />
 
       <HStack gap="x2">
-        <StatTile icon="fire" value={`${user.streakDays}일`} label="연속" />
-        <StatTile icon="controller" value={`${doneCount}/${games.length}`} label="완료 게임" />
-        <StatTile icon="trophy" value={`${user.mockExamCount}회`} label="모의고사" />
+        <StatTile icon="Flame" value={`${user.streakDays}일`} label="연속" />
+        <StatTile icon="Gamepad2" value={`${doneCount}/${games.length}`} label="완료 게임" />
+        <StatTile icon="Trophy" value={`${user.mockExamCount}회`} label="모의고사" />
       </HStack>
 
       <SectionHead title="구독" />
@@ -71,31 +71,31 @@ export function ProfileScreen() {
       <SectionHead title="설정" />
       <Card py="x1">
         <SwitchListItem
-          leadingIcon="bell"
+          leadingIcon="Bell"
           title="푸시 알림"
           value={pushEnabled}
           setValue={setPushEnabled}
         />
         <SwitchListItem
-          leadingIcon="volume"
+          leadingIcon="Volume2"
           title="효과음"
           value={soundEnabled}
           setValue={setSoundEnabled}
         />
-        <ListItem leadingIcon="clock" title="리마인드 시간" trailing="오후 9:00" showChevron />
-        <ListItem leadingIcon="rank" title="주간 랭킹" trailing="친구" showChevron />
-        <ListItem leadingIcon="group-add" title="친구 초대" showChevron />
+        <ListItem leadingIcon="Clock" title="리마인드 시간" trailing="오후 9:00" showChevron />
+        <ListItem leadingIcon="Trophy" title="주간 랭킹" trailing="친구" showChevron />
+        <ListItem leadingIcon="UserRoundPlus" title="친구 초대" showChevron />
       </Card>
 
       <SectionHead title="기타" />
       <Card py="x1">
-        <ListItem leadingIcon="help" title="도움말 · 자주 묻는 질문" showChevron />
-        <ListItem leadingIcon="doc" title="이용약관 · 개인정보처리방침" showChevron />
+        <ListItem leadingIcon="CircleHelp" title="도움말 · 자주 묻는 질문" showChevron />
+        <ListItem leadingIcon="FileText" title="이용약관 · 개인정보처리방침" showChevron />
         {isAnonymous ? (
           // Signing out an anonymous session would orphan its server data,
           // so the only exit for anonymous users is upgrading the account.
           <ListItem
-            leadingIcon="profile"
+            leadingIcon="User"
             title={isLinking ? '연동 중...' : '카카오 계정 연동하기'}
             showChevron={!isLinking}
             onPress={handleLinkKakao}
@@ -103,7 +103,7 @@ export function ProfileScreen() {
           />
         ) : (
           <ListItem
-            leadingIcon="logout"
+            leadingIcon="LogOut"
             title="로그아웃"
             onPress={() => void supabase.auth.signOut()}
           />
@@ -199,7 +199,7 @@ function ProBanner() {
   return (
     <Card bg="bg.neutralSolid" borderColor="stroke.neutralContrast" borderRadius="r5" p="x4">
       <HStack align="center" gap="x3">
-        <Icon name="eco" color="fg.brand" size="large" />
+        <Icon name="Leaf" color="fg.brand" size="large" />
         <VStack flex={1} gap="x0_5">
           <Text color="fg.neutralInverted" textStyle="t4Bold" maxLines={1}>
             역검 Pro 시작하기
@@ -208,7 +208,7 @@ function ProBanner() {
             전체 리포트 · 7일 무료
           </Text>
         </VStack>
-        <Icon name="arrow-forward" color="fg.neutralInverted" />
+        <Icon name="ArrowRight" color="fg.neutralInverted" />
       </HStack>
     </Card>
   );

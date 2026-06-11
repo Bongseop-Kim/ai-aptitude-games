@@ -67,7 +67,7 @@ function MockExamBanner() {
     <Pressable accessibilityLabel="모의고사 시작" accessibilityRole="button">
       <Card bg="bg.neutralSolid" borderColor="stroke.neutralContrast" borderRadius="r5" p="x4">
         <HStack align="center" gap="x3">
-          <Icon name="trophy" color="fg.brand" size="large" />
+          <Icon name="Trophy" color="fg.brand" size="large" />
           <VStack flex={1} gap="x0_5">
             <Text color="fg.neutralInverted" textStyle="t4Bold" maxLines={1}>
               모의고사 한 번에 9게임
@@ -76,7 +76,7 @@ function MockExamBanner() {
               완주하면 종합 리포트가 열려요 · 22분
             </Text>
           </VStack>
-          <Icon name="chevron-right" color="fg.neutralInverted" />
+          <Icon name="ChevronRight" color="fg.neutralInverted" />
         </HStack>
       </Card>
     </Pressable>

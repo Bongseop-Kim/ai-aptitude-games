@@ -18,7 +18,7 @@ export function Logo({ showText = true }: LogoProps) {
         justifyContent="center"
         width="x9"
       >
-        <Icon name="eco" color="fg.neutralInverted" />
+        <Icon name="Leaf" color="fg.neutralInverted" />
       </Box>
       {showText ? <Text textStyle="t7Bold">역검</Text> : null}
     </HStack>
