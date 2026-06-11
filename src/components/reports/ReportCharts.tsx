@@ -303,7 +303,8 @@ export function PercentileBar({ percentile }: PercentileBarProps) {
   const { theme } = useDesignSystemTheme();
   const { size, onLayout } = useMeasuredChart();
   const progress = useFocusProgress(450);
-  const markerX = useDerivedValue(() => size.width * (clamp(percentile) / 100) * progress.value, [percentile, size.width]);
+  const clampedPercentile = clamp(percentile);
+  const markerX = useDerivedValue(() => size.width * (clampedPercentile / 100) * progress.value, [clampedPercentile, size.width]);
 
   return (
     <VStack gap="x2">
