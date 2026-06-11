@@ -7,6 +7,7 @@
 ## Commands
 
 - Typecheck: `npx tsc --noEmit` — must pass before claiming any task complete.
+- Lint: `npm run lint` — must report zero errors before claiming any task complete. Barrel-file imports are enforced as lint errors.
 
 Do not run `npx expo start`, `npm run start`, or other long-lived Expo dev servers unless explicitly asked. The user runs and inspects the Expo app manually.
 
