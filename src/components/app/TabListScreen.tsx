@@ -12,12 +12,14 @@ export type TabListScreenProps<ItemT> = Omit<
 > & {
   bottomPad?: TokenLength;
   header?: ReactNode;
+  pinnedContent?: ReactNode;
 };
 
 export function TabListScreen<ItemT>({
   bottomPad = 'spacingY.screenBottom',
   contentContainerStyle,
   header,
+  pinnedContent,
   ...listProps
 }: TabListScreenProps<ItemT>) {
   const { theme } = useDesignSystemTheme();
@@ -27,6 +29,7 @@ export function TabListScreen<ItemT>({
   return (
     <Screen safeEdges={['top', 'left', 'right']}>
       {header}
+      {pinnedContent}
       <Box flex={1}>
         <FlatList
           {...listProps}

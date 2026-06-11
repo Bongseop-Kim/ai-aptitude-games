@@ -94,11 +94,7 @@ export function ReportsScreen() {
   return (
     <TabListScreen<RecordListItem>
       header={<Header title="기록" subtitle="모의고사 회차별 리포트" />}
-      data={listData}
-      ItemSeparatorComponent={RecordListSeparator}
-      keyExtractor={(item) => (item.kind === 'record' ? item.record.id : item.id)}
-      ListEmptyComponent={emptyState ? <EmptyMockExamRecords {...emptyState} /> : null}
-      ListHeaderComponent={(
+      pinnedContent={(
         <RecordListHeader
           hasRecords={hasRecords}
           isLoading={isLoading}
@@ -107,6 +103,10 @@ export function ReportsScreen() {
           recordFilterRow={recordFilterRow}
         />
       )}
+      data={listData}
+      ItemSeparatorComponent={RecordListSeparator}
+      keyExtractor={(item) => (item.kind === 'record' ? item.record.id : item.id)}
+      ListEmptyComponent={emptyState ? <EmptyMockExamRecords {...emptyState} /> : null}
       renderItem={renderRecordItem}
     />
   );
@@ -146,7 +146,7 @@ function RecordListHeader({
 }: RecordListHeaderProps) {
   if (isLoading) {
     return (
-      <VStack gap="spacingY.componentDefault" mb="spacingY.componentDefault">
+      <VStack gap="spacingY.componentDefault">
         <MockExamSummaryCardSkeleton />
         {recordFilterRow}
         <Button label="새 모의고사 시작" iconLeft="Plus" fullWidth onPress={onStartMockExam} />
@@ -155,11 +155,13 @@ function RecordListHeader({
   }
 
   if (!hasRecords) {
-    return null;
+    return (
+      <Button label="새 모의고사 시작" iconLeft="Plus" fullWidth onPress={onStartMockExam} />
+    );
   }
 
   return (
-    <VStack gap="spacingY.componentDefault" mb="spacingY.componentDefault">
+    <VStack gap="spacingY.componentDefault">
       <MockExamSummaryCard records={records} />
       {recordFilterRow}
       <Button label="새 모의고사 시작" iconLeft="Plus" fullWidth onPress={onStartMockExam} />
