@@ -1,9 +1,9 @@
 import { Body } from '../../components/app/Body';
+import { BottomActionBar } from '../../components/app/BottomActionBar';
 import { Header } from '../../components/app/Header';
 import { Screen } from '../../components/app/Screen';
 import { GameInstructionList } from '../../components/games/GameInstructionList';
 import { GameStatBox } from '../../components/games/GameStatBox';
-import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Icon } from '../../components/ui/Icon';
 import { Tag } from '../../components/ui/Tag';
@@ -61,9 +61,7 @@ export function GameIntroScreen({ game, onStart, onClose }: GameIntroScreenProps
           </Card>
         ) : null}
       </Body>
-      <Box pt="x2">
-        <Button label="연습 시작" iconRight="Play" fullWidth onPress={onStart} />
-      </Box>
+      <BottomActionBar primary={{ label: '연습 시작', iconRight: 'Play', onPress: onStart }} />
     </Screen>
   );
 }

@@ -19,7 +19,7 @@ export function MockExamSummaryCard({ records }: MockExamSummaryCardProps) {
   return (
     <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" gap="x1_5">
       <HStack align="center" gap="x1_5">
-        <Text color="fg.brand" textStyle="t8Bold" maxLines={1}>
+        <Text color="fg.brand" textStyle="t7Bold" maxLines={1}>
           {records.length}회차
         </Text>
         <Box flex={1}>

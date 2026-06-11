@@ -1,9 +1,9 @@
 import { Body } from '../../components/app/Body';
+import { BottomActionBar } from '../../components/app/BottomActionBar';
 import { Header } from '../../components/app/Header';
 import { Screen } from '../../components/app/Screen';
 import { GameStatBox } from '../../components/games/GameStatBox';
 import { Badge } from '../../components/ui/Badge';
-import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Icon } from '../../components/ui/Icon';
 import { gameContent } from '../../data/gameContent';
@@ -75,14 +75,10 @@ export function GameResultScreen({ game, result, onRetry, onExit }: GameResultSc
           </Card>
         ) : null}
       </Body>
-      <HStack gap="x2" pt="x2">
-        <Box flex={1}>
-          <Button label="다시" variant="outline" tone="neutral" fullWidth onPress={onRetry} />
-        </Box>
-        <Box flex={1.4}>
-          <Button label="게임 목록" iconRight="ArrowRight" fullWidth onPress={onExit} />
-        </Box>
-      </HStack>
+      <BottomActionBar
+        secondary={{ label: '다시', tone: 'neutral', onPress: onRetry }}
+        primary={{ label: '게임 목록', iconRight: 'ArrowRight', onPress: onExit }}
+      />
     </Screen>
   );
 }

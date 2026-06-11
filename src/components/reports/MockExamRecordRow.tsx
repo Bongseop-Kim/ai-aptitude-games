@@ -1,7 +1,6 @@
 import { Pressable, type PressableProps } from 'react-native';
 
 import { Box } from '../../design-system/components/Box';
-import { Float } from '../../design-system/components/Float';
 import { HStack, VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
 import type { MockExamRecord } from '../../domain/types';
@@ -37,10 +36,11 @@ export function MockExamRecordRow({ record, isLatest = false, ...props }: MockEx
             </VStack>
             <VStack flex={1} gap="x0_5">
               <HStack align="center" gap="x1_5">
-                <Text textStyle="t3Bold" maxLines={1}>
+                <Text textStyle="t4Bold" maxLines={1}>
                   {record.dateLabel}
                 </Text>
                 {record.pro ? <Badge label="Pro" tone="brand" size="small" /> : null}
+                {isLatest ? <Badge label="최신" tone="critical" size="small" /> : null}
               </HStack>
               <HStack align="center" gap="x2">
                 <HStack align="center" gap="x1">
@@ -63,11 +63,6 @@ export function MockExamRecordRow({ record, isLatest = false, ...props }: MockEx
             <Icon name="ChevronRight" color="fg.neutralSubtle" size="small" />
           </HStack>
         </Card>
-        {isLatest ? (
-          <Float placement="top-start" offsetX="x3" offsetY={-8} zIndex={1}>
-            <Badge label="NEW" tone="critical" size="small" />
-          </Float>
-        ) : null}
       </Box>
     </Pressable>
   );

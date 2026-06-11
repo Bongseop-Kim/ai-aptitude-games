@@ -1,9 +1,9 @@
 import { useState, type ReactNode } from 'react';
-import { FlatList, Pressable, type ListRenderItemInfo } from 'react-native';
+import { Pressable, type ListRenderItemInfo } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { Header } from '../components/app/Header';
-import { Screen } from '../components/app/Screen';
+import { TabListScreen } from '../components/app/TabListScreen';
 import {
   MockExamRecordRow,
   MockExamRecordRowSkeleton,
@@ -19,24 +19,26 @@ import { useMockExamRecords } from '../data/local/useMockExamResults';
 import { Box } from '../design-system/components/Box';
 import { HStack, VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
-import { useDesignSystemTheme } from '../design-system/provider';
 import type { MockExamRecord } from '../domain/types';
 
 type RecordFilter = 'all' | 'pro';
 type RecordListItem =
   | { kind: 'record'; record: MockExamRecord }
   | { kind: 'skeleton'; id: string };
+type RecordEmptyState = {
+  description: string;
+  title: string;
+};
 
 const recordFilters: { value: RecordFilter; label: string }[] = [
   { value: 'all', label: '전체' },
-  { value: 'pro', label: '프리미엄' },
+  { value: 'pro', label: 'Pro' },
 ];
 
 const mockExamRecordSkeletonKeys = ['first', 'second', 'third'] as const;
 
 export function ReportsScreen() {
   const router = useRouter();
-  const { theme } = useDesignSystemTheme();
   const [filter, setFilter] = useState<RecordFilter>('all');
   const { data, isLoading } = useMockExamRecords();
   const mockExamRecords = data ?? [];
@@ -44,6 +46,20 @@ export function ReportsScreen() {
   const records = filter === 'pro' ? mockExamRecords.filter((record) => record.pro) : mockExamRecords;
   const hasRecords = mockExamRecords.length > 0;
   const hasNoRecords = !isLoading && mockExamRecords.length === 0;
+  const hasNoFilteredRecords = !isLoading && hasRecords && records.length === 0;
+  let emptyState: RecordEmptyState | null = null;
+
+  if (hasNoRecords) {
+    emptyState = {
+      title: '모의고사 기록이 아직 없어요',
+      description: '모의고사를 완료하면 회차별 기록을 여기에서 확인할 수 있어요.',
+    };
+  } else if (hasNoFilteredRecords) {
+    emptyState = {
+      title: 'Pro 기록이 아직 없어요',
+      description: 'Pro 리포트를 완료하면 이 필터에서 모아볼 수 있어요.',
+    };
+  }
   const listData: RecordListItem[] = isLoading
     ? mockExamRecordSkeletonKeys.map((id) => ({ kind: 'skeleton', id }))
     : records.map((record) => ({ kind: 'record', record }));
@@ -76,37 +92,23 @@ export function ReportsScreen() {
   };
 
   return (
-    <Screen safeEdges={['top', 'left', 'right']}>
-      <Header title="기록" subtitle="모의고사 회차별 리포트" />
-      <Box flex={1}>
-        <FlatList
-          contentContainerStyle={{
-            flexGrow: 1,
-          }}
-          contentInset={{ bottom: theme.dimension.spacingY.screenBottom }}
-          data={listData}
-          ItemSeparatorComponent={RecordListSeparator}
-          keyExtractor={(item) => (item.kind === 'record' ? item.record.id : item.id)}
-          ListEmptyComponent={hasNoRecords ? EmptyMockExamRecords : null}
-          ListFooterComponent={(
-            <Box mt="x3">
-              <Button label="새 모의고사 시작" variant="outline" iconLeft="Plus" fullWidth onPress={startMockExam} />
-            </Box>
-          )}
-          ListHeaderComponent={(
-            <RecordListHeader
-              hasRecords={hasRecords}
-              isLoading={isLoading}
-              records={mockExamRecords}
-              recordFilterRow={recordFilterRow}
-            />
-          )}
-          renderItem={renderRecordItem}
-          showsVerticalScrollIndicator={false}
-          scrollIndicatorInsets={{ bottom: theme.dimension.spacingY.screenBottom }}
+    <TabListScreen<RecordListItem>
+      header={<Header title="기록" subtitle="모의고사 회차별 리포트" />}
+      data={listData}
+      ItemSeparatorComponent={RecordListSeparator}
+      keyExtractor={(item) => (item.kind === 'record' ? item.record.id : item.id)}
+      ListEmptyComponent={emptyState ? <EmptyMockExamRecords {...emptyState} /> : null}
+      ListHeaderComponent={(
+        <RecordListHeader
+          hasRecords={hasRecords}
+          isLoading={isLoading}
+          onStartMockExam={startMockExam}
+          records={mockExamRecords}
+          recordFilterRow={recordFilterRow}
         />
-      </Box>
-    </Screen>
+      )}
+      renderItem={renderRecordItem}
+    />
   );
 }
 
@@ -130,16 +132,24 @@ function RecordListRecordRow({ record, isLatest }: RecordListRecordRowProps) {
 type RecordListHeaderProps = {
   hasRecords: boolean;
   isLoading: boolean;
+  onStartMockExam: () => void;
   records: MockExamRecord[];
   recordFilterRow: ReactNode;
 };
 
-function RecordListHeader({ hasRecords, isLoading, records, recordFilterRow }: RecordListHeaderProps) {
+function RecordListHeader({
+  hasRecords,
+  isLoading,
+  onStartMockExam,
+  records,
+  recordFilterRow,
+}: RecordListHeaderProps) {
   if (isLoading) {
     return (
-      <VStack gap="spacingY.componentDefault" mb="spacingY.componentDefault" mt="spacingY.componentDefault">
+      <VStack gap="spacingY.componentDefault" mb="spacingY.componentDefault">
         <MockExamSummaryCardSkeleton />
         {recordFilterRow}
+        <Button label="새 모의고사 시작" iconLeft="Plus" fullWidth onPress={onStartMockExam} />
       </VStack>
     );
   }
@@ -149,9 +159,10 @@ function RecordListHeader({ hasRecords, isLoading, records, recordFilterRow }: R
   }
 
   return (
-    <VStack gap="spacingY.componentDefault" mb="spacingY.componentDefault" mt="spacingY.componentDefault">
+    <VStack gap="spacingY.componentDefault" mb="spacingY.componentDefault">
       <MockExamSummaryCard records={records} />
       {recordFilterRow}
+      <Button label="새 모의고사 시작" iconLeft="Plus" fullWidth onPress={onStartMockExam} />
     </VStack>
   );
 }
@@ -160,19 +171,17 @@ function RecordListSeparator() {
   return <Box height="x2" />;
 }
 
-function EmptyMockExamRecords() {
+function EmptyMockExamRecords({ description, title }: RecordEmptyState) {
   return (
-    <Box mt="spacingY.componentDefault">
-      <Card>
-        <VStack align="center" gap="x1">
-          <Text align="center" textStyle="t4Bold">
-            모의고사 기록이 아직 없어요
-          </Text>
-          <Text align="center" color="fg.neutralSubtle" textStyle="t2Regular">
-            모의고사를 완료하면 회차별 기록을 여기에서 확인할 수 있어요.
-          </Text>
-        </VStack>
-      </Card>
-    </Box>
+    <Card>
+      <VStack align="center" gap="x1">
+        <Text align="center" textStyle="t4Bold">
+          {title}
+        </Text>
+        <Text align="center" color="fg.neutralSubtle" textStyle="t2Regular">
+          {description}
+        </Text>
+      </VStack>
+    </Card>
   );
 }

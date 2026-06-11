@@ -2,6 +2,8 @@ import { useState, type ReactNode } from 'react';
 import { Alert, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
+import { BottomActionBar } from '../components/app/BottomActionBar';
+import { Header } from '../components/app/Header';
 import { SectionHead } from '../components/app/SectionHead';
 import { Screen } from '../components/app/Screen';
 import {
@@ -14,7 +16,6 @@ import {
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Icon } from '../components/ui/Icon';
-import { IconButton } from '../components/ui/IconButton';
 import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/ui/Skeleton';
 import { ProgressBar } from '../components/readiness/ProgressBar';
@@ -83,10 +84,11 @@ export function ReportDetailScreen() {
   const { data: record, isLoading } = useMockExamRecord(recordId);
   const { data: records = [] } = useMockExamRecords();
   const section = reportDetailSections[sectionIndex];
+  const isLastSection = sectionIndex >= reportDetailSections.length - 1;
   const locked = Boolean(section.locked && !record?.pro);
 
   function goNext() {
-    if (sectionIndex < reportDetailSections.length - 1) {
+    if (!isLastSection) {
       setSectionIndex((current) => current + 1);
       return;
     }
@@ -94,23 +96,31 @@ export function ReportDetailScreen() {
     router.back();
   }
 
-  return (
-    <Screen bg="bg.layerDefault">
-      <ReportDetailHeader
-        sectionIndex={sectionIndex}
-        title={section.title}
-        round={record?.round}
-        onBack={() => {
-          if (sectionIndex === 0) {
-            router.back();
-            return;
-          }
+  function goBack() {
+    if (sectionIndex === 0) {
+      router.back();
+      return;
+    }
 
-          setSectionIndex((current) => current - 1);
+    setSectionIndex((current) => current - 1);
+  }
+
+  return (
+    <Screen>
+      <Header
+        title={section.title}
+        subtitle={`모의고사 · ${record?.round ?? '-'}회차 리포트`}
+        showBack
+        onBack={goBack}
+        rightAction={{
+          icon: 'Share',
+          label: '공유',
+          onPress: showShareNotice,
         }}
-        onShare={showShareNotice}
-      />
-      <Box flex={1} bleedX="asPadding">
+      >
+        <ReportDetailProgress sectionIndex={sectionIndex} />
+      </Header>
+      <Box flex={1} bleedX="spacingX.globalGutter">
         <ScrollView
           contentContainerStyle={{ flexGrow: 1, paddingBottom: 16 }}
           showsVerticalScrollIndicator={false}
@@ -126,77 +136,39 @@ export function ReportDetailScreen() {
           </Box>
         </ScrollView>
       </Box>
-      <HStack
-        borderColor="stroke.neutralSubtle"
-        borderTopWidth="thin"
-        gap="x2"
-        pt="x2"
-      >
-        <Box flex={1}>
-          <Button
-            label="공유"
-            variant="outline"
-            iconLeft="Share"
-            fullWidth
-            onPress={showShareNotice}
-          />
-        </Box>
-        <Box flex={1.6}>
-          <Button
-            label={sectionIndex < reportDetailSections.length - 1 ? '다음' : '완료'}
-            iconRight={sectionIndex < reportDetailSections.length - 1 ? 'ArrowRight' : 'Check'}
-            fullWidth
-            onPress={goNext}
-          />
-        </Box>
-      </HStack>
+      <BottomActionBar
+        secondary={{
+          label: '공유',
+          iconLeft: 'Share',
+          onPress: showShareNotice,
+        }}
+        primary={{
+          label: isLastSection ? '완료' : '다음',
+          iconRight: isLastSection ? 'Check' : 'ArrowRight',
+          onPress: goNext,
+        }}
+      />
     </Screen>
   );
 }
 
-type ReportDetailHeaderProps = {
+type ReportDetailProgressProps = {
   sectionIndex: number;
-  title: string;
-  round?: number;
-  onBack: () => void;
-  onShare: () => void;
 };
 
-function ReportDetailHeader({ sectionIndex, title, round, onBack, onShare }: ReportDetailHeaderProps) {
+function ReportDetailProgress({ sectionIndex }: ReportDetailProgressProps) {
   return (
-    <VStack
-      bg="bg.layerDefault"
-      borderBottomWidth="thin"
-      borderColor="stroke.neutralSubtle"
-      bleedX="asPadding"
-      gap="x2"
-      px="spacingX.globalGutter"
-      pb="x2"
-    >
-      <HStack align="center" gap="x2">
-        <IconButton name="ArrowLeft" label="뒤로" onPress={onBack} />
-        <VStack flex={1} gap="x0_5">
-          <Text color="fg.neutralSubtle" textStyle="t1Regular" maxLines={1}>
-            모의고사 · {round ?? '-'}회차 리포트
-          </Text>
-          <Text textStyle="t4Bold" maxLines={1}>
-            {title}
-          </Text>
-        </VStack>
-        <IconButton name="Share" label="공유" onPress={onShare} />
-      </HStack>
-      <HStack gap="x1">
-        {reportDetailSections.map((item, index) => (
-          <Box
-            key={item.key}
-            bg={index <= sectionIndex ? 'fg.neutral' : 'bg.neutralWeak'}
-            borderRadius="full"
-            flex={1}
-            height="x1"
-          />
-        ))}
-      </HStack>
-    </VStack>
+    <HStack gap="x1">
+      {reportDetailSections.map((item, index) => (
+        <Box
+          key={item.key}
+          bg={index <= sectionIndex ? 'bg.brandSolid' : 'stroke.neutralWeak'}
+          borderRadius="full"
+          flex={1}
+          height="x1"
+        />
+      ))}
+    </HStack>
   );
 }
 
@@ -331,7 +303,7 @@ function CoverSection({ record }: RecordSectionProps) {
         </Text>
       </VStack>
 
-      <Card bg="bg.brandWeak" borderWidth={0}>
+      <Card bg="bg.brandWeak" borderColor="stroke.brandWeak">
         <HStack align="center" gap="x4">
           <ReadinessGauge score={record.score} size={108} />
           <VStack flex={1} gap="x1">
@@ -363,11 +335,11 @@ function CoverSection({ record }: RecordSectionProps) {
       </Grid>
 
       <SectionHead title="이 리포트에는" />
-      <VStack>
+      <Card py="x1">
         {coverFeatureSections.map((section, index) => (
           <ReportFeatureRow key={section.key} index={index + 1} title={section.title} locked={section.locked} />
         ))}
-      </VStack>
+      </Card>
     </VStack>
   );
 }
@@ -381,7 +353,7 @@ type InsightTileProps = {
 
 function InsightTile({ label, title, description, tone }: InsightTileProps) {
   return (
-    <Card bg={tone === 'positive' ? 'palette.green100' : 'mannerTemp.l4Bg'} borderWidth={0} p="x3">
+    <Card bg={tone === 'positive' ? 'palette.green100' : 'mannerTemp.l4Bg'} borderColor="stroke.neutralWeak" p="x3">
       <VStack gap="x0_5">
         <Text color="fg.neutralMuted" textStyle="t1Regular">
           {label}
@@ -436,12 +408,14 @@ function RadarSection() {
         </Text>
         <Text textStyle="t8Bold">당신의 역량 지도</Text>
       </VStack>
-      <CompetencyRadarChart competencies={reportCompetencies} />
-      <VStack gap="x2">
+      <Card>
+        <CompetencyRadarChart competencies={reportCompetencies} />
+      </Card>
+      <Card gap="x3">
         {reportCompetencies.map((competency) => (
           <CompetencyRow key={competency.key} competency={competency} />
         ))}
-      </VStack>
+      </Card>
     </VStack>
   );
 }
@@ -503,7 +477,7 @@ type HighlightCardProps = {
 
 function HighlightCard({ item, index, tone }: HighlightCardProps) {
   return (
-    <Card bg={tone === 'positive' ? 'palette.green100' : 'mannerTemp.l4Bg'} borderWidth={0} p="x3">
+    <Card bg={tone === 'positive' ? 'palette.green100' : 'mannerTemp.l4Bg'} borderColor="stroke.neutralWeak" p="x3">
       <HStack align="center" justify="spaceBetween" gap="x2">
         <Text textStyle="t4Bold" maxLines={1}>
           #{index + 1} {item.game}
@@ -550,11 +524,11 @@ function PatternSection() {
       <Card>
         <ResponsePatternChart />
       </Card>
-      <VStack gap="x2">
+      <Card gap="x3">
         {responseScales.map((item) => (
           <ScaleRow key={item.left} {...item} />
         ))}
-      </VStack>
+      </Card>
     </VStack>
   );
 }
@@ -613,7 +587,7 @@ function PeerSection({ record, records }: PeerSectionProps) {
         <PercentileBar percentile={72} />
       </Card>
       <SectionHead title="역량별 백분위" />
-      <VStack gap="x2">
+      <Card gap="x3">
         {reportCompetencies.map((competency) => (
           <HStack key={competency.key} align="center" gap="x3">
             <Text textStyle="t3Bold" maxLines={1}>
@@ -625,7 +599,7 @@ function PeerSection({ record, records }: PeerSectionProps) {
             </Text>
           </HStack>
         ))}
-      </VStack>
+      </Card>
       <SectionHead title="회차별 성장" />
       <Card>
         <GrowthTrendChart scores={scores.length > 0 ? scores : [record.score]} />
@@ -672,6 +646,7 @@ function CoachSection() {
           <HStack
             key={item.day}
             align="center"
+            bg="bg.layerFloating"
             borderColor="stroke.neutralSubtle"
             borderRadius="r3"
             borderWidth="thin"

@@ -28,8 +28,11 @@ export function InterviewScreen() {
         <Header
           title="실전 면접"
           subtitle="이력서·채용공고로 맞춤 영상 면접"
-          rightIcon="Info"
-          onRightPress={noop}
+          rightAction={{
+            icon: 'Info',
+            label: '면접 정보',
+            onPress: noop,
+          }}
         />
       }
     >
