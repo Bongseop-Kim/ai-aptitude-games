@@ -127,8 +127,12 @@ export function RotatePlay({ game, onFinish, onClose }: GamePlayProps) {
   const [correctCount, setCorrectCount] = useState(0);
   const [roundScores, setRoundScores] = useState<number[]>([]);
   const responseTimesRef = useRef<number[]>([]);
-  const questionShownAtRef = useRef(Date.now());
+  const questionShownAtRef = useRef(0);
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    questionShownAtRef.current = Date.now();
+  }, []);
 
   useEffect(() => {
     return () => {

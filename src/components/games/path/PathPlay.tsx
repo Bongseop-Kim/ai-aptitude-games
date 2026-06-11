@@ -110,8 +110,12 @@ export function PathPlay({ game, onFinish, onClose }: GamePlayProps) {
   const [feedback, setFeedback] = useState<FeedbackState>(null);
   const [correctCount, setCorrectCount] = useState(0);
   const responseTimesRef = useRef<number[]>([]);
-  const questionShownAtRef = useRef(Date.now());
+  const questionShownAtRef = useRef(0);
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    questionShownAtRef.current = Date.now();
+  }, []);
 
   useEffect(() => {
     return () => {

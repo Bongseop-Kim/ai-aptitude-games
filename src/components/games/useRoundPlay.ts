@@ -6,6 +6,7 @@ export function useRoundPlay<TAnswer>(options: {
   totalRounds: number;
   feedbackMs: number;
   onComplete: (summary: { correctCount: number; responseTimes: number[] }) => void;
+  onAdvanceRound?: (round: number) => void;
 }): {
   round: number;
   picked: TAnswer | null;
@@ -15,17 +16,22 @@ export function useRoundPlay<TAnswer>(options: {
   markQuestionShown: () => void;
 } {
   const onCompleteRef = useRef(options.onComplete);
+  const onAdvanceRoundRef = useRef(options.onAdvanceRound);
   const [round, setRound] = useState(1);
   const [picked, setPicked] = useState<TAnswer | null>(null);
   const pickedRef = useRef<TAnswer | null>(null);
   const [correctCount, setCorrectCount] = useState(0);
   const responseTimesRef = useRef<number[]>([]);
-  const questionShownAtRef = useRef(Date.now());
+  const questionShownAtRef = useRef(0);
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     onCompleteRef.current = options.onComplete;
   }, [options.onComplete]);
+
+  useEffect(() => {
+    onAdvanceRoundRef.current = options.onAdvanceRound;
+  }, [options.onAdvanceRound]);
 
   useEffect(() => {
     questionShownAtRef.current = Date.now();
@@ -61,7 +67,10 @@ export function useRoundPlay<TAnswer>(options: {
         return;
       }
 
-      setRound((value) => value + 1);
+      const nextRound = round + 1;
+
+      onAdvanceRoundRef.current?.(nextRound);
+      setRound(nextRound);
       pickedRef.current = null;
       setPicked(null);
     }, options.feedbackMs);
