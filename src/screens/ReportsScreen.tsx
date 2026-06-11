@@ -3,8 +3,14 @@ import { Pressable } from 'react-native';
 
 import { Header } from '../components/app/Header';
 import { TabScreen } from '../components/app/TabScreen';
-import { MockExamRecordRow } from '../components/reports/MockExamRecordRow';
-import { MockExamSummaryCard } from '../components/reports/MockExamSummaryCard';
+import {
+  MockExamRecordRow,
+  MockExamRecordRowSkeleton,
+} from '../components/reports/MockExamRecordRow';
+import {
+  MockExamSummaryCard,
+  MockExamSummaryCardSkeleton,
+} from '../components/reports/MockExamSummaryCard';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Tag } from '../components/ui/Tag';
@@ -19,6 +25,8 @@ const recordFilters: { value: RecordFilter; label: string }[] = [
   { value: 'pro', label: '프리미엄' },
 ];
 
+const mockExamRecordSkeletonKeys = ['first', 'second', 'third'] as const;
+
 export function ReportsScreen() {
   const [filter, setFilter] = useState<RecordFilter>('all');
   const { data, isLoading } = useMockExamRecords();
@@ -27,24 +35,38 @@ export function ReportsScreen() {
   const records = filter === 'pro' ? mockExamRecords.filter((record) => record.pro) : mockExamRecords;
   const hasRecords = mockExamRecords.length > 0;
   const hasNoRecords = !isLoading && mockExamRecords.length === 0;
+  const recordFilterRow = (
+    <HStack align="center" gap="x2">
+      {recordFilters.map(({ value, label }) => (
+        <Pressable
+          key={value}
+          accessibilityRole="button"
+          accessibilityState={{ selected: filter === value }}
+          onPress={() => setFilter(value)}
+        >
+          <Tag label={label} selected={filter === value} />
+        </Pressable>
+      ))}
+    </HStack>
+  );
 
   return (
     <TabScreen header={<Header title="기록" subtitle="모의고사 회차별 리포트" />}>
+      {isLoading ? (
+        <>
+          <MockExamSummaryCardSkeleton />
+          {recordFilterRow}
+          <VStack gap="x2">
+            {mockExamRecordSkeletonKeys.map((key) => (
+              <MockExamRecordRowSkeleton key={key} />
+            ))}
+          </VStack>
+        </>
+      ) : null}
       {hasRecords ? (
         <>
           <MockExamSummaryCard records={mockExamRecords} />
-          <HStack align="center" gap="x2">
-            {recordFilters.map(({ value, label }) => (
-              <Pressable
-                key={value}
-                accessibilityRole="button"
-                accessibilityState={{ selected: filter === value }}
-                onPress={() => setFilter(value)}
-              >
-                <Tag label={label} selected={filter === value} />
-              </Pressable>
-            ))}
-          </HStack>
+          {recordFilterRow}
           <VStack gap="x2">
             {records.map((record) => (
               <MockExamRecordRow

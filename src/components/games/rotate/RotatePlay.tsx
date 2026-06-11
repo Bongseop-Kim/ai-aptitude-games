@@ -258,7 +258,7 @@ export function RotatePlay({ game, onFinish, onClose }: GamePlayProps) {
           ) : (
             sequence.map((opId, index) => {
               const op = rotateOpById[opId];
-              return <Tag key={`${opId}-${index}`} label={`${index + 1}. ${op.label}`} />;
+              return <Tag key={`op-${index + 1}-${opId}`} label={`${index + 1}. ${op.label}`} />;
             })
           )}
           {sequence.length > 0 ? (

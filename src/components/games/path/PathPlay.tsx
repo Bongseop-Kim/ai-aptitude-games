@@ -91,7 +91,7 @@ function PathBoard({ disabled, fences, puzzle, tone, onToggleFence }: PathBoardP
     <Grid columns={puzzle.cols} gap="x1">
       {puzzle.cells.map((cell, index) => (
         <PathCell
-          key={`${cell}-${index}`}
+          key={`cell-${Math.floor(index / puzzle.cols) + 1}-${(index % puzzle.cols) + 1}-${cell}`}
           cell={cell}
           disabled={disabled}
           fenced={fences.has(index)}

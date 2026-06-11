@@ -3,6 +3,7 @@ import { HStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
 import type { MockExamRecord } from '../../domain/types';
 import { Card } from '../ui/Card';
+import { Skeleton } from '../ui/Skeleton';
 import { MockExamTrendLine } from './MockExamTrendLine';
 
 export type MockExamSummaryCardProps = {
@@ -31,6 +32,21 @@ export function MockExamSummaryCard({ records }: MockExamSummaryCardProps) {
         </Text>
       </HStack>
       {records.length >= 2 ? <MockExamTrendLine scores={scores} /> : null}
+    </Card>
+  );
+}
+
+export function MockExamSummaryCardSkeleton() {
+  return (
+    <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" gap="x1_5">
+      <HStack align="center" gap="x1_5">
+        <Skeleton height="x9" width="x16" />
+        <Box flex={1}>
+          <Skeleton height="x3" width="x14" />
+        </Box>
+        <Skeleton height="x5" width="x8" />
+      </HStack>
+      <Skeleton height="x11" width="full" />
     </Card>
   );
 }

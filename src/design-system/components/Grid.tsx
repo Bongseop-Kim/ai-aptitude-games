@@ -28,13 +28,14 @@ export function Grid({
   ...props
 }: GridProps) {
   const { theme } = useDesignSystemTheme();
-  const [containerWidth, setContainerWidth] = useState(0);
+  const [containerWidth, setContainerWidth] = useState<number | null>(null);
   const isRowFlow = autoFlow === 'row';
   const normalizedColumns = normalizeColumns(columns);
   const columnGap = props.columnGap ?? props.gap ?? 0;
   const resolvedColumnGap = resolveLength(theme, columnGap);
   const numericColumnGap = typeof resolvedColumnGap === 'number' ? resolvedColumnGap : 0;
-  const canMeasureItems = isRowFlow && normalizedColumns > 1 && containerWidth > 0;
+  const canMeasureItems = isRowFlow && normalizedColumns > 1 && containerWidth != null && containerWidth > 0;
+  const shouldHideUntilMeasured = isRowFlow && normalizedColumns > 1 && containerWidth == null;
   const itemWidth = canMeasureItems
     ? Math.max(
         0,
@@ -53,6 +54,7 @@ export function Grid({
       flexWrap={wrap ?? (isRowFlow ? 'wrap' : undefined)}
       {...props}
       onLayout={handleLayout}
+      style={[{ opacity: shouldHideUntilMeasured ? 0 : 1 }, props.style]}
     >
       {Children.map(children, (child) => {
         if (!itemWidth) return child;

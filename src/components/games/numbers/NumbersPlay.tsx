@@ -184,7 +184,7 @@ export function NumbersPlay({ game, onFinish, onClose }: GamePlayProps) {
         <HStack align="center" gap="x1" justify="center">
           {question.sequence.map((digit, index) => (
             <Box
-              key={`${digit}-${index}`}
+              key={`memory-digit-${index + 1}-${digit}`}
               alignItems="center"
               bg={colors.bg}
               borderRadius="r3"
@@ -199,9 +199,9 @@ export function NumbersPlay({ game, onFinish, onClose }: GamePlayProps) {
           ))}
         </HStack>
         <HStack align="center" gap="x1" justify="center">
-          {target.map((_, index) => (
+          {target.map((digit, index) => (
             <Box
-              key={index}
+              key={`recall-slot-${index + 1}-${digit}`}
               alignItems="center"
               bg="bg.layerDefault"
               borderColor={inputBorderColor({

@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useMemo } from 'react';
 
 import { games } from '../games';
 import type { GameResultInput } from '../../domain/games/results';
@@ -51,18 +50,14 @@ export function useBestScore(gameId: GameId) {
 export function useGamesWithProgress(): GameWithProgress[] {
   const { data: bestScores } = useBestScores();
 
-  return useMemo(
-    () =>
-      games.map((game) => {
-        const score = bestScores?.[game.id] ?? null;
-        return {
-          ...game,
-          score,
-          status: score != null ? 'done' : 'ready',
-        };
-      }),
-    [bestScores],
-  );
+  return games.map((game) => {
+    const score = bestScores?.[game.id] ?? null;
+    return {
+      ...game,
+      score,
+      status: score != null ? 'done' : 'ready',
+    };
+  });
 }
 
 export function useSaveGameResult() {

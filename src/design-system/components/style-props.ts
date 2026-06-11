@@ -284,7 +284,7 @@ function resolveSize(theme: AppTheme, value: TokenSize | undefined) {
   return resolveLength(theme, value);
 }
 
-function resolveRadius(theme: AppTheme, value: TokenRadius | undefined) {
+export function resolveRadius(theme: AppTheme, value: TokenRadius | undefined) {
   if (value === undefined) return undefined;
   if (typeof value === 'number') return value;
   if (value in theme.radius) return theme.radius[value as keyof ThemeRadius];
