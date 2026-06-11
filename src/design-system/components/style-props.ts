@@ -10,6 +10,7 @@ type ThemeShadow = AppTheme['shadow'];
 export type ColorToken =
   | `fg.${Extract<keyof ThemeColor['fg'], string>}`
   | `bg.${Extract<keyof ThemeColor['bg'], string>}`
+  | `mannerTemp.${Extract<keyof ThemeColor['mannerTemp'], string>}`
   | `stroke.${Extract<keyof ThemeColor['stroke'], string>}`
   | `palette.${Extract<keyof ThemeColor['palette'], string>}`;
 

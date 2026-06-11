@@ -60,6 +60,18 @@ Good:
 
 If an expression is difficult with existing Layout props or tokens, ask before adding an ad hoc implementation.
 
+## React
+
+React Compiler is enabled (Expo SDK default, opt-out only). Do not add manual `useMemo`, `useCallback`, or `React.memo` for performance — the compiler memoizes render computations automatically, including Skia object creation. Hoist pure computations to module-level functions for readability, not memoization.
+
+This project is on React 19. Use the modern syntax:
+
+- `ref` is a regular prop — never use `forwardRef`.
+- Render context providers as `<MyContext value={...}>`, not `<MyContext.Provider value={...}>`.
+- Read context with `use(MyContext)`, not `useContext(MyContext)`. `use` may be called conditionally.
+
+Form Actions (`useActionState`, `useOptimistic`, `<form action>`) are web-centric — do not reach for them in this React Native codebase.
+
 ## Imports
 
 Do not use barrel files (`index.ts` re-export files). Import directly from the module that defines the symbol, e.g. `import { GameTile } from '../components/games/GameTile'`.

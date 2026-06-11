@@ -5,6 +5,7 @@ import { Logo } from '../components/app/Logo';
 import { SectionHead } from '../components/app/SectionHead';
 import { TabScreen } from '../components/app/TabScreen';
 import { GameTile } from '../components/games/GameTile';
+import { ReadinessGauge } from '../components/readiness/ReadinessGauge';
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
 import { Icon, type IconName } from '../components/ui/Icon';
@@ -105,14 +106,7 @@ function ReadinessSummary() {
   return (
     <Card gap="x4" p="x4">
       <HStack align="center" gap="x4">
-        <VStack align="center" bg="palette.red100" borderRadius="r5" height="x16" justify="center" width="x16">
-          <Text color="fg.critical" textStyle="t10Bold" maxLines={1}>
-            {user.readiness.score}°
-          </Text>
-          <Text color="fg.neutralMuted" textStyle="t2Medium" maxLines={1}>
-            준비도
-          </Text>
-        </VStack>
+        <ReadinessGauge score={user.readiness.score} />
         <VStack flex={1} gap="x2">
           <HStack align="center" gap="x1_5">
             <Text color="fg.neutralMuted" textStyle="t3Medium" maxLines={1}>

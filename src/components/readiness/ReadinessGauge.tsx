@@ -1,35 +1,82 @@
-import { HStack, VStack } from '../../design-system/components/Stack';
+import { useEffect } from 'react';
+import { useIsFocused } from 'expo-router';
+
+import { Box } from '../../design-system/components/Box';
+import { Float } from '../../design-system/components/Float';
+import { VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
-import { readinessLabel, readinessTone } from '../../domain/readiness';
-import { Card } from '../ui/Card';
-import { ProgressBar } from './ProgressBar';
-import { ReadinessChip } from './ReadinessChip';
+import { resolveColor } from '../../design-system/components/style-props';
+import { useDesignSystemTheme } from '../../design-system/provider';
+import { readinessTempColors } from '../../domain/readiness';
+import { Canvas, Easing, Path, Skia, useSharedValue, withTiming } from '../../lib/native-motion';
 
 export type ReadinessGaugeProps = {
   score: number;
-  label?: string;
+  size?: number;
+  strokeWidth?: number;
 };
 
-export function ReadinessGauge({ score, label = readinessLabel(score) }: ReadinessGaugeProps) {
+function clampScore(score: number) {
+  return Math.max(0, Math.min(100, score));
+}
+
+export function ReadinessGauge({ score, size = 116, strokeWidth = 12 }: ReadinessGaugeProps) {
+  const { theme } = useDesignSystemTheme();
+  const isFocused = useIsFocused();
+  const colors = readinessTempColors(score);
+  const clamped = clampScore(score);
+  const trackColor = resolveColor(theme, colors.bg);
+  const progressColor = resolveColor(theme, colors.text);
+  const progress = useSharedValue(0);
+  const inset = strokeWidth / 2;
+  const path = Skia.Path.Make();
+
+  path.addArc(
+    { x: inset, y: inset, width: size - strokeWidth, height: size - strokeWidth },
+    -90,
+    359.99,
+  );
+
+  useEffect(() => {
+    if (!isFocused) return;
+
+    progress.set(withTiming(clamped / 100, {
+      duration: 600,
+      easing: Easing.out(Easing.cubic),
+    }));
+  }, [clamped, isFocused, progress]);
+
   return (
-    <VStack>
-      <Card>
-        <VStack gap="x4">
-          <HStack align="center" justify="spaceBetween">
-            <VStack gap="x1">
-              <Text color="fg.neutralMuted" textStyle="t3Medium">
-                면접 준비도
-              </Text>
-              <Text textStyle="t10Bold">{score}°</Text>
-            </VStack>
-            <ReadinessChip score={score} />
-          </HStack>
-          <ProgressBar value={score} tone={readinessTone(score)} />
-          <Text color="fg.neutralMuted" textStyle="t4Regular">
-            {label}
+    <Box
+      accessibilityLabel={`준비도 ${score}도`}
+      accessibilityRole="progressbar"
+      accessibilityValue={{ min: 0, max: 100, now: clamped }}
+      height={size}
+      position="relative"
+      width={size}
+    >
+      <Canvas style={{ width: size, height: size }}>
+        <Path path={path} style="stroke" strokeWidth={strokeWidth} color={trackColor} />
+        <Path
+          path={path}
+          style="stroke"
+          strokeWidth={strokeWidth}
+          strokeCap="round"
+          color={progressColor}
+          start={0}
+          end={progress}
+        />
+      </Canvas>
+      <Float placement="middle-center">
+        <VStack align="center" gap="x0_5">
+          <Text color={colors.text} textStyle="t10Bold" maxLines={1}>
+            {score}°
+          </Text>
+          <Text color="fg.neutralMuted" textStyle="t2Medium" maxLines={1}>
+            준비도
           </Text>
         </VStack>
-      </Card>
-    </VStack>
+      </Float>
+    </Box>
   );
 }
