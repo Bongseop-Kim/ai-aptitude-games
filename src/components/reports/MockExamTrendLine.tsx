@@ -36,19 +36,19 @@ function createTrendPoints(scores: number[], size: { width: number; height: numb
   });
 }
 
-function createTrendPath(points: Array<{ x: number; y: number }>) {
-  const path = Skia.Path.Make();
+function createTrendPath(points: { x: number; y: number }[]) {
+  const builder = Skia.PathBuilder.Make();
 
   points.forEach((point, index) => {
     if (index === 0) {
-      path.moveTo(point.x, point.y);
+      builder.moveTo(point.x, point.y);
       return;
     }
 
-    path.lineTo(point.x, point.y);
+    builder.lineTo(point.x, point.y);
   });
 
-  return path;
+  return builder.detach();
 }
 
 export function MockExamTrendLine({ scores }: MockExamTrendLineProps) {

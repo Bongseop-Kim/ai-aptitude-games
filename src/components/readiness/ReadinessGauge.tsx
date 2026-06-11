@@ -29,13 +29,13 @@ export function ReadinessGauge({ score, size = 116, strokeWidth = 12 }: Readines
   const progressColor = resolveColor(theme, colors.text);
   const progress = useSharedValue(0);
   const inset = strokeWidth / 2;
-  const path = Skia.Path.Make();
-
-  path.addArc(
-    { x: inset, y: inset, width: size - strokeWidth, height: size - strokeWidth },
-    -90,
-    359.99,
-  );
+  const path = Skia.PathBuilder.Make()
+    .addArc(
+      { x: inset, y: inset, width: size - strokeWidth, height: size - strokeWidth },
+      -90,
+      359.99,
+    )
+    .detach();
 
   useEffect(() => {
     if (!isFocused) return;
