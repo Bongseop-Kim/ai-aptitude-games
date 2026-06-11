@@ -22,7 +22,7 @@ export function useRoundPlay<TAnswer>(options: {
   const pickedRef = useRef<TAnswer | null>(null);
   const [correctCount, setCorrectCount] = useState(0);
   const responseTimesRef = useRef<number[]>([]);
-  const questionShownAtRef = useRef(0);
+  const questionShownAtRef = useRef<number | null>(null);
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -52,7 +52,9 @@ export function useRoundPlay<TAnswer>(options: {
   const choose = useCallback((value: TAnswer, isCorrect: boolean) => {
     if (pickedRef.current != null) return;
 
-    responseTimesRef.current.push(Date.now() - questionShownAtRef.current);
+    const answeredAt = Date.now();
+
+    responseTimesRef.current.push(answeredAt - (questionShownAtRef.current ?? answeredAt));
     const nextCorrectCount = correctCount + (isCorrect ? 1 : 0);
     pickedRef.current = value;
     setPicked(value);

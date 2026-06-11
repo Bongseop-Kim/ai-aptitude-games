@@ -14,7 +14,7 @@ module.exports = defineConfig([
         {
           patterns: [
             {
-              group: ['**/index', '**/index.ts', '**/index.tsx'],
+              group: ['**/index', '**/index.js', '**/index.jsx', '**/index.ts', '**/index.tsx'],
               message:
                 'Barrel files are not allowed. Import directly from the module that defines the symbol.',
             },

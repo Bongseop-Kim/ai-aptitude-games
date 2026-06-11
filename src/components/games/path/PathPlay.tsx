@@ -110,7 +110,7 @@ export function PathPlay({ game, onFinish, onClose }: GamePlayProps) {
   const [feedback, setFeedback] = useState<FeedbackState>(null);
   const [correctCount, setCorrectCount] = useState(0);
   const responseTimesRef = useRef<number[]>([]);
-  const questionShownAtRef = useRef(0);
+  const questionShownAtRef = useRef<number | null>(null);
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -150,7 +150,9 @@ export function PathPlay({ game, onFinish, onClose }: GamePlayProps) {
   function submit() {
     if (isSubmitted) return;
 
-    responseTimesRef.current.push(Date.now() - questionShownAtRef.current);
+    const answeredAt = Date.now();
+
+    responseTimesRef.current.push(answeredAt - (questionShownAtRef.current ?? answeredAt));
     const isCorrect = isPathSeparated(puzzle, fences);
     const nextCorrectCount = correctCount + (isCorrect ? 1 : 0);
 
