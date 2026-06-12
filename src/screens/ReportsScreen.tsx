@@ -14,9 +14,9 @@ import {
 } from '../components/reports/MockExamSummaryCard';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
+import { List } from '../components/ui/List';
 import { Tag } from '../components/ui/Tag';
 import { useMockExamRecords } from '../data/local/useMockExamResults';
-import { Box } from '../design-system/components/Box';
 import { HStack, VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
 import type { MockExamRecord } from '../domain/types';
@@ -104,7 +104,7 @@ export function ReportsScreen() {
         />
       )}
       data={listData}
-      ItemSeparatorComponent={RecordListSeparator}
+      ItemSeparatorComponent={List.Divider}
       keyExtractor={(item) => (item.kind === 'record' ? item.record.id : item.id)}
       ListEmptyComponent={emptyState ? <EmptyMockExamRecords {...emptyState} /> : null}
       renderItem={renderRecordItem}
@@ -167,10 +167,6 @@ function RecordListHeader({
       <Button label="새 모의고사 시작" iconLeft="Plus" fullWidth onPress={onStartMockExam} />
     </VStack>
   );
-}
-
-function RecordListSeparator() {
-  return <Box height="x2" />;
 }
 
 function EmptyMockExamRecords({ description, title }: RecordEmptyState) {

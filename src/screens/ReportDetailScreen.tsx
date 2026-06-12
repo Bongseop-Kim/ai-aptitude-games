@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import { Alert, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
@@ -16,6 +16,7 @@ import {
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Icon } from '../components/ui/Icon';
+import { List } from '../components/ui/List';
 import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/ui/Skeleton';
 import { ProgressBar } from '../components/readiness/ProgressBar';
@@ -336,9 +337,11 @@ function CoverSection({ record }: RecordSectionProps) {
 
       <SectionHead title="이 리포트에는" />
       <Card py="x1">
-        {coverFeatureSections.map((section, index) => (
-          <ReportFeatureRow key={section.key} index={index + 1} title={section.title} locked={section.locked} />
-        ))}
+        <List.Root>
+          {coverFeatureSections.map((section, index) => (
+            <ReportFeatureRow key={section.key} index={index + 1} title={section.title} locked={section.locked} />
+          ))}
+        </List.Root>
       </Card>
     </VStack>
   );
@@ -377,25 +380,25 @@ type ReportFeatureRowProps = {
 
 function ReportFeatureRow({ index, title, locked }: ReportFeatureRowProps) {
   return (
-    <HStack
-      align="center"
-      borderBottomWidth="thin"
-      borderColor="stroke.neutralSubtle"
-      gap="x3"
-      py="x2"
-    >
-      <Text color="fg.neutralSubtle" textStyle="t3Bold">
-        {index}
-      </Text>
-      <Box flex={1}>
-        <Text textStyle="t4Regular">
-          {title}
+    <List.Item>
+      <List.Prefix>
+        <Text color="fg.neutralSubtle" textStyle="t3Bold">
+          {index}
         </Text>
-      </Box>
-      {locked ? <Badge label="Pro" tone="brand" size="small" /> : (
-        <Text color="fg.neutralSubtle" textStyle="t2Regular">Free</Text>
-      )}
-    </HStack>
+      </List.Prefix>
+      <List.Content>
+        <List.Title>
+          {title}
+        </List.Title>
+      </List.Content>
+      <List.Suffix>
+        {locked ? (
+          <Badge label="Pro" tone="brand" size="small" />
+        ) : (
+          <Text color="fg.neutralSubtle" textStyle="t2Regular">Free</Text>
+        )}
+      </List.Suffix>
+    </List.Item>
   );
 }
 
@@ -452,47 +455,56 @@ function HighlightsSection() {
           <Icon name="TrendingUp" color="fg.positive" size="small" />
           <Text textStyle="t4Bold">강점 Top 3</Text>
         </HStack>
-        {reportStrengths.map((item, index) => (
-          <HighlightCard key={item.game} item={item} index={index} tone="positive" />
-        ))}
+        <List.Root>
+          {reportStrengths.map((item, index) => (
+            <Fragment key={item.game}>
+              {index > 0 ? <List.Divider /> : null}
+              <HighlightRow item={item} index={index} tone="positive" />
+            </Fragment>
+          ))}
+        </List.Root>
       </VStack>
       <VStack gap="x2">
         <HStack align="center" gap="x1_5">
           <Icon name="CircleDot" color="mannerTemp.l4Text" size="small" />
           <Text textStyle="t4Bold">보완 Top 3</Text>
         </HStack>
-        {reportGrowthAreas.map((item, index) => (
-          <HighlightCard key={item.game} item={item} index={index} tone="warning" />
-        ))}
+        <List.Root>
+          {reportGrowthAreas.map((item, index) => (
+            <Fragment key={item.game}>
+              {index > 0 ? <List.Divider /> : null}
+              <HighlightRow item={item} index={index} tone="warning" />
+            </Fragment>
+          ))}
+        </List.Root>
       </VStack>
     </VStack>
   );
 }
 
-type HighlightCardProps = {
+type HighlightRowProps = {
   item: ReportHighlight;
   index: number;
   tone: 'positive' | 'warning';
 };
 
-function HighlightCard({ item, index, tone }: HighlightCardProps) {
+function HighlightRow({ item, index, tone }: HighlightRowProps) {
   return (
-    <Card bg={tone === 'positive' ? 'palette.green100' : 'mannerTemp.l4Bg'} borderColor="stroke.neutralWeak" p="x3">
-      <HStack align="center" justify="spaceBetween" gap="x2">
-        <Text textStyle="t4Bold" maxLines={1}>
-          #{index + 1} {item.game}
-        </Text>
+    <List.Item>
+      <List.Prefix>
+        <Text color="fg.neutralSubtle" textStyle="t3Bold">{index + 1}</Text>
+      </List.Prefix>
+      <List.Content>
+        <List.Title>{item.game}</List.Title>
+        <List.Detail>{item.skill}</List.Detail>
+        <List.Detail>{item.note}</List.Detail>
+      </List.Content>
+      <List.Suffix>
         <Text color={tone === 'positive' ? 'fg.positive' : 'mannerTemp.l4Text'} textStyle="t5Bold">
           {item.score}
         </Text>
-      </HStack>
-      <Text color="fg.neutralSubtle" textStyle="t1Regular">
-        {item.skill}
-      </Text>
-      <Text color="fg.neutralMuted" textStyle="t2Regular">
-        {item.note}
-      </Text>
-    </Card>
+      </List.Suffix>
+    </List.Item>
   );
 }
 
@@ -641,30 +653,25 @@ function CoachSection() {
         </HStack>
       </Card>
       <SectionHead title="2주 훈련 플랜" />
-      <VStack gap="x2">
+      <List.Root>
         {coachPlan.map((item, index) => (
-          <HStack
-            key={item.day}
-            align="center"
-            bg="bg.layerFloating"
-            borderColor="stroke.neutralSubtle"
-            borderRadius="r3"
-            borderWidth="thin"
-            gap="x3"
-            px="x3"
-            py="x2"
-          >
-            <Badge label={item.day} tone={index === coachPlan.length - 1 ? 'positive' : 'brand'} size="small" />
-            <VStack flex={1}>
-              <Text textStyle="t3Bold">{item.game}</Text>
-              <Text color="fg.neutralSubtle" textStyle="t1Regular">{item.level}</Text>
-            </VStack>
-            <Text align="right" color="fg.neutralSubtle" textStyle="t1Regular">
-              {item.duration}
-            </Text>
-          </HStack>
+          <Fragment key={item.day}>
+            {index > 0 ? <List.Divider /> : null}
+            <List.Item>
+              <List.Prefix>
+                <Badge label={item.day} tone={index === coachPlan.length - 1 ? 'positive' : 'brand'} size="small" />
+              </List.Prefix>
+              <List.Content>
+                <List.Title>{item.game}</List.Title>
+                <List.Detail>{item.level}</List.Detail>
+              </List.Content>
+              <List.Suffix>
+                <Text color="fg.neutralMuted" textStyle="t3Medium" maxLines={1}>{item.duration}</Text>
+              </List.Suffix>
+            </List.Item>
+          </Fragment>
         ))}
-      </VStack>
+      </List.Root>
       <Card>
         <HStack align="center" gap="x3">
           <Icon name="Bell" color="fg.brand" />

@@ -1,13 +1,13 @@
-import { Pressable, type PressableProps } from 'react-native';
+import type { PressableProps } from 'react-native';
 
 import { Box } from '../../design-system/components/Box';
-import { HStack, VStack } from '../../design-system/components/Stack';
+import { HStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
 import { toneColors } from '../../domain/tone';
 import type { GameWithProgress } from '../../domain/types';
 import { ProgressBar } from '../readiness/ProgressBar';
-import { Card } from '../ui/Card';
 import { Icon } from '../ui/Icon';
+import { List } from '../ui/List';
 
 export type GameListRowProps = Omit<PressableProps, 'children'> & {
   game: GameWithProgress;
@@ -18,47 +18,38 @@ export function GameListRow({ game, accessibilityState, disabled, onPress, ...pr
   const isDisabled = Boolean(disabled);
 
   return (
-    <Pressable
+    <List.Item
       {...props}
-      accessibilityRole="button"
       accessibilityState={{ ...accessibilityState, disabled: isDisabled }}
       disabled={isDisabled}
       onPress={onPress}
     >
-      <Card p="x3">
-        <HStack align="center" gap="x3">
-          <Box
-            alignItems="center"
-            bg={colors.bg}
-            borderRadius="r3"
-            height="x11"
-            justifyContent="center"
-            width="x11"
-          >
-            <Icon name={game.icon} color={colors.fg} />
-          </Box>
-          <VStack flex={1} gap="x1_5">
-            <VStack gap="x0_5">
-              <HStack align="center" gap="x1_5">
-                <Text color="fg.neutral" textStyle="t4Bold" maxLines={1}>
-                  {game.name}
-                </Text>
-                {game.status === 'done' ? <Icon name="Check" color="fg.positive" size="small" /> : null}
-              </HStack>
-              <Text color="fg.neutralMuted" textStyle="t2Regular" maxLines={1}>
-                {game.skill} · {game.minutes}분
-              </Text>
-            </VStack>
-            <HStack align="center" gap="x2">
-              {game.score != null ? (
-                <ProgressBar value={game.score} tone={game.tone} layout="inline" />
-              ) : null}
-              <Text textStyle="t3Bold">{game.score ?? '—'}</Text>
-            </HStack>
-          </VStack>
-          <Icon name="ChevronRight" color="fg.neutralSubtle" size="small" />
+      <List.Prefix>
+        <Box
+          alignItems="center"
+          bg={colors.bg}
+          borderRadius="r3"
+          height="x11"
+          justifyContent="center"
+          width="x11"
+        >
+          <Icon name={game.icon} color={colors.fg} />
+        </Box>
+      </List.Prefix>
+      <List.Content>
+        <HStack align="center" gap="x1_5">
+          <List.Title>{game.name}</List.Title>
+          {game.status === 'done' ? <Icon name="Check" color="fg.positive" size="small" /> : null}
         </HStack>
-      </Card>
-    </Pressable>
+        <List.Detail>{`${game.skill} · ${game.minutes}분`}</List.Detail>
+        <HStack align="center" gap="x2" pt="x1">
+          {game.score != null ? <ProgressBar value={game.score} tone={game.tone} layout="inline" /> : null}
+          <Text textStyle="t3Bold">{game.score ?? '—'}</Text>
+        </HStack>
+      </List.Content>
+      <List.Suffix>
+        <Icon name="ChevronRight" size="small" />
+      </List.Suffix>
+    </List.Item>
   );
 }

@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 
@@ -10,6 +11,7 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Icon, type IconName } from '../components/ui/Icon';
 import { IconButton } from '../components/ui/IconButton';
+import { List } from '../components/ui/List';
 import { Tag } from '../components/ui/Tag';
 import { Box } from '../design-system/components/Box';
 import { HStack, VStack } from '../design-system/components/Stack';
@@ -46,11 +48,14 @@ export function InterviewScreen() {
           actionAccessibilityLabel="지난 면접 전체 보기"
           onActionPress={() => router.push('/reports')}
         />
-        <VStack gap="x2">
-          {interviewSessions.map((session) => (
-            <InterviewSessionCard key={`${session.company}-${session.date}`} session={session} />
+        <List.Root>
+          {interviewSessions.map((session, index) => (
+            <Fragment key={`${session.company}-${session.date}`}>
+              {index > 0 ? <List.Divider /> : null}
+              <InterviewSessionCard session={session} />
+            </Fragment>
           ))}
-        </VStack>
+        </List.Root>
       </VStack>
     </TabScreen>
   );
@@ -114,41 +119,34 @@ function StartInterviewCard() {
 
 function InterviewSessionCard({ session }: { session: InterviewSession }) {
   return (
-    <Pressable
+    <List.Item
       accessibilityLabel={`${session.company} ${session.role} 면접 기록`}
-      accessibilityRole="button"
       onPress={noop}
     >
-      <Card p="x3">
-        <HStack align="center" gap="x3">
-          <ReadinessGauge score={session.score} size={52} strokeWidth={5} />
-          <VStack flex={1} gap="x1">
-            <HStack align="center" gap="x1_5">
-              <Text textStyle="t4Bold" maxLines={1}>
-                {session.company}
-              </Text>
-              <Text color="fg.neutralSubtle" textStyle="t2Regular" maxLines={1}>
-                {session.role}
-              </Text>
-            </HStack>
-            <HStack align="center" gap="x2">
-              <Text color="fg.neutralSubtle" textStyle="t2Regular" maxLines={1}>
-                {session.date}
-              </Text>
-              <Text color="fg.neutralSubtle" textStyle="t2Regular" maxLines={1}>
-                질문 {session.questionCount}개
-              </Text>
-              {session.delta === null ? null : (
-                <Text color="fg.positive" textStyle="t2Bold" maxLines={1}>
-                  ▲ {session.delta}
-                </Text>
-              )}
-            </HStack>
-          </VStack>
-          <Icon name="ChevronRight" color="fg.neutralSubtle" size="small" />
+      <List.Prefix>
+        <ReadinessGauge score={session.score} size={52} strokeWidth={5} />
+      </List.Prefix>
+      <List.Content>
+        <HStack align="center" gap="x1_5">
+          <List.Title>{session.company}</List.Title>
+          <Text color="fg.neutralMuted" textStyle="t3Regular" maxLines={1}>
+            {session.role}
+          </Text>
         </HStack>
-      </Card>
-    </Pressable>
+        <HStack align="center" gap="x2">
+          <List.Detail>{session.date}</List.Detail>
+          <List.Detail>{`질문 ${session.questionCount}개`}</List.Detail>
+          {session.delta === null ? null : (
+            <Text color="fg.positive" textStyle="t3Regular" maxLines={1}>
+              ▲ {session.delta}
+            </Text>
+          )}
+        </HStack>
+      </List.Content>
+      <List.Suffix>
+        <Icon name="ChevronRight" size="small" />
+      </List.Suffix>
+    </List.Item>
   );
 }
 
