@@ -12,6 +12,7 @@ import {
   NUMBERS_MEMORIZE_MS_PER_DIGIT,
   NUMBERS_TOTAL_ROUNDS,
   createNumbersQuestion,
+  numbersSequenceLength,
   numbersTargetSequence,
 } from '../../../domain/games/numbers';
 import { averageResponseMs, computeGameScore } from '../../../domain/games/results';
@@ -86,12 +87,14 @@ export function NumbersPlay({ game, onFinish, onClose }: GamePlayProps) {
   const { round, picked, headerScore, choose, markQuestionShown } = useRoundPlay<number[]>({
     totalRounds: NUMBERS_TOTAL_ROUNDS,
     feedbackMs: NUMBERS_FEEDBACK_MS,
-    onComplete: ({ correctCount, responseTimes }) => {
+    getLevelParams: (_answer, currentRound) => ({ digits: numbersSequenceLength(currentRound) }),
+    onComplete: ({ correctCount, responseTimes, rounds }) => {
       onFinish({
         gameId: game.id,
         score: computeGameScore(correctCount, NUMBERS_TOTAL_ROUNDS),
         accuracy: correctCount / NUMBERS_TOTAL_ROUNDS,
         avgResponseMs: averageResponseMs(responseTimes),
+        rounds,
       });
     },
   });
@@ -121,7 +124,7 @@ export function NumbersPlay({ game, onFinish, onClose }: GamePlayProps) {
   const isRecall = phase === 'recall';
   const isFeedback = phase === 'feedback';
   const isInputComplete = input.length === target.length;
-  const isInputCorrect = input.every((digit, index) => digit === target[index]);
+  const isInputCorrect = isInputComplete && input.every((digit, index) => digit === target[index]);
   const inputFeedbackColor = isInputCorrect ? toneColors.positive.fg : toneColors.critical.fg;
 
   function addDigit(digit: number) {

@@ -14,7 +14,12 @@ import {
   type PathCellType,
   type PathPuzzle,
 } from '../../../domain/games/path';
-import { averageResponseMs, computeGameScore, roundScore } from '../../../domain/games/results';
+import {
+  averageResponseMs,
+  computeGameScore,
+  roundScore,
+  type GameRoundResult,
+} from '../../../domain/games/results';
 import { toneColors } from '../../../domain/tone';
 import type { ColorToken } from '../../../design-system/components/style-props';
 import { Button } from '../../ui/Button';
@@ -110,6 +115,7 @@ export function PathPlay({ game, onFinish, onClose }: GamePlayProps) {
   const [feedback, setFeedback] = useState<FeedbackState>(null);
   const [correctCount, setCorrectCount] = useState(0);
   const responseTimesRef = useRef<number[]>([]);
+  const roundsRef = useRef<GameRoundResult[]>([]);
   const questionShownAtRef = useRef<number | null>(null);
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -152,8 +158,16 @@ export function PathPlay({ game, onFinish, onClose }: GamePlayProps) {
 
     const answeredAt = Date.now();
 
-    responseTimesRef.current.push(answeredAt - (questionShownAtRef.current ?? answeredAt));
+    const responseMs = answeredAt - (questionShownAtRef.current ?? answeredAt);
+
+    responseTimesRef.current.push(responseMs);
     const isCorrect = isPathSeparated(puzzle, fences);
+    roundsRef.current.push({
+      roundIndex: round,
+      correct: isCorrect,
+      responseMs,
+      levelParams: null,
+    });
     const nextCorrectCount = correctCount + (isCorrect ? 1 : 0);
 
     setFeedback(isCorrect ? 'correct' : 'wrong');
@@ -166,6 +180,7 @@ export function PathPlay({ game, onFinish, onClose }: GamePlayProps) {
           score: computeGameScore(nextCorrectCount, PATH_TOTAL_ROUNDS),
           accuracy: nextCorrectCount / PATH_TOTAL_ROUNDS,
           avgResponseMs: averageResponseMs(responseTimesRef.current),
+          rounds: [...roundsRef.current],
         });
         return;
       }

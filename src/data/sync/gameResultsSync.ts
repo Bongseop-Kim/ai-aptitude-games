@@ -10,6 +10,7 @@ type UnsyncedGameResultRow = {
   accuracy: number;
   avg_response_ms: number;
   created_at: string;
+  mock_exam_id: string | null;
 };
 
 let pushInFlight = false;
@@ -34,7 +35,7 @@ export async function pushUnsyncedGameResults(db: SQLiteDatabase, userId: string
 
   try {
     const rows = await db.getAllAsync<UnsyncedGameResultRow>(
-      'SELECT id, user_id, game_id, score, accuracy, avg_response_ms, created_at FROM game_results WHERE synced = 0 AND user_id = ?',
+      'SELECT id, user_id, game_id, score, accuracy, avg_response_ms, created_at, mock_exam_id FROM game_results WHERE synced = 0 AND user_id = ?',
       userId,
     );
     if (rows.length === 0) {
@@ -49,6 +50,7 @@ export async function pushUnsyncedGameResults(db: SQLiteDatabase, userId: string
       accuracy: row.accuracy,
       avg_response_ms: row.avg_response_ms,
       created_at: toIsoUtc(row.created_at),
+      mock_exam_id: row.mock_exam_id,
     }));
 
     const { error } = await supabase

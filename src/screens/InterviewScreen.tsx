@@ -1,4 +1,3 @@
-import { Fragment } from 'react';
 import { useRouter } from 'expo-router';
 
 import { Header } from '../components/app/Header';
@@ -11,15 +10,18 @@ import { Card } from '../components/ui/Card';
 import { Icon, type IconName } from '../components/ui/Icon';
 import { IconButton } from '../components/ui/IconButton';
 import { List } from '../components/ui/List';
+import { Skeleton } from '../components/ui/Skeleton';
 import { Tag } from '../components/ui/Tag';
+import { useInterviewSessions } from '../data/local/useInterviewSessions';
 import { Box } from '../design-system/components/Box';
 import { HStack, VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
-import { interviewSessions, ncsJob } from '../data/interview';
-import type { InterviewSession } from '../data/interview';
+import { ncsJob } from '../data/interview';
+import type { InterviewSessionRecord } from '../domain/types';
 
 export function InterviewScreen() {
   const router = useRouter();
+  const { data: sessions = [], isLoading } = useInterviewSessions();
 
   return (
     <TabScreen
@@ -36,22 +38,38 @@ export function InterviewScreen() {
     >
       <NcsJobCard />
       <StartInterviewCard />
-      <Button label="이력서로 시작하기" variant="solid" tone="brand" iconLeft="Zap" fullWidth disabled />
+      <Button
+        label="이력서로 시작하기"
+        variant="solid"
+        tone="brand"
+        iconLeft="Zap"
+        fullWidth
+        onPress={() => router.push('/interview/new' as never)}
+      />
       <VStack gap="x2">
         <SectionHead
           title="지난 면접"
           actionLabel="전체"
           actionAccessibilityLabel="지난 면접 전체 보기"
-          onActionPress={() => router.push('/reports')}
+          onActionPress={() => router.push('/reports' as never)}
         />
-        <List.Root>
-          {interviewSessions.map((session, index) => (
-            <Fragment key={`${session.company}-${session.date}`}>
-              {index > 0 ? <List.Divider /> : null}
-              <InterviewSessionCard session={session} />
-            </Fragment>
-          ))}
-        </List.Root>
+        <Box minHeight="x39">
+          {isLoading ? <InterviewSessionSkeletonList /> : null}
+          {!isLoading && sessions.length === 0 ? <EmptyInterviewSessions /> : null}
+          {!isLoading && sessions.length > 0 ? (
+            <List.Root>
+              {sessions.map((session, index) => (
+                <Box key={session.id}>
+                  {index > 0 ? <List.Divider /> : null}
+                  <InterviewSessionCard
+                    session={session}
+                    onPress={() => router.push({ pathname: '/interview/[id]', params: { id: session.id } } as never)}
+                  />
+                </Box>
+              ))}
+            </List.Root>
+          ) : null}
+        </Box>
       </VStack>
     </TabScreen>
   );
@@ -111,9 +129,9 @@ function StartInterviewCard() {
   );
 }
 
-function InterviewSessionCard({ session }: { session: InterviewSession }) {
+function InterviewSessionCard({ session, onPress }: { session: InterviewSessionRecord; onPress: () => void }) {
   return (
-    <List.Item accessibilityLabel={`${session.company} ${session.role} 면접 기록`}>
+    <List.Item accessibilityLabel={`${session.company} ${session.role} 면접 기록`} onPress={onPress}>
       <List.Prefix>
         <ReadinessGauge score={session.score} size={52} strokeWidth={5} />
       </List.Prefix>
@@ -125,16 +143,51 @@ function InterviewSessionCard({ session }: { session: InterviewSession }) {
           </Text>
         </HStack>
         <HStack align="center" gap="x2">
-          <List.Detail>{session.date}</List.Detail>
+          <List.Detail>{session.dateLabel}</List.Detail>
           <List.Detail>{`질문 ${session.questionCount}개`}</List.Detail>
           {session.delta === null ? null : (
-            <Text color="fg.positive" textStyle="t3Regular" maxLines={1}>
-              ▲ {session.delta}
+            <Text color={session.delta >= 0 ? 'fg.positive' : 'fg.warning'} textStyle="t3Regular" maxLines={1}>
+              {session.delta >= 0 ? '▲' : '▼'} {Math.abs(session.delta)}
             </Text>
           )}
         </HStack>
       </List.Content>
     </List.Item>
+  );
+}
+
+function InterviewSessionSkeletonList() {
+  return (
+    <VStack>
+      <InterviewSessionRowSkeleton />
+      <List.Divider />
+      <InterviewSessionRowSkeleton />
+    </VStack>
+  );
+}
+
+function InterviewSessionRowSkeleton() {
+  return (
+    <HStack align="center" gap="x3" py="x3">
+      <Skeleton borderRadius="full" height="x13" width="x13" />
+      <VStack flex={1} gap="x2">
+        <Skeleton height="x4" width="x16" />
+        <Skeleton height="x3" width="full" />
+      </VStack>
+    </HStack>
+  );
+}
+
+function EmptyInterviewSessions() {
+  return (
+    <Card minHeight={132}>
+      <VStack align="center" flex={1} gap="x2" justify="center">
+        <Icon name="Video" color="fg.neutralSubtle" />
+        <Text align="center" color="fg.neutralMuted" textStyle="t4Regular">
+          아직 면접 기록이 없어요
+        </Text>
+      </VStack>
+    </Card>
   );
 }
 

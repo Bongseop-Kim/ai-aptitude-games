@@ -38,6 +38,7 @@ const RESPONSE_PATTERN_POINTS = [
 ] as const;
 
 function clamp(value: number, min = 0, max = 100) {
+  'worklet';
   return Math.max(min, Math.min(max, value));
 }
 

@@ -6,7 +6,7 @@ import { Grid } from '../../../design-system/components/Grid';
 import { HStack, VStack } from '../../../design-system/components/Stack';
 import { Text } from '../../../design-system/components/Text';
 import type { GamePlayProps } from '../../../domain/games/play';
-import { averageResponseMs } from '../../../domain/games/results';
+import { averageResponseMs, type GameRoundResult } from '../../../domain/games/results';
 import {
   ROTATE_CLICK_LIMIT,
   ROTATE_FEEDBACK_MS,
@@ -127,6 +127,7 @@ export function RotatePlay({ game, onFinish, onClose }: GamePlayProps) {
   const [correctCount, setCorrectCount] = useState(0);
   const [roundScores, setRoundScores] = useState<number[]>([]);
   const responseTimesRef = useRef<number[]>([]);
+  const roundsRef = useRef<GameRoundResult[]>([]);
   const questionShownAtRef = useRef<number | null>(null);
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -164,8 +165,16 @@ export function RotatePlay({ game, onFinish, onClose }: GamePlayProps) {
 
     const answeredAt = Date.now();
 
-    responseTimesRef.current.push(answeredAt - (questionShownAtRef.current ?? answeredAt));
+    const responseMs = answeredAt - (questionShownAtRef.current ?? answeredAt);
+
+    responseTimesRef.current.push(responseMs);
     const isCorrect = statesMatch(currentState, target);
+    roundsRef.current.push({
+      roundIndex: round,
+      correct: isCorrect,
+      responseMs,
+      levelParams: null,
+    });
     const nextCorrectCount = correctCount + (isCorrect ? 1 : 0);
     const nextRoundScores = [...roundScores, rotateRoundScore(isCorrect, sequence.length, minClicks)];
 
@@ -180,6 +189,7 @@ export function RotatePlay({ game, onFinish, onClose }: GamePlayProps) {
           score: computeRotateScore(nextRoundScores),
           accuracy: nextCorrectCount / ROTATE_TOTAL_ROUNDS,
           avgResponseMs: averageResponseMs(responseTimesRef.current),
+          rounds: [...roundsRef.current],
         });
         return;
       }

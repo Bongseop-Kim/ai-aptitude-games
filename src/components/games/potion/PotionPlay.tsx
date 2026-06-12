@@ -34,12 +34,13 @@ export function PotionPlay({ game, onFinish, onClose }: GamePlayProps) {
     onAdvanceRound: () => {
       setQuestion(createPotionQuestion(session));
     },
-    onComplete: ({ correctCount, responseTimes }) => {
+    onComplete: ({ correctCount, responseTimes, rounds }) => {
       onFinish({
         gameId: game.id,
         score: computeGameScore(correctCount, POTION_TOTAL_ROUNDS),
         accuracy: correctCount / POTION_TOTAL_ROUNDS,
         avgResponseMs: averageResponseMs(responseTimes),
+        rounds,
       });
     },
   });

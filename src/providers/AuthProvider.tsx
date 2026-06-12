@@ -2,7 +2,7 @@ import type { Session } from '@supabase/supabase-js';
 import * as Linking from 'expo-linking';
 import {
   createContext,
-  useContext,
+  use,
   useEffect,
   useMemo,
   useState,
@@ -68,11 +68,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
     [session, isLoading],
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext value={value}>{children}</AuthContext>;
 }
 
 export function useAuth() {
-  const ctx = useContext(AuthContext);
+  const ctx = use(AuthContext);
   if (!ctx) {
     throw new Error('useAuth must be used within an AuthProvider.');
   }

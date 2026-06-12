@@ -10,6 +10,7 @@ import { Icon } from '../components/ui/Icon';
 import { List } from '../components/ui/List';
 import { Tag } from '../components/ui/Tag';
 import { useGamesWithProgress } from '../data/local/useGameResults';
+import { useActiveMockExamSession } from '../data/local/useMockExamSession';
 import { HStack, VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
 import type { GameWithProgress } from '../domain/types';
@@ -55,7 +56,7 @@ export function GamesScreen() {
             {index > 0 ? <List.Divider /> : null}
             <GameListRow
               game={game}
-              onPress={() => router.push({ pathname: '/games/[id]', params: { id: game.id } })}
+              onPress={() => router.push({ pathname: '/games/[id]', params: { id: game.id } } as never)}
             />
           </Fragment>
         ))}
@@ -65,17 +66,25 @@ export function GamesScreen() {
 }
 
 function MockExamBanner() {
+  const router = useRouter();
+  const { data: session } = useActiveMockExamSession();
+  const completedCount = session?.items.length ?? 0;
+
   return (
-    <Pressable accessibilityLabel="모의고사 시작" accessibilityRole="button">
+    <Pressable
+      accessibilityLabel={session ? '모의고사 이어하기' : '모의고사 시작'}
+      accessibilityRole="button"
+      onPress={() => router.push({ pathname: '/mock-exam' } as never)}
+    >
       <Card bg="bg.neutralSolid" borderColor="stroke.neutralContrast" borderRadius="r5" p="x4">
         <HStack align="center" gap="x3">
           <Icon name="Trophy" color="fg.brand" size="large" />
           <VStack flex={1} gap="x0_5">
             <Text color="fg.neutralInverted" textStyle="t4Bold" maxLines={1}>
-              모의고사 한 번에 9게임
+              {session ? `모의고사 이어하기 · ${completedCount}/10 완료` : '모의고사 한 번에 9게임 + AI 면접'}
             </Text>
             <Text color="fg.neutralSubtle" textStyle="t2Regular" maxLines={1}>
-              완주하면 종합 리포트가 열려요 · 22분
+              {session ? '완료한 항목은 다시 응시할 수 없어요' : '완주하면 종합 리포트가 열려요'}
             </Text>
           </VStack>
           <Icon name="ChevronRight" color="fg.neutralInverted" />

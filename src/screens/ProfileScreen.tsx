@@ -223,7 +223,7 @@ function DevSeedSection() {
   const seedDevData = useSeedDevData();
   const clearDevData = useClearDevData();
   const [feedback, setFeedback] = useState<
-    | { type: 'seed'; gameResults: number; mockExams: number }
+    | { type: 'seed'; gameResults: number; mockExams: number; interviews: number }
     | { type: 'clear' }
     | null
   >(null);
@@ -267,7 +267,7 @@ function DevSeedSection() {
         {feedback ? (
           <Text color="fg.neutralSubtle" textStyle="t2Regular">
             {feedback.type === 'seed'
-              ? `게임 결과 ${feedback.gameResults}개 · 모의고사 ${feedback.mockExams}회차 추가됨.`
+              ? `게임 결과 ${feedback.gameResults}개 · 모의고사 ${feedback.mockExams}회차 · 면접 ${feedback.interviews}회 추가됨.`
               : '로컬 데이터를 모두 삭제했어요.'}
           </Text>
         ) : null}

@@ -116,12 +116,13 @@ export function ComparePlay({ game, onFinish, onClose }: GamePlayProps) {
     onAdvanceRound: () => {
       setQuestion(createCompareQuestion());
     },
-    onComplete: ({ correctCount, responseTimes }) => {
+    onComplete: ({ correctCount, responseTimes, rounds }) => {
       onFinish({
         gameId: game.id,
         score: computeGameScore(correctCount, COMPARE_TOTAL_ROUNDS),
         accuracy: correctCount / COMPARE_TOTAL_ROUNDS,
         avgResponseMs: averageResponseMs(responseTimes),
+        rounds,
       });
     },
   });

@@ -14,7 +14,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.bongsub.aiaptitudegames",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "모의 면접 영상 답변을 위해 카메라 접근이 필요해요."
       },
       "appleTeamId": "Z995BAAVG5"
     },
@@ -38,7 +39,14 @@
       "expo-secure-store",
       "expo-web-browser",
       "expo-router",
-      "expo-splash-screen"
+      "expo-splash-screen",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "모의 면접 영상 답변을 위해 카메라 접근이 필요해요.",
+          "recordAudioAndroid": false
+        }
+      ]
     ]
   }
 }

@@ -17,6 +17,7 @@ import { Card } from '../components/ui/Card';
 import { List } from '../components/ui/List';
 import { Tag } from '../components/ui/Tag';
 import { useMockExamRecords } from '../data/local/useMockExamResults';
+import { useActiveMockExamSession } from '../data/local/useMockExamSession';
 import { HStack, VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
 import type { MockExamRecord } from '../domain/types';
@@ -41,6 +42,7 @@ export function ReportsScreen() {
   const router = useRouter();
   const [filter, setFilter] = useState<RecordFilter>('all');
   const { data, isLoading } = useMockExamRecords();
+  const { data: activeSession } = useActiveMockExamSession();
   const mockExamRecords = data ?? [];
   const latestRound = mockExamRecords[0]?.round;
   const records = filter === 'pro' ? mockExamRecords.filter((record) => record.pro) : mockExamRecords;
@@ -77,7 +79,8 @@ export function ReportsScreen() {
       ))}
     </HStack>
   );
-  const startMockExam = () => router.push({ pathname: '/games/[id]', params: { id: 'rps', mock: 'true', idx: '0' } });
+  const startMockExam = () => router.push({ pathname: '/mock-exam' } as never);
+  const mockExamActionLabel = activeSession ? '모의고사 이어하기' : '새 모의고사 시작';
   const renderRecordItem = ({ item }: ListRenderItemInfo<RecordListItem>) => {
     if (item.kind === 'skeleton') {
       return <MockExamRecordRowSkeleton />;
@@ -101,6 +104,7 @@ export function ReportsScreen() {
           onStartMockExam={startMockExam}
           records={mockExamRecords}
           recordFilterRow={recordFilterRow}
+          startMockExamLabel={mockExamActionLabel}
         />
       )}
       data={listData}
@@ -135,6 +139,7 @@ type RecordListHeaderProps = {
   onStartMockExam: () => void;
   records: MockExamRecord[];
   recordFilterRow: ReactNode;
+  startMockExamLabel: string;
 };
 
 function RecordListHeader({
@@ -143,20 +148,21 @@ function RecordListHeader({
   onStartMockExam,
   records,
   recordFilterRow,
+  startMockExamLabel,
 }: RecordListHeaderProps) {
   if (isLoading) {
     return (
       <VStack gap="spacingY.componentDefault">
         <MockExamSummaryCardSkeleton />
         {recordFilterRow}
-        <Button label="새 모의고사 시작" iconLeft="Plus" fullWidth onPress={onStartMockExam} />
+        <Button label={startMockExamLabel} iconLeft="Plus" fullWidth onPress={onStartMockExam} />
       </VStack>
     );
   }
 
   if (!hasRecords) {
     return (
-      <Button label="새 모의고사 시작" iconLeft="Plus" fullWidth onPress={onStartMockExam} />
+      <Button label={startMockExamLabel} iconLeft="Plus" fullWidth onPress={onStartMockExam} />
     );
   }
 
@@ -164,7 +170,7 @@ function RecordListHeader({
     <VStack gap="spacingY.componentDefault">
       <MockExamSummaryCard records={records} />
       {recordFilterRow}
-      <Button label="새 모의고사 시작" iconLeft="Plus" fullWidth onPress={onStartMockExam} />
+      <Button label={startMockExamLabel} iconLeft="Plus" fullWidth onPress={onStartMockExam} />
     </VStack>
   );
 }

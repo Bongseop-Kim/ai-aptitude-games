@@ -45,8 +45,10 @@ export type ReadinessLevel = 'seed' | 'sprout' | 'steady' | 'strong';
 
 export type ReportSectionKey =
   | 'cover'
+  | 'games'
   | 'radar'
   | 'highlights'
+  | 'interview'
   | 'resilience'
   | 'pattern'
   | 'peer'
@@ -70,6 +72,21 @@ export type MockExamRecord = {
   duration: string;
   durationMs: number;
   pro: boolean;
+};
+
+export type InterviewSessionRecord = {
+  id: string;
+  round: number;
+  createdAt: string;
+  dateLabel: string;
+  company: string;
+  role: string;
+  score: number;
+  delta: number | null;
+  questionCount: number;
+  duration: string;
+  durationMs: number;
+  mockExamId: string | null;
 };
 
 export type SubscriptionPlan = {

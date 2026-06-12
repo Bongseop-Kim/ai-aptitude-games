@@ -6,13 +6,20 @@ import type { GameResultInput } from '../../domain/games/results';
 import type { GameId, GameWithProgress } from '../../domain/types';
 import { useAuth } from '../../providers/AuthProvider';
 import { pushUnsyncedGameResults } from '../sync/gameResultsSync';
-import { getBestScoreForGame, getBestScores, insertGameResult } from './gameResults';
+import {
+  getBestScoreForGame,
+  getBestScores,
+  getGameResultsForMockExam,
+  insertGameResult,
+} from './gameResults';
 
 export const gameResultKeys = {
   all: ['game-results'] as const,
   best: (userId: string | null) => ['game-results', userId, 'best'] as const,
   bestFor: (userId: string | null, gameId: GameId) =>
     ['game-results', userId, 'best', gameId] as const,
+  mockExam: (userId: string | null, mockExamId: string | null) =>
+    ['game-results', userId, 'mock-exam', mockExamId] as const,
 };
 
 export function useBestScores() {
@@ -60,6 +67,22 @@ export function useGamesWithProgress(): GameWithProgress[] {
   });
 }
 
+export function useGameResultsForMockExam(mockExamId: string | null) {
+  const db = useSQLiteContext();
+  const { userId } = useAuth();
+
+  return useQuery({
+    queryKey: gameResultKeys.mockExam(userId, mockExamId),
+    queryFn: () => {
+      if (!userId || !mockExamId) {
+        throw new Error('Cannot load game results without an authenticated user and mock exam.');
+      }
+      return getGameResultsForMockExam(db, userId, mockExamId);
+    },
+    enabled: userId != null && mockExamId != null,
+  });
+}
+
 export function useSaveGameResult() {
   const db = useSQLiteContext();
   const queryClient = useQueryClient();
@@ -70,7 +93,9 @@ export function useSaveGameResult() {
       if (!userId) {
         throw new Error('Cannot save a game result without an authenticated user.');
       }
-      return insertGameResult(db, userId, input);
+      return db.withTransactionAsync(async () => {
+        await insertGameResult(db, userId, input);
+      });
     },
     retry: 2,
     onSuccess: () => {
