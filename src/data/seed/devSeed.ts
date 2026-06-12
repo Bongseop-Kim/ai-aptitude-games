@@ -3,11 +3,14 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import { clamp } from '../../domain/games/random';
 import { games } from '../games';
 import { insertGameResult } from '../local/gameResults';
+import { insertInterviewSession } from '../local/interviewSessions';
 import { getMockExamResultCount, insertMockExamResult } from '../local/mockExamResults';
+import { mockJobPosting } from '../interviewFlow';
 
 export type DevSeedSummary = {
   gameResults: number;
   mockExams: number;
+  interviews: number;
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -45,9 +48,15 @@ function weeklyMockExamDate(roundIndex: number) {
   return new Date(Date.now() - weeksAgo * 7 * DAY_MS - jitterMs);
 }
 
+function recentInterviewDate(sessionIndex: number) {
+  const daysAgo = [18, 9, 2][sessionIndex] ?? 1;
+  const jitterMs = randomInt(0, 8) * 60 * 60 * 1000;
+  return new Date(Date.now() - daysAgo * DAY_MS - jitterMs);
+}
+
 export async function seedDevData(db: SQLiteDatabase, userId: string): Promise<DevSeedSummary> {
   if (!__DEV__) {
-    return { gameResults: 0, mockExams: 0 };
+    return { gameResults: 0, mockExams: 0, interviews: 0 };
   }
 
   let gameResults = 0;
@@ -69,6 +78,37 @@ export async function seedDevData(db: SQLiteDatabase, userId: string): Promise<D
     }
   }
 
+  const interviewSessions = [
+    {
+      company: mockJobPosting.company,
+      role: mockJobPosting.role,
+      score: randomInt(60, 68),
+      questionCount: 8,
+      durationMs: randomInt(6, 8) * MINUTE_MS + randomInt(0, 45) * 1000,
+    },
+    {
+      company: '오월컴퍼니',
+      role: '프론트엔드 엔지니어',
+      score: randomInt(69, 77),
+      questionCount: 6,
+      durationMs: randomInt(5, 7) * MINUTE_MS + randomInt(0, 45) * 1000,
+    },
+    {
+      company: '오월컴퍼니',
+      role: '프론트엔드 엔지니어 (Web)',
+      score: randomInt(78, 85),
+      questionCount: 8,
+      durationMs: randomInt(7, 10) * MINUTE_MS + randomInt(0, 45) * 1000,
+    },
+  ];
+
+  for (const [index, session] of interviewSessions.entries()) {
+    await insertInterviewSession(db, userId, session, {
+      createdAt: formatSqliteUtc(recentInterviewDate(index)),
+    });
+  }
+  const interviews = interviewSessions.length;
+
   const existingMockExamCount = await getMockExamResultCount(db, userId);
   if (existingMockExamCount > 0) {
     await insertMockExamResult(
@@ -81,7 +121,7 @@ export async function seedDevData(db: SQLiteDatabase, userId: string): Promise<D
       },
       { createdAt: formatSqliteUtc(new Date()) },
     );
-    return { gameResults, mockExams: 1 };
+    return { gameResults, mockExams: 1, interviews };
   }
 
   let score = randomInt(58, 65);
@@ -102,7 +142,7 @@ export async function seedDevData(db: SQLiteDatabase, userId: string): Promise<D
     );
   }
 
-  return { gameResults, mockExams: 6 };
+  return { gameResults, mockExams: 6, interviews };
 }
 
 export async function clearAllLocalData(db: SQLiteDatabase) {
@@ -114,6 +154,7 @@ export async function clearAllLocalData(db: SQLiteDatabase) {
   // server because client deletes are intentionally unsupported by append-only RLS.
   await db.withTransactionAsync(async () => {
     await db.runAsync('DELETE FROM game_results');
+    await db.runAsync('DELETE FROM interview_sessions');
     await db.runAsync('DELETE FROM mock_exam_results');
   });
 }

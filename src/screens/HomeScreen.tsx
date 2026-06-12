@@ -15,7 +15,9 @@ import { Grid } from '../design-system/components/Grid';
 import { HStack, VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
 import { games } from '../data/games';
-import { ncsJob, recentMock } from '../data/interview';
+import { ncsJob } from '../data/interview';
+import { mockJobPosting } from '../data/interviewFlow';
+import { getOverallInterviewScore } from '../data/interviewSession';
 import { useGamesWithProgress } from '../data/local/useGameResults';
 import { user } from '../data/user';
 import { toneColors } from '../domain/tone';
@@ -106,6 +108,7 @@ function Greeting() {
 
 function ReadinessSummary() {
   const router = useRouter();
+  const recentInterviewScore = getOverallInterviewScore();
 
   return (
     <Card gap="x4" p="x4">
@@ -122,8 +125,8 @@ function ReadinessSummary() {
             <Tag label={`${ncsJob.name} · NCS 기반`} tone="brand" selected />
           </HStack>
           <Text color="fg.neutralMuted" textStyle="t3Regular">
-            최근 모의 면접 <Text color="fg.neutral" textStyle="t3Bold">{recentMock.score}점</Text> · {recentMock.company}{' '}
-            {recentMock.role}
+            최근 모의 면접 <Text color="fg.neutral" textStyle="t3Bold">{recentInterviewScore}점</Text> · {mockJobPosting.company}{' '}
+            {mockJobPosting.role}
           </Text>
         </VStack>
       </HStack>

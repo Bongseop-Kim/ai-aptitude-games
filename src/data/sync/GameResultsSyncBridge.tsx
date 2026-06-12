@@ -4,6 +4,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 
 import { useAuth } from '../../providers/AuthProvider';
 import { pushUnsyncedGameResults } from './gameResultsSync';
+import { pushUnsyncedInterviewSessions } from './interviewSessionsSync';
 import { pushUnsyncedMockExamResults } from './mockExamResultsSync';
 
 /**
@@ -23,11 +24,13 @@ export function GameResultsSyncBridge() {
 
     void pushUnsyncedGameResults(db, userId);
     void pushUnsyncedMockExamResults(db, userId);
+    void pushUnsyncedInterviewSessions(db, userId);
 
     const subscription = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
         void pushUnsyncedGameResults(db, userId);
         void pushUnsyncedMockExamResults(db, userId);
+        void pushUnsyncedInterviewSessions(db, userId);
       }
     });
     return () => subscription.remove();

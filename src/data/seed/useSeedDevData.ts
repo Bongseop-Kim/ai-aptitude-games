@@ -2,8 +2,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSQLiteContext } from 'expo-sqlite';
 
 import { gameResultKeys } from '../local/useGameResults';
+import { interviewSessionKeys } from '../local/useInterviewSessions';
 import { mockExamKeys } from '../local/useMockExamResults';
 import { pushUnsyncedGameResults } from '../sync/gameResultsSync';
+import { pushUnsyncedInterviewSessions } from '../sync/interviewSessionsSync';
 import { pushUnsyncedMockExamResults } from '../sync/mockExamResultsSync';
 import { useAuth } from '../../providers/AuthProvider';
 import { clearAllLocalData, seedDevData } from './devSeed';
@@ -22,9 +24,11 @@ export function useSeedDevData() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: gameResultKeys.all });
+      void queryClient.invalidateQueries({ queryKey: interviewSessionKeys.all });
       void queryClient.invalidateQueries({ queryKey: mockExamKeys.all });
       if (userId) {
         void pushUnsyncedGameResults(db, userId);
+        void pushUnsyncedInterviewSessions(db, userId);
         void pushUnsyncedMockExamResults(db, userId);
       }
     },
@@ -44,6 +48,7 @@ export function useClearDevData() {
     mutationFn: () => clearAllLocalData(db),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: gameResultKeys.all });
+      void queryClient.invalidateQueries({ queryKey: interviewSessionKeys.all });
       void queryClient.invalidateQueries({ queryKey: mockExamKeys.all });
     },
     onError: (error) => {

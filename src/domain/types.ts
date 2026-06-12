@@ -72,6 +72,20 @@ export type MockExamRecord = {
   pro: boolean;
 };
 
+export type InterviewSessionRecord = {
+  id: string;
+  round: number;
+  createdAt: string;
+  dateLabel: string;
+  company: string;
+  role: string;
+  score: number;
+  delta: number | null;
+  questionCount: number;
+  duration: string;
+  durationMs: number;
+};
+
 export type SubscriptionPlan = {
   id: 'free' | 'pro-monthly' | 'pro-yearly';
   name: string;

@@ -47,6 +47,8 @@ function RootStack() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="reports/[id]" />
       <Stack.Screen name="games/[id]" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="interview/[id]" />
+      <Stack.Screen name="interview/new" options={{ gestureEnabled: false }} />
     </Stack>
   );
 }
