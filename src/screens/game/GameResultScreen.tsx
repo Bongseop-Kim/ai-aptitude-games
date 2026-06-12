@@ -10,21 +10,30 @@ import { gameContent } from '../../data/gameContent';
 import { Box } from '../../design-system/components/Box';
 import { HStack, VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
-import { gradeForScore, peerPercentile, type GameResultInput } from '../../domain/games/results';
+import { gradeForScore, type GameResultInput } from '../../domain/games/results';
 import { toneColors } from '../../domain/tone';
 import type { Game } from '../../domain/types';
 
 export type GameResultScreenProps = {
   game: Game;
   result: GameResultInput;
+  bestBeforePlay?: number | null;
   onRetry?: () => void;
   onExit: () => void;
   exitLabel?: string;
 };
 
+function bestComparisonLabel(resultScore: number, bestBeforePlay: number | null | undefined) {
+  if (bestBeforePlay === undefined) return '확인 중';
+  if (bestBeforePlay === null) return '첫 기록';
+  if (resultScore > bestBeforePlay) return `▲ ${resultScore - bestBeforePlay} 경신`;
+  return `최고 ${bestBeforePlay}`;
+}
+
 export function GameResultScreen({
   game,
   result,
+  bestBeforePlay,
   onRetry,
   onExit,
   exitLabel = '게임 목록',
@@ -70,7 +79,7 @@ export function GameResultScreen({
         <HStack gap="x2">
           <GameStatBox label="정답률" value={`${Math.round(result.accuracy * 100)}%`} />
           <GameStatBox label="평균 응답" value={`${(result.avgResponseMs / 1000).toFixed(1)}초`} />
-          <GameStatBox label="또래 대비" value={`상위 ${peerPercentile(result.score)}%`} />
+          <GameStatBox label="내 최고 기록 대비" value={bestComparisonLabel(result.score, bestBeforePlay)} />
         </HStack>
 
         {content ? (

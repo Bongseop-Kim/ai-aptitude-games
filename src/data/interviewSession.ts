@@ -112,48 +112,6 @@ export const interviewQuestions: readonly InterviewQuestion[] = [
   },
 ];
 
-export const interviewTopFixes = [
-  {
-    axis: 'star' as const,
-    title: '결과(Result)로 마무리하기',
-    body: '답변 4개에서 결과가 빠졌어요. "그래서 무엇이 좋아졌는지"를 수치로 닫아주세요.',
-  },
-  {
-    axis: 'gaze' as const,
-    title: '카메라를 기준점으로',
-    body: '시선이 자주 아래로 향했어요. 렌즈를 사람 눈이라 생각하고 70% 이상 유지해 보세요.',
-    pro: true,
-  },
-  {
-    axis: 'content' as const,
-    title: '전문 용어 한 번씩 풀기',
-    body: '용어가 연달아 나올 때 쉬운 말로 한 번 풀어주면 전달력이 올라가요.',
-  },
-];
-
-export const peerAxisScores: Record<InterviewAxisKey, number> = {
-  content: 70,
-  star: 63,
-  voice: 76,
-  gaze: 67,
-  delivery: 71,
-};
-
-export const deliveryDetails = [
-  { label: '표정 안정', value: 78 },
-  { label: '자세 일관성', value: 71 },
-  { label: '제스처', value: 64 },
-  { label: '말 속도', value: 82 },
-] as const;
-
-export const ncsUnitScores = [
-  { label: '요구사항 확인', score: 82 },
-  { label: '화면 구현', score: 78 },
-  { label: '기능 구현', score: 75 },
-  { label: '통합 구현', score: 71 },
-  { label: '테스트', score: 68 },
-] as const;
-
 export function getAxisAverages(questions = interviewQuestions) {
   const sums: Record<InterviewAxisKey, number> = {
     content: 0,
@@ -175,10 +133,6 @@ export function getAxisAverages(questions = interviewQuestions) {
   }, { content: 0, star: 0, voice: 0, gaze: 0, delivery: 0 });
 }
 
-export function getQuestionOverall(question: InterviewQuestion) {
-  const scores = Object.values(question.scores);
-  return Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length);
-}
 
 export function getOverallInterviewScore() {
   const averages = getAxisAverages();

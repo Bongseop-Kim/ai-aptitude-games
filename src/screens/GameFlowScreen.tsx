@@ -13,7 +13,7 @@ import {
   useActiveMockExamSession,
   useCompleteMockExamGameItem,
 } from '../data/local/useMockExamSession';
-import { useSaveGameResult } from '../data/local/useGameResults';
+import { useBestScores, useSaveGameResult } from '../data/local/useGameResults';
 import { VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
 import type { GameResultInput } from '../domain/games/results';
@@ -28,7 +28,9 @@ export function GameFlowScreen() {
   const router = useRouter();
   const [phase, setPhase] = useState<GamePhase>('intro');
   const [result, setResult] = useState<GameResultInput | null>(null);
+  const [bestBeforePlay, setBestBeforePlay] = useState<number | null | undefined>(undefined);
   const [playStartedAt, setPlayStartedAt] = useState(() => Date.now());
+  const bestScores = useBestScores();
   const saveGameResult = useSaveGameResult();
   const mockExamSession = useActiveMockExamSession();
   const completeMockExamGameItem = useCompleteMockExamGameItem();
@@ -103,6 +105,7 @@ export function GameFlowScreen() {
 
   function startPlay() {
     setPlayStartedAt(Date.now());
+    setBestBeforePlay(bestScores.isLoading || !game ? undefined : bestScores.data?.[game.id] ?? null);
     setPhase('play');
   }
 
@@ -148,9 +151,10 @@ export function GameFlowScreen() {
       <GameResultScreen
         game={game}
         result={result}
+        bestBeforePlay={bestBeforePlay}
         onRetry={isMockExamMode ? undefined : () => {
           setResult(null);
-          setPhase('play');
+          startPlay();
         }}
         onExit={close}
         exitLabel={isMockExamMode ? '모의고사로 돌아가기' : undefined}

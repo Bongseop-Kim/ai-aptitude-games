@@ -3,9 +3,19 @@ import { AppState } from 'react-native';
 import { useSQLiteContext } from 'expo-sqlite';
 
 import { useAuth } from '../../providers/AuthProvider';
+import { pushUnsyncedGameResultRounds } from './gameResultRoundsSync';
 import { pushUnsyncedGameResults } from './gameResultsSync';
 import { pushUnsyncedInterviewSessions } from './interviewSessionsSync';
+import { pushUnsyncedMockExamResultItems } from './mockExamResultItemsSync';
 import { pushUnsyncedMockExamResults } from './mockExamResultsSync';
+
+async function pushAllUnsynced(db: ReturnType<typeof useSQLiteContext>, userId: string) {
+  await pushUnsyncedGameResults(db, userId);
+  await pushUnsyncedGameResultRounds(db, userId);
+  await pushUnsyncedMockExamResults(db, userId);
+  await pushUnsyncedMockExamResultItems(db, userId);
+  await pushUnsyncedInterviewSessions(db, userId);
+}
 
 /**
  * Mounts the silent background sync triggers: pushes the outbox when the
@@ -22,15 +32,11 @@ export function GameResultsSyncBridge() {
       return;
     }
 
-    void pushUnsyncedGameResults(db, userId);
-    void pushUnsyncedMockExamResults(db, userId);
-    void pushUnsyncedInterviewSessions(db, userId);
+    void pushAllUnsynced(db, userId);
 
     const subscription = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
-        void pushUnsyncedGameResults(db, userId);
-        void pushUnsyncedMockExamResults(db, userId);
-        void pushUnsyncedInterviewSessions(db, userId);
+        void pushAllUnsynced(db, userId);
       }
     });
     return () => subscription.remove();

@@ -47,10 +47,7 @@ export function InterviewDetailScreen() {
             {isLoading ? <InterviewDetailSkeleton /> : null}
             {!isLoading && !session ? <MissingInterviewSession onBack={() => router.back()} /> : null}
             {!isLoading && session ? (
-              <FeedbackReportBody
-                session={session}
-                onRetryQuestion={() => router.push({ pathname: '/interview/new', params: { mode: 'retry' } } as never)}
-              />
+              <FeedbackReportBody session={session} />
             ) : null}
           </Box>
         </ScrollView>
@@ -75,12 +72,9 @@ export function InterviewDetailScreen() {
 
 function InterviewDetailSkeleton() {
   return (
-    <VStack gap="x3">
-      <Skeleton height="x8" width="full" />
-      <Skeleton borderRadius="r4" height={142} width="full" />
-      <Skeleton borderRadius="r4" height={280} width="full" />
-      <Skeleton borderRadius="r4" height={170} width="full" />
-      <Skeleton borderRadius="r4" height={230} width="full" />
+    <VStack gap="x4">
+      <Skeleton borderRadius="r4" height="x16" width="full" />
+      <Skeleton borderRadius="r4" height="x16" width="full" />
     </VStack>
   );
 }

@@ -167,6 +167,22 @@ export async function finalizeMockExamSessionIfComplete(
       durationMs: totalDurationMs,
       pro: false,
     }, { id: sessionId });
+    await db.runAsync(
+      `INSERT INTO mock_exam_result_items (
+        mock_exam_id,
+        item_key,
+        user_id,
+        result_id,
+        score,
+        duration_ms,
+        completed_at
+      )
+      SELECT session_id, item_key, ?, result_id, score, duration_ms, created_at
+      FROM mock_exam_session_items
+      WHERE session_id = ?`,
+      userId,
+      sessionId,
+    );
     await db.runAsync('DELETE FROM mock_exam_session_items WHERE session_id = ?', sessionId);
     await db.runAsync('DELETE FROM mock_exam_sessions WHERE id = ?', sessionId);
     finalizedId = sessionId;

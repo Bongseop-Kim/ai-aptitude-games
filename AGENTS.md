@@ -41,7 +41,7 @@ Rules for local-first tables:
 - Sync pushes are idempotent upserts (`onConflict: 'id'`). Mark `synced` only after a confirmed server response.
 - This project is in active development — do not implement backwards-compatible migrations that preserve existing local data. That concern applies only after entering production.
 
-Supabase migration files are append-only after `supabase db push`. Treat pushed migrations as already applied history: never edit an existing pushed migration file to change schema or grants. Create a new migration file for follow-up changes instead.
+Supabase migration files are append-only after `supabase db push`. Treat pushed migrations as already applied history: never edit an existing pushed migration file to change schema or grants. Create a new migration file for follow-up changes instead — and create it ONLY with `npm run migration:new <name>`. Never hand-write the timestamp prefix and never use `supabase migration new` or `date -u`: existing migrations can carry timestamps later than the current time, and a current-time stamp then sorts before them, making `supabase db push` reject the file as out-of-order. The script stamps each new file strictly after the latest existing migration.
 
 ## Layout
 

@@ -23,12 +23,13 @@ export function PromisePlay({ game, onFinish, onClose }: GamePlayProps) {
   const { round, picked, headerScore, choose } = useRoundPlay<number>({
     totalRounds: PROMISE_TOTAL_ROUNDS,
     feedbackMs: PROMISE_FEEDBACK_MS,
-    onComplete: ({ correctCount, responseTimes }) => {
+    onComplete: ({ correctCount, responseTimes, rounds }) => {
       onFinish({
         gameId: game.id,
         score: computeGameScore(correctCount, PROMISE_TOTAL_ROUNDS),
         accuracy: correctCount / PROMISE_TOTAL_ROUNDS,
         avgResponseMs: averageResponseMs(responseTimes),
+        rounds,
       });
     },
   });

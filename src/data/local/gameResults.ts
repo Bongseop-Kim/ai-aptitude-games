@@ -9,11 +9,40 @@ type BestScoreRow = {
   score: number;
 };
 
+export type GameResultRecord = {
+  id: string;
+  gameId: GameId;
+  score: number;
+  accuracy: number;
+  avgResponseMs: number;
+  createdAt: string;
+};
+
+type GameResultRow = {
+  id: string;
+  game_id: GameId;
+  score: number;
+  accuracy: number;
+  avg_response_ms: number;
+  created_at: string;
+};
+
 type GameResultOptions = {
   id?: string;
   createdAt?: string;
   mockExamId?: string;
 };
+
+function toGameResultRecord(row: GameResultRow): GameResultRecord {
+  return {
+    id: row.id,
+    gameId: row.game_id,
+    score: row.score,
+    accuracy: row.accuracy,
+    avgResponseMs: row.avg_response_ms,
+    createdAt: row.created_at,
+  };
+}
 
 export async function insertGameResult(
   db: SQLiteDatabase,
@@ -40,6 +69,27 @@ export async function insertGameResult(
     ...values,
   );
 
+  for (const round of input.rounds) {
+    await db.runAsync(
+      `INSERT INTO game_result_rounds (
+        id,
+        result_id,
+        user_id,
+        round_index,
+        correct,
+        response_ms,
+        level_params
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      Crypto.randomUUID(),
+      id,
+      userId,
+      round.roundIndex,
+      round.correct ? 1 : 0,
+      round.responseMs,
+      round.levelParams == null ? null : JSON.stringify(round.levelParams),
+    );
+  }
+
   return id;
 }
 
@@ -64,4 +114,25 @@ export async function getBestScoreForGame(db: SQLiteDatabase, userId: string, ga
   );
 
   return row?.score ?? null;
+}
+
+export async function getGameResultsForMockExam(
+  db: SQLiteDatabase,
+  userId: string,
+  mockExamId: string,
+) {
+  const rows = await db.getAllAsync<GameResultRow>(
+    `SELECT id, game_id, score, accuracy, avg_response_ms, created_at
+     FROM game_results
+     WHERE user_id = ? AND mock_exam_id = ?`,
+    userId,
+    mockExamId,
+  );
+
+  const resultMap: Partial<Record<GameId, GameResultRecord>> = {};
+  for (const row of rows) {
+    resultMap[row.game_id] = toGameResultRecord(row);
+  }
+
+  return resultMap;
 }

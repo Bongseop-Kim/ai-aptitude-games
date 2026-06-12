@@ -3,8 +3,10 @@ import { useSQLiteContext } from 'expo-sqlite';
 
 import type { GameResultInput } from '../../domain/games/results';
 import { useAuth } from '../../providers/AuthProvider';
+import { pushUnsyncedGameResultRounds } from '../sync/gameResultRoundsSync';
 import { pushUnsyncedGameResults } from '../sync/gameResultsSync';
 import { pushUnsyncedInterviewSessions } from '../sync/interviewSessionsSync';
+import { pushUnsyncedMockExamResultItems } from '../sync/mockExamResultItemsSync';
 import { pushUnsyncedMockExamResults } from '../sync/mockExamResultsSync';
 import { gameResultKeys } from './useGameResults';
 import { interviewSessionKeys } from './useInterviewSessions';
@@ -107,7 +109,10 @@ export function useCompleteMockExamGameItem() {
       void queryClient.invalidateQueries({ queryKey: mockExamSessionKeys.all });
       void queryClient.invalidateQueries({ queryKey: gameResultKeys.all });
       if (userId) {
-        void pushUnsyncedGameResults(db, userId);
+        void (async () => {
+          await pushUnsyncedGameResults(db, userId);
+          await pushUnsyncedGameResultRounds(db, userId);
+        })();
       }
     },
     onError: (error) => {
@@ -169,7 +174,10 @@ export function useFinalizeMockExamSession() {
       void queryClient.invalidateQueries({ queryKey: mockExamSessionKeys.all });
       void queryClient.invalidateQueries({ queryKey: mockExamKeys.all });
       if (userId) {
-        void pushUnsyncedMockExamResults(db, userId);
+        void (async () => {
+          await pushUnsyncedMockExamResults(db, userId);
+          await pushUnsyncedMockExamResultItems(db, userId);
+        })();
       }
     },
     onError: (error) => {

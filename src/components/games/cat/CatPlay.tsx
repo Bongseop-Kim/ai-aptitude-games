@@ -164,12 +164,13 @@ export function CatPlay({ game, onFinish, onClose }: GamePlayProps) {
       setQuestion(createQuestionForRound(foundPlan, nextRound));
       setPhase('memorize');
     },
-    onComplete: ({ correctCount, responseTimes }) => {
+    onComplete: ({ correctCount, responseTimes, rounds }) => {
       onFinish({
         gameId: game.id,
         score: computeCatScore(pointsRef.current),
         accuracy: correctCount / CAT_TOTAL_ROUNDS,
         avgResponseMs: averageResponseMs(responseTimes),
+        rounds,
       });
     },
   });

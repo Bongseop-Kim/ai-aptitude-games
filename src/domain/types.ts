@@ -45,6 +45,7 @@ export type ReadinessLevel = 'seed' | 'sprout' | 'steady' | 'strong';
 
 export type ReportSectionKey =
   | 'cover'
+  | 'games'
   | 'radar'
   | 'highlights'
   | 'interview'

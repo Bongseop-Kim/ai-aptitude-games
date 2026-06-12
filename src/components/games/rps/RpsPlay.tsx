@@ -31,12 +31,13 @@ export function RpsPlay({ game, onFinish, onClose }: GamePlayProps) {
     onAdvanceRound: () => {
       setQuestion(createRpsQuestion());
     },
-    onComplete: ({ correctCount, responseTimes }) => {
+    onComplete: ({ correctCount, responseTimes, rounds }) => {
       onFinish({
         gameId: game.id,
         score: computeGameScore(correctCount, RPS_TOTAL_ROUNDS),
         accuracy: correctCount / RPS_TOTAL_ROUNDS,
         avgResponseMs: averageResponseMs(responseTimes),
+        rounds,
       });
     },
   });

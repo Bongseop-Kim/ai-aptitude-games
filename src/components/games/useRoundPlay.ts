@@ -1,12 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { roundScore } from '../../domain/games/results';
+import { roundScore, type GameRoundResult } from '../../domain/games/results';
 
 export function useRoundPlay<TAnswer>(options: {
   totalRounds: number;
   feedbackMs: number;
-  onComplete: (summary: { correctCount: number; responseTimes: number[] }) => void;
+  onComplete: (summary: {
+    correctCount: number;
+    responseTimes: number[];
+    rounds: GameRoundResult[];
+  }) => void;
   onAdvanceRound?: (round: number) => void;
+  getLevelParams?: (answer: TAnswer, round: number) => GameRoundResult['levelParams'];
 }): {
   round: number;
   picked: TAnswer | null;
@@ -22,6 +27,7 @@ export function useRoundPlay<TAnswer>(options: {
   const pickedRef = useRef<TAnswer | null>(null);
   const [correctCount, setCorrectCount] = useState(0);
   const responseTimesRef = useRef<number[]>([]);
+  const roundsRef = useRef<GameRoundResult[]>([]);
   const questionShownAtRef = useRef<number | null>(null);
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -54,7 +60,15 @@ export function useRoundPlay<TAnswer>(options: {
 
     const answeredAt = Date.now();
 
-    responseTimesRef.current.push(answeredAt - (questionShownAtRef.current ?? answeredAt));
+    const responseMs = answeredAt - (questionShownAtRef.current ?? answeredAt);
+
+    responseTimesRef.current.push(responseMs);
+    roundsRef.current.push({
+      roundIndex: round,
+      correct: isCorrect,
+      responseMs,
+      levelParams: options.getLevelParams?.(value, round) ?? null,
+    });
     const nextCorrectCount = correctCount + (isCorrect ? 1 : 0);
     pickedRef.current = value;
     setPicked(value);
@@ -65,6 +79,7 @@ export function useRoundPlay<TAnswer>(options: {
         onCompleteRef.current({
           correctCount: nextCorrectCount,
           responseTimes: [...responseTimesRef.current],
+          rounds: [...roundsRef.current],
         });
         return;
       }
@@ -76,7 +91,7 @@ export function useRoundPlay<TAnswer>(options: {
       pickedRef.current = null;
       setPicked(null);
     }, options.feedbackMs);
-  }, [correctCount, options.feedbackMs, options.totalRounds, round]);
+  }, [correctCount, options, round]);
 
   return {
     round,

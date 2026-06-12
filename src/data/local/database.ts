@@ -1,7 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 export const LOCAL_DB_NAME = 'ai-aptitude-games.db';
-export const LOCAL_DB_SCHEMA_VERSION = 7;
+export const LOCAL_DB_SCHEMA_VERSION = 8;
 
 type SchemaVersionRow = {
   version: number;
@@ -113,6 +113,43 @@ const migrations: readonly { version: number; sql: string }[] = [
 
       ALTER TABLE game_results ADD COLUMN mock_exam_id TEXT;
       ALTER TABLE interview_sessions ADD COLUMN mock_exam_id TEXT;
+    `,
+  },
+  {
+    version: 8,
+    sql: `
+      DELETE FROM game_results;
+      DELETE FROM mock_exam_results;
+      DELETE FROM interview_sessions;
+      DELETE FROM mock_exam_session_items;
+      DELETE FROM mock_exam_sessions;
+
+      CREATE TABLE game_result_rounds (
+        id TEXT PRIMARY KEY NOT NULL,
+        result_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        round_index INTEGER NOT NULL,
+        correct INTEGER NOT NULL,
+        response_ms INTEGER NOT NULL,
+        level_params TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        synced INTEGER NOT NULL DEFAULT 0
+      );
+      CREATE INDEX idx_game_result_rounds_result_id ON game_result_rounds (result_id);
+      CREATE INDEX idx_game_result_rounds_unsynced ON game_result_rounds (user_id) WHERE synced = 0;
+
+      CREATE TABLE mock_exam_result_items (
+        mock_exam_id TEXT NOT NULL,
+        item_key TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        result_id TEXT NOT NULL,
+        score INTEGER NOT NULL,
+        duration_ms INTEGER NOT NULL,
+        completed_at TEXT NOT NULL,
+        synced INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (mock_exam_id, item_key)
+      );
+      CREATE INDEX idx_mock_exam_result_items_unsynced ON mock_exam_result_items (user_id) WHERE synced = 0;
     `,
   },
 ];

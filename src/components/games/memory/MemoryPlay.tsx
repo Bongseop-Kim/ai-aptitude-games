@@ -26,12 +26,19 @@ export function MemoryPlay({ game, onFinish, onClose }: GamePlayProps) {
   const { round, picked, headerScore, choose } = useRoundPlay<MemoryAnswer>({
     totalRounds: MEMORY_TOTAL_ROUNDS,
     feedbackMs: MEMORY_FEEDBACK_MS,
-    onComplete: ({ correctCount, responseTimes }) => {
+    getLevelParams: (_answer, currentRound) => {
+      const target = rounds[currentRound - 1]?.answer;
+      if (target === 'n2') return { n_back: 2 };
+      if (target === 'n3') return { n_back: 3 };
+      return null;
+    },
+    onComplete: ({ correctCount, responseTimes, rounds: roundResults }) => {
       onFinish({
         gameId: game.id,
         score: computeGameScore(correctCount, MEMORY_TOTAL_ROUNDS),
         accuracy: correctCount / MEMORY_TOTAL_ROUNDS,
         avgResponseMs: averageResponseMs(responseTimes),
+        rounds: roundResults,
       });
     },
   });

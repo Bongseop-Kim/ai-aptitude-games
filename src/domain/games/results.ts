@@ -1,11 +1,19 @@
 import type { GameId } from '../types';
 import { clamp } from './random';
 
+export type GameRoundResult = {
+  roundIndex: number;
+  correct: boolean;
+  responseMs: number;
+  levelParams?: Record<string, number | boolean> | null;
+};
+
 export type GameResultInput = {
   gameId: GameId;
   score: number;
   accuracy: number;
   avgResponseMs: number;
+  rounds: GameRoundResult[];
 };
 
 export type GameGrade = 'A' | 'A-' | 'B+' | 'B' | 'C';
@@ -31,11 +39,6 @@ export function gradeForScore(score: number): GameGrade {
   if (score >= 65) return 'B+';
   if (score >= 55) return 'B';
   return 'C';
-}
-
-// 또래 비교 데이터가 생기기 전까지 쓰는 placeholder 공식 (프로토타입과 동일)
-export function peerPercentile(score: number): number {
-  return Math.max(8, 100 - score);
 }
 
 export function averageResponseMs(times: readonly number[]): number {
