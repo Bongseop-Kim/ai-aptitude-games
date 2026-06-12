@@ -146,29 +146,30 @@ function InterviewHero() {
   return (
     <VStack flex={1} gap="x2">
       <SectionHead title="실전 면접" />
-      <Pressable
-        accessibilityLabel="실전 면접 시작하기"
-        accessibilityRole="button"
-        style={{ flex: 1 }}
-        onPress={() => router.push('/interview')}
-      >
-        <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" flex={1} gap="x3" p="x3">
-          <Box alignItems="center" bg="bg.layerDefault" borderRadius="r3" height="x12" justifyContent="center" width="x12">
-            <Icon name="Video" color="fg.brand" size="large" />
-          </Box>
-          <VStack flex={1} gap="x1">
-            <Text textStyle="t5Bold" maxLines={2}>
-              내 직무에 딱 맞는{'\n'}면접을 연습해요
-            </Text>
-            <Text color="fg.neutralMuted" textStyle="t2Regular" maxLines={1}>
-              면접 데이터 8만 건 분석
-            </Text>
-          </VStack>
-          <HStack>
-            <Badge label="NCS 기반" tone="brandSolid" size="small" />
-          </HStack>
-        </Card>
-      </Pressable>
+      <Box flex={1}>
+        <Pressable
+          accessibilityLabel="실전 면접 시작하기"
+          accessibilityRole="button"
+          onPress={() => router.push('/interview')}
+        >
+          <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" flex={1} gap="x3" p="x3">
+            <Box alignItems="center" bg="bg.layerDefault" borderRadius="r3" height="x12" justifyContent="center" width="x12">
+              <Icon name="Video" color="fg.brand" size="large" />
+            </Box>
+            <VStack flex={1} gap="x1">
+              <Text textStyle="t5Bold" maxLines={2}>
+                내 직무에 딱 맞는{'\n'}면접을 연습해요
+              </Text>
+              <Text color="fg.neutralMuted" textStyle="t2Regular" maxLines={1}>
+                면접 데이터 8만 건 분석
+              </Text>
+            </VStack>
+            <HStack>
+              <Badge label="NCS 기반" tone="brandSolid" size="small" />
+            </HStack>
+          </Card>
+        </Pressable>
+      </Box>
     </VStack>
   );
 }
@@ -181,30 +182,31 @@ function DailyChallenge() {
   return (
     <VStack flex={1} gap="x2">
       <SectionHead title="오늘의 챌린지" />
-      <Pressable
-        accessibilityLabel={`${challengeGame.name} 오늘의 챌린지 시작`}
-        accessibilityRole="button"
-        style={{ flex: 1 }}
-        onPress={openChallenge}
-      >
-        <Card bg="bg.layerDefault" flex={1} gap="x3" p="x3">
-          <Box alignItems="center" bg={colors.bg} borderRadius="r3" height="x12" justifyContent="center" width="x12">
-            <Icon name={challengeGame.icon} color={colors.fg} size="large" />
-          </Box>
-          <VStack flex={1} gap="x1">
-            <Text textStyle="t5Bold" maxLines={2}>
-              {challengeGame.name} · 75점 이상
-            </Text>
-            <Text color="fg.neutralMuted" textStyle="t2Regular" maxLines={1}>
-              {challengeGame.skill} · 예상 {challengeGame.minutes}분
-            </Text>
-          </VStack>
-          <HStack gap="x1_5">
-            <Badge label="+20 XP" tone="brand" size="small" />
-            <Badge label="스트릭 +1일" tone="critical" size="small" />
-          </HStack>
-        </Card>
-      </Pressable>
+      <Box flex={1}>
+        <Pressable
+          accessibilityLabel={`${challengeGame.name} 오늘의 챌린지 시작`}
+          accessibilityRole="button"
+          onPress={openChallenge}
+        >
+          <Card bg="bg.layerDefault" flex={1} gap="x3" p="x3">
+            <Box alignItems="center" bg={colors.bg} borderRadius="r3" height="x12" justifyContent="center" width="x12">
+              <Icon name={challengeGame.icon} color={colors.fg} size="large" />
+            </Box>
+            <VStack flex={1} gap="x1">
+              <Text textStyle="t5Bold" maxLines={2}>
+                {challengeGame.name} · 75점 이상
+              </Text>
+              <Text color="fg.neutralMuted" textStyle="t2Regular" maxLines={1}>
+                {challengeGame.skill} · 예상 {challengeGame.minutes}분
+              </Text>
+            </VStack>
+            <HStack gap="x1_5">
+              <Badge label="+20 XP" tone="brand" size="small" />
+              <Badge label="스트릭 +1일" tone="critical" size="small" />
+            </HStack>
+          </Card>
+        </Pressable>
+      </Box>
     </VStack>
   );
 }

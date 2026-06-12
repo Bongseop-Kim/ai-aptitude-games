@@ -9,6 +9,7 @@ import {
 import { useDesignSystemTheme } from '../../design-system/provider';
 import {
   Canvas,
+  cancelAnimation,
   Easing,
   Group,
   LinearGradient,
@@ -71,13 +72,21 @@ export function Skeleton({
   );
 
   useEffect(() => {
-    if (!isFocused) return;
+    if (!isFocused) {
+      cancelAnimation(progress);
+      progress.set(0);
+      return;
+    }
 
     progress.set(0);
     progress.set(withRepeat(withTiming(1, {
       duration: SHIMMER_DURATION_MS,
       easing: Easing.linear,
     }), -1));
+
+    return () => {
+      cancelAnimation(progress);
+    };
   }, [isFocused, progress]);
 
   return (

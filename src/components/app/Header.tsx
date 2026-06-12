@@ -39,7 +39,7 @@ export function Header({ title, subtitle, children, showBack = false, onBack, ri
             ) : null}
           </VStack>
         </HStack>
-        {rightAction ? (
+        {rightAction?.onPress ? (
           <IconButton
             name={rightAction.icon}
             label={rightAction.label}

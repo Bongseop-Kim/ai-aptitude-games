@@ -87,6 +87,7 @@ export function ReportDetailScreen() {
   const section = reportDetailSections[sectionIndex];
   const isLastSection = sectionIndex >= reportDetailSections.length - 1;
   const locked = Boolean(section.locked && !record?.pro);
+  const canUseReportActions = !isLoading && Boolean(record);
 
   function goNext() {
     if (!isLastSection) {
@@ -113,11 +114,11 @@ export function ReportDetailScreen() {
         subtitle={`모의고사 · ${record?.round ?? '-'}회차 리포트`}
         showBack
         onBack={goBack}
-        rightAction={{
+        rightAction={canUseReportActions ? {
           icon: 'Share',
           label: '공유',
           onPress: showShareNotice,
-        }}
+        } : undefined}
       >
         <ReportDetailProgress sectionIndex={sectionIndex} />
       </Header>
@@ -137,18 +138,20 @@ export function ReportDetailScreen() {
           </Box>
         </ScrollView>
       </Box>
-      <BottomActionBar
-        secondary={{
-          label: '공유',
-          iconLeft: 'Share',
-          onPress: showShareNotice,
-        }}
-        primary={{
-          label: isLastSection ? '완료' : '다음',
-          iconRight: isLastSection ? 'Check' : 'ArrowRight',
-          onPress: goNext,
-        }}
-      />
+      {canUseReportActions ? (
+        <BottomActionBar
+          secondary={{
+            label: '공유',
+            iconLeft: 'Share',
+            onPress: showShareNotice,
+          }}
+          primary={{
+            label: isLastSection ? '완료' : '다음',
+            iconRight: isLastSection ? 'Check' : 'ArrowRight',
+            onPress: goNext,
+          }}
+        />
+      ) : null}
     </Screen>
   );
 }
@@ -581,7 +584,9 @@ type PeerSectionProps = {
 };
 
 function PeerSection({ record, records }: PeerSectionProps) {
-  const chronologicalRecords = [...records].reverse();
+  const chronologicalRecords = records
+    .filter((item) => item.round <= record.round)
+    .reverse();
   const scores = chronologicalRecords.map((item) => item.score);
   const firstScore = scores[0] ?? record.score;
   const delta = record.score - firstScore;

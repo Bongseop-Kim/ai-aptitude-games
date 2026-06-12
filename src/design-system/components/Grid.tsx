@@ -35,7 +35,7 @@ export function Grid({
   const resolvedColumnGap = resolveLength(theme, columnGap);
   const numericColumnGap = typeof resolvedColumnGap === 'number' ? resolvedColumnGap : 0;
   const canMeasureItems = isRowFlow && normalizedColumns > 1 && containerWidth != null && containerWidth > 0;
-  const shouldHideUntilMeasured = isRowFlow && normalizedColumns > 1 && containerWidth == null;
+  const shouldHideUntilMeasured = isRowFlow && normalizedColumns > 1 && (containerWidth == null || containerWidth === 0);
   const itemWidth = canMeasureItems
     ? Math.max(
         0,

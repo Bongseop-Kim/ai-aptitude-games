@@ -26,6 +26,7 @@ export function ProfileScreen() {
   const [pushEnabled, setPushEnabled] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isLinking, setIsLinking] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const gamesWithProgress = useGamesWithProgress();
   const doneCount = gamesWithProgress.filter((game) => game.status === 'done').length;
 
@@ -49,6 +50,26 @@ export function ProfileScreen() {
       .finally(() => {
         setIsLinking(false);
       });
+  }
+
+  async function handleSignOut() {
+    if (isSigningOut) {
+      return;
+    }
+
+    setIsSigningOut(true);
+
+    try {
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        throw error;
+      }
+    } catch {
+      Alert.alert('로그아웃에 실패했어요', '잠시 후 다시 시도해주세요.');
+    } finally {
+      setIsSigningOut(false);
+    }
   }
 
   return (
@@ -94,7 +115,6 @@ export function ProfileScreen() {
               <Text color="fg.neutralMuted" textStyle="t3Medium" maxLines={1}>
                 오후 9:00
               </Text>
-              <Icon name="ChevronRight" size="small" />
             </List.Suffix>
           </List.Item>
           <List.Item>
@@ -108,7 +128,6 @@ export function ProfileScreen() {
               <Text color="fg.neutralMuted" textStyle="t3Medium" maxLines={1}>
                 친구
               </Text>
-              <Icon name="ChevronRight" size="small" />
             </List.Suffix>
           </List.Item>
           <List.Item>
@@ -118,9 +137,6 @@ export function ProfileScreen() {
             <List.Content>
               <List.Title>친구 초대</List.Title>
             </List.Content>
-            <List.Suffix>
-              <Icon name="ChevronRight" size="small" />
-            </List.Suffix>
           </List.Item>
         </List.Root>
       </Card>
@@ -135,9 +151,6 @@ export function ProfileScreen() {
             <List.Content>
               <List.Title>도움말 · 자주 묻는 질문</List.Title>
             </List.Content>
-            <List.Suffix>
-              <Icon name="ChevronRight" size="small" />
-            </List.Suffix>
           </List.Item>
           <List.Item>
             <List.Prefix>
@@ -146,9 +159,6 @@ export function ProfileScreen() {
             <List.Content>
               <List.Title>이용약관 · 개인정보처리방침</List.Title>
             </List.Content>
-            <List.Suffix>
-              <Icon name="ChevronRight" size="small" />
-            </List.Suffix>
           </List.Item>
           {isAnonymous ? (
             // Signing out an anonymous session would orphan its server data,
@@ -165,12 +175,12 @@ export function ProfileScreen() {
               </List.Suffix>
             </List.Item>
           ) : (
-            <List.Item onPress={() => void supabase.auth.signOut()}>
+            <List.Item onPress={() => void handleSignOut()} disabled={isSigningOut}>
               <List.Prefix>
                 <Icon name="LogOut" color="fg.brand" />
               </List.Prefix>
               <List.Content>
-                <List.Title>로그아웃</List.Title>
+                <List.Title>{isSigningOut ? '로그아웃 중...' : '로그아웃'}</List.Title>
               </List.Content>
             </List.Item>
           )}

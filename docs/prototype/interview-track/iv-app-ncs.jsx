@@ -46,7 +46,7 @@ function InterviewTrackAppNCS() {
   const replace = useAppNCb((name, params = {}) => setStack(s => [...s.slice(0, -1), { name, params }]), []);
   const resetTo = useAppNCb((name, params = {}) => setStack([{ name, params }]), []);
 
-  useAppNE(() => { if (scrollRef.current) scrollRef.current.scrollTop = 0; }, [stack.length, cur.name]);
+  useAppNE(() => { if (scrollRef.current) scrollRef.current.scrollTop = 0; }, [stack.length, cur.name, cur.params?.tab]);
 
   const ctx = {
     nav, back, replace, resetTo, route: cur, params: cur.params || {},

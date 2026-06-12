@@ -304,7 +304,11 @@ export function PercentileBar({ percentile }: PercentileBarProps) {
   const { size, onLayout } = useMeasuredChart();
   const progress = useFocusProgress(450);
   const clampedPercentile = clamp(percentile);
-  const markerX = useDerivedValue(() => size.width * (clampedPercentile / 100) * progress.value, [clampedPercentile, size.width]);
+  const markerWidth = 3;
+  const markerX = useDerivedValue(() => {
+    const targetX = size.width * ((100 - clampedPercentile) / 100) * progress.value;
+    return clamp(targetX, 0, Math.max(0, size.width - markerWidth));
+  }, [clampedPercentile, size.width]);
 
   return (
     <VStack gap="x2">
@@ -324,7 +328,7 @@ export function PercentileBar({ percentile }: PercentileBarProps) {
                 />
               </RoundedRect>
               <Group>
-                <Rect x={markerX} y={10} width={3} height={40} color={resolveColor(theme, 'fg.neutral')} />
+                <Rect x={markerX} y={10} width={markerWidth} height={40} color={resolveColor(theme, 'fg.neutral')} />
               </Group>
             </>
           ) : null}

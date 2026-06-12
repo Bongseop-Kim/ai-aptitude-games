@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { FlatList, type FlatListProps } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Box } from '../../design-system/components/Box';
 import { useDesignSystemTheme } from '../../design-system/provider';
@@ -22,9 +23,11 @@ export function TabListScreen<ItemT>({
   pinnedContent,
   ...listProps
 }: TabListScreenProps<ItemT>) {
+  const insets = useSafeAreaInsets();
   const { theme } = useDesignSystemTheme();
   const resolvedBottomPad = resolveLength(theme, bottomPad);
   const bottomPadding = typeof resolvedBottomPad === 'number' ? resolvedBottomPad : 0;
+  const bottomPaddingWithInset = bottomPadding + insets.bottom;
 
   return (
     <Screen safeEdges={['top', 'left', 'right']}>
@@ -37,12 +40,12 @@ export function TabListScreen<ItemT>({
             {
               flexGrow: 1,
               paddingTop: theme.dimension.spacingY.componentDefault,
-              paddingBottom: bottomPadding,
+              paddingBottom: bottomPaddingWithInset,
             },
             contentContainerStyle,
           ]}
           contentInsetAdjustmentBehavior="automatic"
-          scrollIndicatorInsets={{ bottom: bottomPadding }}
+          scrollIndicatorInsets={{ bottom: bottomPaddingWithInset }}
           showsVerticalScrollIndicator={false}
         />
       </Box>

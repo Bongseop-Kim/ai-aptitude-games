@@ -1,4 +1,5 @@
 export {
+  cancelAnimation,
   Easing,
   useAnimatedStyle,
   useDerivedValue,

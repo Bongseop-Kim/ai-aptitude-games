@@ -1,5 +1,4 @@
 import { Fragment } from 'react';
-import { Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { Header } from '../components/app/Header';
@@ -19,8 +18,6 @@ import { Text } from '../design-system/components/Text';
 import { interviewSessions, ncsJob } from '../data/interview';
 import type { InterviewSession } from '../data/interview';
 
-const noop = () => {};
-
 export function InterviewScreen() {
   const router = useRouter();
 
@@ -33,14 +30,13 @@ export function InterviewScreen() {
           rightAction={{
             icon: 'Info',
             label: '면접 정보',
-            onPress: noop,
           }}
         />
       }
     >
       <NcsJobCard />
       <StartInterviewCard />
-      <Button label="이력서로 시작하기" variant="solid" tone="brand" iconLeft="Zap" fullWidth onPress={noop} />
+      <Button label="이력서로 시작하기" variant="solid" tone="brand" iconLeft="Zap" fullWidth disabled />
       <VStack gap="x2">
         <SectionHead
           title="지난 면접"
@@ -80,7 +76,7 @@ function NcsJobCard() {
             지원 공고에 맞춰 자동 분류했어요
           </Text>
         </VStack>
-        <IconButton name="Pencil" label="직무 변경" variant="weak" onPress={noop} />
+        <IconButton name="Pencil" label="직무 변경" variant="weak" disabled />
       </HStack>
       <HStack align="center" gap="x1_5">
         <Icon name="CircleCheck" color="fg.positive" size="small" />
@@ -99,30 +95,25 @@ function NcsJobCard() {
 
 function StartInterviewCard() {
   return (
-    <Pressable accessibilityLabel="이 직무로 면접 시작" accessibilityRole="button" onPress={noop}>
-      <Card p="x3">
-        <HStack align="center" gap="x3">
-          <IconTile icon="Video" bg="bg.brandWeak" color="fg.brand" />
-          <VStack flex={1} gap="x0_5">
-            <Text textStyle="t5Bold" maxLines={1}>
-              이 직무로 면접 시작
-            </Text>
-            <Text color="fg.neutralMuted" textStyle="t2Regular" maxLines={1}>
-              능력단위 기반 맞춤 질문 8개 · 8만 건 분석
-            </Text>
-          </VStack>
-        </HStack>
-      </Card>
-    </Pressable>
+    <Card p="x3">
+      <HStack align="center" gap="x3">
+        <IconTile icon="Video" bg="bg.brandWeak" color="fg.brand" />
+        <VStack flex={1} gap="x0_5">
+          <Text textStyle="t5Bold" maxLines={1}>
+            이 직무로 면접 시작
+          </Text>
+          <Text color="fg.neutralMuted" textStyle="t2Regular" maxLines={1}>
+            능력단위 기반 맞춤 질문 8개 · 8만 건 분석
+          </Text>
+        </VStack>
+      </HStack>
+    </Card>
   );
 }
 
 function InterviewSessionCard({ session }: { session: InterviewSession }) {
   return (
-    <List.Item
-      accessibilityLabel={`${session.company} ${session.role} 면접 기록`}
-      onPress={noop}
-    >
+    <List.Item accessibilityLabel={`${session.company} ${session.role} 면접 기록`}>
       <List.Prefix>
         <ReadinessGauge score={session.score} size={52} strokeWidth={5} />
       </List.Prefix>
@@ -143,9 +134,6 @@ function InterviewSessionCard({ session }: { session: InterviewSession }) {
           )}
         </HStack>
       </List.Content>
-      <List.Suffix>
-        <Icon name="ChevronRight" size="small" />
-      </List.Suffix>
     </List.Item>
   );
 }
