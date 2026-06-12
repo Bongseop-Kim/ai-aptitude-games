@@ -218,11 +218,18 @@ export function InterviewFlowScreen() {
     }
 
     try {
+      if (interviewQuestions.length === 0) {
+        Alert.alert('면접 질문이 없어요', '질문을 만든 뒤 다시 시도해주세요.');
+        return;
+      }
+
+      const score = getOverallInterviewScore();
+      const safeScore = Number.isFinite(score) ? score : 0;
       const durationMs = Math.max(1000, Date.now() - flowStartedAt);
       const input = {
         company: mockJobPosting.company,
         role: mockJobPosting.role,
-        score: getOverallInterviewScore(),
+        score: safeScore,
         questionCount: interviewQuestions.length,
         durationMs,
       };

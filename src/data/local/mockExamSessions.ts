@@ -155,7 +155,7 @@ export async function finalizeMockExamSessionIfComplete(
       sessionId,
     );
 
-    if (rows.length < MOCK_EXAM_ITEM_COUNT) {
+    if (rows.length !== MOCK_EXAM_ITEM_COUNT) {
       return;
     }
 
@@ -172,12 +172,21 @@ export async function finalizeMockExamSessionIfComplete(
         mock_exam_id,
         item_key,
         user_id,
-        result_id,
+        game_result_id,
+        interview_session_id,
         score,
         duration_ms,
         completed_at
       )
-      SELECT session_id, item_key, ?, result_id, score, duration_ms, created_at
+      SELECT
+        session_id,
+        item_key,
+        ?,
+        CASE WHEN item_key = 'interview' THEN NULL ELSE result_id END,
+        CASE WHEN item_key = 'interview' THEN result_id ELSE NULL END,
+        score,
+        duration_ms,
+        created_at
       FROM mock_exam_session_items
       WHERE session_id = ?`,
       userId,

@@ -176,6 +176,9 @@ export function useFinalizeMockExamSession() {
       if (userId) {
         void (async () => {
           await pushUnsyncedMockExamResults(db, userId);
+          await pushUnsyncedGameResults(db, userId);
+          await pushUnsyncedInterviewSessions(db, userId);
+          await pushUnsyncedGameResultRounds(db, userId);
           await pushUnsyncedMockExamResultItems(db, userId);
         })();
       }

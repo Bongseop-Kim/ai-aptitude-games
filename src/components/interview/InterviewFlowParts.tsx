@@ -72,6 +72,19 @@ const uploadTabs = [
   { label: '직접 붙여넣기', value: 'paste' },
 ] as const;
 
+const uploadCardHeight = 'x42_5';
+const gaugeSize = {
+  medium: 92,
+  large: 110,
+} as const;
+const gaugeStroke = {
+  default: 9,
+} as const;
+const cameraPreviewHeight = 'x37_5';
+const cameraPreviewWidth = 'x29';
+const MIN_BAR_HEIGHT = 6;
+const MAX_BAR_HEIGHT = 28;
+
 export function UploadOrPasteCard({
   mode,
   onModeChange,
@@ -86,7 +99,7 @@ export function UploadOrPasteCard({
   return (
     <Card gap="x3" p="x3">
       <Tabs items={uploadTabs} value={mode} onChange={onModeChange} />
-      <Box minHeight={170}>
+      <Box minHeight={uploadCardHeight}>
         {mode === 'file' ? (
           fileName ? (
             <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" p="x3">
@@ -114,7 +127,7 @@ export function UploadOrPasteCard({
                 borderWidth="thin"
                 gap="x2"
                 justifyContent="center"
-                minHeight={170}
+                minHeight={uploadCardHeight}
                 p="x4"
               >
                 <Box alignItems="center" bg="bg.layerFloating" borderRadius="full" height="x12" justifyContent="center" width="x12">
@@ -131,7 +144,7 @@ export function UploadOrPasteCard({
           )
         ) : (
           <TextArea
-            height={170}
+            height={uploadCardHeight}
             onChangeText={onPasteChange}
             placeholder={placeholder}
             value={pasteValue}
@@ -187,7 +200,7 @@ export function AnalysisLoading({ onDone }: AnalysisLoadingProps) {
   return (
     <VStack flex={1} gap="x5" justify="center">
       <VStack align="center" gap="x3">
-        <ReadinessGauge score={progress} size={110} strokeWidth={9} />
+        <ReadinessGauge score={progress} size={gaugeSize.large} strokeWidth={gaugeStroke.default} />
         <VStack align="center" gap="x0_5">
           <Text align="center" textStyle="t7Bold">맞춤 면접을 설계하고 있어요</Text>
           <Text align="center" color="fg.neutralSubtle" textStyle="t3Regular">
@@ -234,7 +247,7 @@ export function MatchScoreCard() {
   return (
     <Card bg="bg.brandWeak" borderColor="stroke.brandWeak">
       <HStack align="center" gap="x4">
-        <ReadinessGauge score={mockMatch.score} size={92} strokeWidth={9} />
+        <ReadinessGauge score={mockMatch.score} size={gaugeSize.medium} strokeWidth={gaugeStroke.default} />
         <VStack flex={1} gap="x1">
           <Text color="fg.neutralMuted" textStyle="t2Regular">이력서 × 리플로우 적합도</Text>
           <Text color="fg.brand" textStyle="t7Bold">{matchLabel(mockMatch.score)}</Text>
@@ -411,16 +424,18 @@ export function InterviewCameraView({
   const canShowCamera = active && permission?.granted;
 
   return (
-    <Box bg="bg.neutralSolid" borderRadius="r3" height={150} overflow="hidden" width={116}>
+    <Box bg="bg.neutralSolid" borderRadius="r3" height={cameraPreviewHeight} overflow="hidden" width={cameraPreviewWidth}>
       {canShowCamera ? (
-        <CameraView style={{ flex: 1 }} facing="front" active={active} />
+        <Box flex={1}>
+          <CameraView facing="front" active={active} />
+        </Box>
       ) : (
         <VStack align="center" flex={1} gap="x2" justify="center" p="x2">
           <Icon name="Video" color="fg.neutralInverted" />
           <Text align="center" color="fg.neutralInverted" textStyle="t1Regular">
             카메라 권한이 필요해요
           </Text>
-          {permission?.canAskAgain !== false ? (
+          {permission?.canAskAgain ? (
             <Button label="허용" size="small" variant="weak" onPress={requestPermission} />
           ) : (
             <Button label="설정" size="small" variant="weak" onPress={() => Linking.openSettings()} />
@@ -482,7 +497,7 @@ export function WaveformBars({ active }: { active: boolean }) {
           key={index}
           bg={active ? 'bg.brandSolid' : 'stroke.neutralWeak'}
           borderRadius="full"
-          height={Math.max(6, Math.round(28 * (active ? bar : 0.2)))}
+          height={Math.max(MIN_BAR_HEIGHT, Math.round(MAX_BAR_HEIGHT * (active ? bar : 0.2)))}
           width="x1"
         />
       ))}

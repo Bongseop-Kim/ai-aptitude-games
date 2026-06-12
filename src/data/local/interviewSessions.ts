@@ -28,9 +28,12 @@ type InterviewSessionRow = {
   mock_exam_id: string | null;
 };
 
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+
 function toLocalDateLabel(sqliteUtcDatetime: string) {
-  const date = new Date(`${sqliteUtcDatetime.replace(' ', 'T')}Z`);
-  return `${date.getMonth() + 1}월 ${date.getDate()}일`;
+  const utcTime = new Date(`${sqliteUtcDatetime.replace(' ', 'T')}Z`).getTime();
+  const kstDate = new Date(utcTime + KST_OFFSET_MS);
+  return `${kstDate.getUTCMonth() + 1}월 ${kstDate.getUTCDate()}일`;
 }
 
 function formatDuration(durationMs: number) {
@@ -40,12 +43,26 @@ function formatDuration(durationMs: number) {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
+function validateInterviewSessionInput(input: InterviewSessionInput) {
+  if (!Number.isFinite(input.score) || input.score < 0 || input.score > 100) {
+    throw new Error('Interview session score must be a number between 0 and 100.');
+  }
+  if (!Number.isInteger(input.questionCount) || input.questionCount <= 0) {
+    throw new Error('Interview session questionCount must be a positive integer.');
+  }
+  if (!Number.isFinite(input.durationMs) || input.durationMs < 0) {
+    throw new Error('Interview session durationMs must be a non-negative number.');
+  }
+}
+
 export async function insertInterviewSession(
   db: SQLiteDatabase,
   userId: string,
   input: InterviewSessionInput,
   options: InterviewSessionOptions = {},
 ) {
+  validateInterviewSessionInput(input);
+
   const id = options.id ?? Crypto.randomUUID();
   const columns = ['id', 'user_id', 'company', 'role', 'score', 'question_count', 'duration_ms'];
   const values = [

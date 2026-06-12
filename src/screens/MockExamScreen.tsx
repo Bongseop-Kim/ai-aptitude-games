@@ -124,7 +124,7 @@ export function MockExamScreen() {
       return;
     }
 
-    router.push({ pathname: '/games/[id]', params: { id: itemKey, mockExamSessionId: session.id } });
+    router.push({ pathname: '/games/[id]', params: { id: itemKey, mockExamSessionId: session.id } } as never);
   }
 
   if (activeSession.isLoading) {

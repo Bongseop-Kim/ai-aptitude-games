@@ -26,6 +26,7 @@ import { Box } from '../design-system/components/Box';
 import { Grid } from '../design-system/components/Grid';
 import { HStack, VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
+import { useDesignSystemTheme } from '../design-system/provider';
 import type { MockExamRecord, ReportSectionKey } from '../domain/types';
 
 const coverFeatureSections = reportDetailSections.slice(1);
@@ -63,6 +64,7 @@ function previousRecordFor(record: MockExamRecord, records: MockExamRecord[]) {
 export function ReportDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { theme } = useDesignSystemTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const recordId = typeof id === 'string' ? id : null;
   const { data: record, isLoading } = useMockExamRecord(recordId);
@@ -84,7 +86,7 @@ export function ReportDetailScreen() {
       />
       <Box flex={1} bleedBottom="spacingY.componentDefault" bleedX="spacingX.globalGutter">
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + 16 }}
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + theme.dimension.spacingX.globalGutter }}
           showsVerticalScrollIndicator={false}
         >
           <Box px="spacingX.globalGutter" py="x3">
@@ -156,7 +158,7 @@ function LockedReportSection({ locked, children }: LockedReportSectionProps) {
   }
 
   return (
-    <Box minHeight={240} position="relative">
+    <Box minHeight="x60" position="relative">
       <Box style={{ opacity: 0.18 }}>
         {children}
       </Box>

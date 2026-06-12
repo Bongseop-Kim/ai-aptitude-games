@@ -4,18 +4,26 @@ import {
   resolveColor,
   resolveLength,
   resolveRadius,
+  type TokenLength,
 } from '../../design-system/components/style-props';
 import { useDesignSystemTheme } from '../../design-system/provider';
 
 export type TextAreaProps = Omit<TextInputProps, 'multiline' | 'style'> & {
-  height?: number;
+  height?: TokenLength;
 };
 
-export function TextArea({ height = 136, placeholderTextColor, ...props }: TextAreaProps) {
+const DEFAULT_TEXT_AREA_HEIGHT: TokenLength = 'x34';
+const DEFAULT_TEXT_AREA_HEIGHT_PX = 136;
+const DEFAULT_TEXT_AREA_PADDING = 12;
+
+export function TextArea({ height = DEFAULT_TEXT_AREA_HEIGHT, placeholderTextColor, ...props }: TextAreaProps) {
   const { fontFamily, fontsLoaded, theme } = useDesignSystemTheme();
   const resolvedFontFamily = fontsLoaded ? fontFamily?.regular : undefined;
   const padding = resolveLength(theme, 'x3');
-  const resolvedPadding = typeof padding === 'number' ? padding : 12;
+  const resolvedHeight = resolveLength(theme, height);
+  const resolvedNumericHeight =
+    typeof resolvedHeight === 'number' ? resolvedHeight : DEFAULT_TEXT_AREA_HEIGHT_PX;
+  const resolvedPadding = typeof padding === 'number' ? padding : DEFAULT_TEXT_AREA_PADDING;
 
   return (
     <TextInput
@@ -31,7 +39,7 @@ export function TextArea({ height = 136, placeholderTextColor, ...props }: TextA
         fontFamily: resolvedFontFamily,
         fontSize: theme.fontSize.t5,
         fontWeight: resolvedFontFamily ? undefined : theme.fontWeight.regular,
-        height,
+        height: resolvedNumericHeight,
         lineHeight: theme.lineHeight.t5,
         paddingHorizontal: resolvedPadding,
         paddingVertical: resolvedPadding,

@@ -10,11 +10,11 @@ import { pushUnsyncedMockExamResultItems } from './mockExamResultItemsSync';
 import { pushUnsyncedMockExamResults } from './mockExamResultsSync';
 
 async function pushAllUnsynced(db: ReturnType<typeof useSQLiteContext>, userId: string) {
-  await pushUnsyncedGameResults(db, userId);
-  await pushUnsyncedGameResultRounds(db, userId);
   await pushUnsyncedMockExamResults(db, userId);
-  await pushUnsyncedMockExamResultItems(db, userId);
+  await pushUnsyncedGameResults(db, userId);
   await pushUnsyncedInterviewSessions(db, userId);
+  await pushUnsyncedGameResultRounds(db, userId);
+  await pushUnsyncedMockExamResultItems(db, userId);
 }
 
 /**

@@ -51,9 +51,9 @@ export function InterviewScreen() {
           title="지난 면접"
           actionLabel="전체"
           actionAccessibilityLabel="지난 면접 전체 보기"
-          onActionPress={() => router.push('/reports')}
+          onActionPress={() => router.push('/reports' as never)}
         />
-        <Box minHeight={156}>
+        <Box minHeight="x39">
           {isLoading ? <InterviewSessionSkeletonList /> : null}
           {!isLoading && sessions.length === 0 ? <EmptyInterviewSessions /> : null}
           {!isLoading && sessions.length > 0 ? (

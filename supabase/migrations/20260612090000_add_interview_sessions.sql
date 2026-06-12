@@ -7,6 +7,7 @@ create table "public"."interview_sessions" (
   "question_count" integer not null,
   "duration_ms" integer not null,
   "created_at" timestamp with time zone not null,
+  "synced" boolean not null default false,
   "synced_at" timestamp with time zone not null default now()
 );
 
@@ -25,6 +26,8 @@ alter table "public"."interview_sessions" validate constraint "interview_session
 grant insert on table "public"."interview_sessions" to "authenticated";
 
 grant select on table "public"."interview_sessions" to "authenticated";
+
+grant update on table "public"."interview_sessions" to "authenticated";
 
 grant delete on table "public"."interview_sessions" to "service_role";
 
@@ -67,3 +70,11 @@ as permissive
 for select
 to authenticated
 using ((( SELECT auth.uid() AS uid) = user_id));
+
+create policy "users can update own interview sessions"
+on "public"."interview_sessions"
+as permissive
+for update
+to authenticated
+using ((( SELECT auth.uid() AS uid) = user_id))
+with check ((( SELECT auth.uid() AS uid) = user_id));

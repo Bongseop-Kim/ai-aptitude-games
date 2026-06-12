@@ -1,7 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 export const LOCAL_DB_NAME = 'ai-aptitude-games.db';
-export const LOCAL_DB_SCHEMA_VERSION = 8;
+export const LOCAL_DB_SCHEMA_VERSION = 9;
 
 type SchemaVersionRow = {
   version: number;
@@ -136,19 +136,43 @@ const migrations: readonly { version: number; sql: string }[] = [
         synced INTEGER NOT NULL DEFAULT 0
       );
       CREATE INDEX idx_game_result_rounds_result_id ON game_result_rounds (result_id);
+      CREATE UNIQUE INDEX idx_game_result_rounds_result_round ON game_result_rounds (result_id, round_index);
       CREATE INDEX idx_game_result_rounds_unsynced ON game_result_rounds (user_id) WHERE synced = 0;
 
       CREATE TABLE mock_exam_result_items (
         mock_exam_id TEXT NOT NULL,
         item_key TEXT NOT NULL,
         user_id TEXT NOT NULL,
-        result_id TEXT NOT NULL,
+        game_result_id TEXT,
+        interview_session_id TEXT,
         score INTEGER NOT NULL,
         duration_ms INTEGER NOT NULL,
         completed_at TEXT NOT NULL,
         synced INTEGER NOT NULL DEFAULT 0,
-        PRIMARY KEY (mock_exam_id, item_key)
+        PRIMARY KEY (mock_exam_id, item_key),
+        CHECK ((game_result_id IS NOT NULL) != (interview_session_id IS NOT NULL))
       );
+      CREATE INDEX idx_mock_exam_result_items_unsynced ON mock_exam_result_items (user_id) WHERE synced = 0;
+    `,
+  },
+  {
+    version: 9,
+    sql: `
+      DROP TABLE IF EXISTS mock_exam_result_items;
+      CREATE TABLE mock_exam_result_items (
+        mock_exam_id TEXT NOT NULL,
+        item_key TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        game_result_id TEXT,
+        interview_session_id TEXT,
+        score INTEGER NOT NULL,
+        duration_ms INTEGER NOT NULL,
+        completed_at TEXT NOT NULL,
+        synced INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (mock_exam_id, item_key),
+        CHECK ((game_result_id IS NOT NULL) != (interview_session_id IS NOT NULL))
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_game_result_rounds_result_round ON game_result_rounds (result_id, round_index);
       CREATE INDEX idx_mock_exam_result_items_unsynced ON mock_exam_result_items (user_id) WHERE synced = 0;
     `,
   },

@@ -132,7 +132,7 @@ function ReadinessSummary() {
         </VStack>
       </HStack>
       <Box bg="stroke.neutralWeak" height="x0_5" />
-      <Pressable accessibilityLabel="지난 리포트 보기" accessibilityRole="button" onPress={() => router.push('/reports')}>
+      <Pressable accessibilityLabel="지난 리포트 보기" accessibilityRole="button" onPress={() => router.push('/reports' as never)}>
         <HStack align="center" justify="spaceBetween">
           <Text color="fg.neutralMuted" textStyle="t3Medium">
             지난 리포트 보기
@@ -154,7 +154,7 @@ function InterviewHero() {
         <Pressable
           accessibilityLabel="실전 면접 시작하기"
           accessibilityRole="button"
-          onPress={() => router.push('/interview')}
+          onPress={() => router.push('/interview' as never)}
         >
           <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" flex={1} gap="x3" p="x3">
             <Box alignItems="center" bg="bg.layerDefault" borderRadius="r3" height="x12" justifyContent="center" width="x12">
@@ -181,7 +181,7 @@ function InterviewHero() {
 function DailyChallenge() {
   const colors = toneColors[challengeGame.tone];
   const router = useRouter();
-  const openChallenge = () => router.push({ pathname: '/games/[id]', params: { id: challengeGame.id } });
+  const openChallenge = () => router.push({ pathname: '/games/[id]', params: { id: challengeGame.id } } as never);
 
   return (
     <VStack flex={1} gap="x2">
@@ -218,7 +218,7 @@ function DailyChallenge() {
 function AllGamesSection() {
   const router = useRouter();
   const gamesWithProgress = useGamesWithProgress();
-  const openGame = (id: GameId) => router.push({ pathname: '/games/[id]', params: { id } });
+  const openGame = (id: GameId) => router.push({ pathname: '/games/[id]', params: { id } } as never);
 
   return (
     <VStack gap="x2">

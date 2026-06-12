@@ -10,6 +10,7 @@ import { Card } from '../components/ui/Card';
 import { Skeleton } from '../components/ui/Skeleton';
 import { useInterviewSession } from '../data/local/useInterviewSessions';
 import { Box } from '../design-system/components/Box';
+import { useDesignSystemTheme } from '../design-system/provider';
 import { VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
 
@@ -23,6 +24,7 @@ export function InterviewDetailScreen() {
   const recordId = typeof id === 'string' ? id : null;
   const { data: session, isLoading } = useInterviewSession(recordId);
   const canUseActions = !isLoading && Boolean(session);
+  const { theme } = useDesignSystemTheme();
 
   function goRetry() {
     router.push({ pathname: '/interview/new', params: { mode: 'retry' } } as never);
@@ -42,7 +44,10 @@ export function InterviewDetailScreen() {
         } : undefined}
       />
       <Box flex={1} bleedX="spacingX.globalGutter">
-        <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 16 }} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: theme.dimension.spacingX.globalGutter }}
+          showsVerticalScrollIndicator={false}
+        >
           <Box px="spacingX.globalGutter" py="x3">
             {isLoading ? <InterviewDetailSkeleton /> : null}
             {!isLoading && !session ? <MissingInterviewSession onBack={() => router.back()} /> : null}

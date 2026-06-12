@@ -14,7 +14,8 @@ create table "public"."mock_exam_result_items" (
   "mock_exam_id" uuid not null,
   "item_key" text not null,
   "user_id" uuid not null,
-  "result_id" uuid not null,
+  "game_result_id" uuid,
+  "interview_session_id" uuid,
   "score" integer not null,
   "duration_ms" integer not null,
   "completed_at" timestamp with time zone not null,
@@ -29,11 +30,17 @@ CREATE UNIQUE INDEX game_result_rounds_pkey ON public.game_result_rounds USING b
 
 CREATE INDEX game_result_rounds_result_id_idx ON public.game_result_rounds USING btree (result_id);
 
+CREATE UNIQUE INDEX game_result_rounds_result_id_round_index_key ON public.game_result_rounds USING btree (result_id, round_index);
+
 CREATE UNIQUE INDEX mock_exam_result_items_pkey ON public.mock_exam_result_items USING btree (mock_exam_id, item_key);
 
-CREATE INDEX mock_exam_result_items_result_id_idx ON public.mock_exam_result_items USING btree (result_id);
+CREATE INDEX mock_exam_result_items_game_result_id_idx ON public.mock_exam_result_items USING btree (game_result_id) WHERE game_result_id IS NOT NULL;
+
+CREATE INDEX mock_exam_result_items_interview_session_id_idx ON public.mock_exam_result_items USING btree (interview_session_id) WHERE interview_session_id IS NOT NULL;
 
 alter table "public"."game_result_rounds" add constraint "game_result_rounds_pkey" PRIMARY KEY using index "game_result_rounds_pkey";
+
+alter table "public"."game_result_rounds" add constraint "game_result_rounds_result_id_round_index_key" UNIQUE using index "game_result_rounds_result_id_round_index_key";
 
 alter table "public"."mock_exam_result_items" add constraint "mock_exam_result_items_pkey" PRIMARY KEY using index "mock_exam_result_items_pkey";
 
@@ -48,6 +55,18 @@ alter table "public"."game_result_rounds" validate constraint "game_result_round
 alter table "public"."mock_exam_result_items" add constraint "mock_exam_result_items_mock_exam_id_fkey" FOREIGN KEY (mock_exam_id) REFERENCES public.mock_exam_results(id) ON DELETE CASCADE not valid;
 
 alter table "public"."mock_exam_result_items" validate constraint "mock_exam_result_items_mock_exam_id_fkey";
+
+alter table "public"."mock_exam_result_items" add constraint "mock_exam_result_items_game_result_id_fkey" FOREIGN KEY (game_result_id) REFERENCES public.game_results(id) ON DELETE CASCADE not valid;
+
+alter table "public"."mock_exam_result_items" validate constraint "mock_exam_result_items_game_result_id_fkey";
+
+alter table "public"."mock_exam_result_items" add constraint "mock_exam_result_items_interview_session_id_fkey" FOREIGN KEY (interview_session_id) REFERENCES public.interview_sessions(id) ON DELETE CASCADE not valid;
+
+alter table "public"."mock_exam_result_items" validate constraint "mock_exam_result_items_interview_session_id_fkey";
+
+alter table "public"."mock_exam_result_items" add constraint "mock_exam_result_items_one_result_reference_check" CHECK (((game_result_id IS NOT NULL) AND (interview_session_id IS NULL)) OR ((game_result_id IS NULL) AND (interview_session_id IS NOT NULL))) not valid;
+
+alter table "public"."mock_exam_result_items" validate constraint "mock_exam_result_items_one_result_reference_check";
 
 alter table "public"."mock_exam_result_items" add constraint "mock_exam_result_items_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
 

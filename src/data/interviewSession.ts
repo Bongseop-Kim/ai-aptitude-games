@@ -113,6 +113,17 @@ export const interviewQuestions: readonly InterviewQuestion[] = [
 ];
 
 export function getAxisAverages(questions = interviewQuestions) {
+  const zeroes: Record<InterviewAxisKey, number> = {
+    content: 0,
+    star: 0,
+    voice: 0,
+    gaze: 0,
+    delivery: 0,
+  };
+  if (!questions.length) {
+    return zeroes;
+  }
+
   const sums: Record<InterviewAxisKey, number> = {
     content: 0,
     star: 0,
@@ -130,7 +141,7 @@ export function getAxisAverages(questions = interviewQuestions) {
   return axisKeys.reduce<Record<InterviewAxisKey, number>>((result, key) => {
     result[key] = Math.round(sums[key] / questions.length);
     return result;
-  }, { content: 0, star: 0, voice: 0, gaze: 0, delivery: 0 });
+  }, zeroes);
 }
 
 

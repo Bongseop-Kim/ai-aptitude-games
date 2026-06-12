@@ -16,8 +16,8 @@ export type SheetProps = {
 export function Sheet({ visible, title, subtitle, onClose, children }: SheetProps) {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Box flex={1} justifyContent="flexEnd">
-        <Pressable accessibilityRole="button" onPress={onClose}>
+      <Box flex={1}>
+        <Pressable accessibilityRole="button" style={{ flex: 1 }} onPress={onClose}>
           <Box bg="bg.overlay" flex={1} />
         </Pressable>
         <Box

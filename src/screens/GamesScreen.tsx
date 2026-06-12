@@ -56,7 +56,7 @@ export function GamesScreen() {
             {index > 0 ? <List.Divider /> : null}
             <GameListRow
               game={game}
-              onPress={() => router.push({ pathname: '/games/[id]', params: { id: game.id } })}
+              onPress={() => router.push({ pathname: '/games/[id]', params: { id: game.id } } as never)}
             />
           </Fragment>
         ))}

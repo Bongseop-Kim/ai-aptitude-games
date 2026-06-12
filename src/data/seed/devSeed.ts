@@ -100,7 +100,8 @@ function buildSeedGameInput(gameId: GameId) {
 
 type SeedExamItem = {
   itemKey: GameId | 'interview';
-  resultId: string;
+  gameResultId?: string;
+  interviewSessionId?: string;
   score: number;
   durationMs: number;
   completedAt: string;
@@ -118,15 +119,17 @@ async function insertSeedExamItems(
         mock_exam_id,
         item_key,
         user_id,
-        result_id,
+        game_result_id,
+        interview_session_id,
         score,
         duration_ms,
         completed_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       mockExamId,
       item.itemKey,
       userId,
-      item.resultId,
+      item.gameResultId ?? null,
+      item.interviewSessionId ?? null,
       item.score,
       item.durationMs,
       item.completedAt,
@@ -139,64 +142,66 @@ async function seedMockExamRound(
   userId: string,
   options: { startedAt: Date; pro: boolean },
 ) {
-  const mockExamId = Crypto.randomUUID();
-  const items: SeedExamItem[] = [];
-  let itemTime = options.startedAt.getTime();
+  await db.withTransactionAsync(async () => {
+    const mockExamId = Crypto.randomUUID();
+    const items: SeedExamItem[] = [];
+    let itemTime = options.startedAt.getTime();
 
-  for (const game of games) {
-    const input = buildSeedGameInput(game.id);
-    const durationMs = randomInt(60, 180) * 1000;
-    itemTime += durationMs + randomInt(10, 40) * 1000;
-    const completedAt = formatSqliteUtc(new Date(itemTime));
-    const resultId = await insertGameResult(db, userId, input, {
-      mockExamId,
-      createdAt: completedAt,
-    });
-    items.push({ itemKey: game.id, resultId, score: input.score, durationMs, completedAt });
-  }
+    for (const game of games) {
+      const input = buildSeedGameInput(game.id);
+      const durationMs = randomInt(60, 180) * 1000;
+      itemTime += durationMs + randomInt(10, 40) * 1000;
+      const completedAt = formatSqliteUtc(new Date(itemTime));
+      const resultId = await insertGameResult(db, userId, input, {
+        mockExamId,
+        createdAt: completedAt,
+      });
+      items.push({ itemKey: game.id, gameResultId: resultId, score: input.score, durationMs, completedAt });
+    }
 
-  const gameScoreAverage =
-    items.reduce((sum, item) => sum + item.score, 0) / items.length;
-  const interviewScore = clamp(Math.round(gameScoreAverage) + randomInt(-8, 8), 40, 100);
-  const interviewDurationMs = randomInt(6, 10) * MINUTE_MS + randomInt(0, 45) * 1000;
-  itemTime += interviewDurationMs + randomInt(10, 40) * 1000;
-  const interviewCompletedAt = formatSqliteUtc(new Date(itemTime));
-  const interviewId = Crypto.randomUUID();
+    const gameScoreAverage =
+      items.reduce((sum, item) => sum + item.score, 0) / items.length;
+    const interviewScore = clamp(Math.round(gameScoreAverage) + randomInt(-8, 8), 40, 100);
+    const interviewDurationMs = randomInt(6, 10) * MINUTE_MS + randomInt(0, 45) * 1000;
+    itemTime += interviewDurationMs + randomInt(10, 40) * 1000;
+    const interviewCompletedAt = formatSqliteUtc(new Date(itemTime));
+    const interviewId = Crypto.randomUUID();
 
-  await insertInterviewSession(
-    db,
-    userId,
-    {
-      company: mockJobPosting.company,
-      role: mockJobPosting.role,
+    await insertInterviewSession(
+      db,
+      userId,
+      {
+        company: mockJobPosting.company,
+        role: mockJobPosting.role,
+        score: interviewScore,
+        questionCount: 8,
+        durationMs: interviewDurationMs,
+      },
+      { id: interviewId, createdAt: interviewCompletedAt, mockExamId },
+    );
+    items.push({
+      itemKey: 'interview',
+      interviewSessionId: interviewId,
       score: interviewScore,
-      questionCount: 8,
       durationMs: interviewDurationMs,
-    },
-    { id: interviewId, createdAt: interviewCompletedAt, mockExamId },
-  );
-  items.push({
-    itemKey: 'interview',
-    resultId: interviewId,
-    score: interviewScore,
-    durationMs: interviewDurationMs,
-    completedAt: interviewCompletedAt,
+      completedAt: interviewCompletedAt,
+    });
+
+    const totalScore = items.reduce((sum, item) => sum + item.score, 0);
+    const totalDurationMs = items.reduce((sum, item) => sum + item.durationMs, 0);
+
+    await insertMockExamResult(
+      db,
+      userId,
+      {
+        score: Math.round(totalScore / items.length),
+        durationMs: totalDurationMs,
+        pro: options.pro,
+      },
+      { id: mockExamId, createdAt: interviewCompletedAt },
+    );
+    await insertSeedExamItems(db, userId, mockExamId, items);
   });
-
-  const totalScore = items.reduce((sum, item) => sum + item.score, 0);
-  const totalDurationMs = items.reduce((sum, item) => sum + item.durationMs, 0);
-
-  await insertMockExamResult(
-    db,
-    userId,
-    {
-      score: Math.round(totalScore / items.length),
-      durationMs: totalDurationMs,
-      pro: options.pro,
-    },
-    { id: mockExamId, createdAt: interviewCompletedAt },
-  );
-  await insertSeedExamItems(db, userId, mockExamId, items);
 }
 
 export async function seedDevData(db: SQLiteDatabase, userId: string): Promise<DevSeedSummary> {

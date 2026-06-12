@@ -6,7 +6,8 @@ type UnsyncedMockExamResultItemRow = {
   mock_exam_id: string;
   item_key: string;
   user_id: string;
-  result_id: string;
+  game_result_id: string | null;
+  interview_session_id: string | null;
   score: number;
   duration_ms: number;
   completed_at: string;
@@ -42,7 +43,7 @@ export async function pushUnsyncedMockExamResultItems(db: SQLiteDatabase, userId
 
   try {
     const rows = await db.getAllAsync<UnsyncedMockExamResultItemRow>(
-      `SELECT mock_exam_id, item_key, user_id, result_id, score, duration_ms, completed_at
+      `SELECT mock_exam_id, item_key, user_id, game_result_id, interview_session_id, score, duration_ms, completed_at
        FROM mock_exam_result_items
        WHERE synced = 0 AND user_id = ?`,
       userId,
@@ -55,7 +56,8 @@ export async function pushUnsyncedMockExamResultItems(db: SQLiteDatabase, userId
       mock_exam_id: row.mock_exam_id,
       item_key: row.item_key,
       user_id: row.user_id,
-      result_id: row.result_id,
+      game_result_id: row.game_result_id,
+      interview_session_id: row.interview_session_id,
       score: row.score,
       duration_ms: row.duration_ms,
       completed_at: toIsoUtc(row.completed_at),

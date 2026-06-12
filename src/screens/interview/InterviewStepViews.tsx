@@ -357,7 +357,7 @@ export function RecordStepView({
           </HStack>
           <StarGuide />
         </VStack>
-        <Card bg={mode === 'ready' ? 'bg.brandWeak' : 'bg.layerFloating'} borderColor={mode === 'ready' ? 'stroke.brandWeak' : 'stroke.neutralSubtle'} minHeight={142} p="x3">
+        <Card bg={mode === 'ready' ? 'bg.brandWeak' : 'bg.layerFloating'} borderColor={mode === 'ready' ? 'stroke.brandWeak' : 'stroke.neutralSubtle'} minHeight="x35_5" p="x3">
           {mode === 'ready' ? (
             <VStack gap="x2">
               <HStack align="center" gap="x1_5">
