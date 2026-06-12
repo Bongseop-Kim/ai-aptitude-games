@@ -47,6 +47,7 @@ export type ReportSectionKey =
   | 'cover'
   | 'radar'
   | 'highlights'
+  | 'interview'
   | 'resilience'
   | 'pattern'
   | 'peer'
@@ -84,6 +85,7 @@ export type InterviewSessionRecord = {
   questionCount: number;
   duration: string;
   durationMs: number;
+  mockExamId: string | null;
 };
 
 export type SubscriptionPlan = {

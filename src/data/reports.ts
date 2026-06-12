@@ -25,6 +25,7 @@ export const reportDetailSections: ReportDetailSection[] = [
   { key: 'cover', title: '종합 리포트', locked: false },
   { key: 'radar', title: '5대 역량 프로필', locked: false },
   { key: 'highlights', title: '강점 · 약점 Top 3', locked: false },
+  { key: 'interview', title: 'AI 면접 피드백', locked: false },
   { key: 'resilience', title: '스트레스 복원력', locked: true },
   { key: 'pattern', title: '응답 패턴 프로필', locked: true },
   { key: 'peer', title: '또래 비교 · 성장 추이', locked: false },

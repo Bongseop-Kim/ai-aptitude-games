@@ -17,11 +17,18 @@ import type { Game } from '../../domain/types';
 export type GameResultScreenProps = {
   game: Game;
   result: GameResultInput;
-  onRetry: () => void;
+  onRetry?: () => void;
   onExit: () => void;
+  exitLabel?: string;
 };
 
-export function GameResultScreen({ game, result, onRetry, onExit }: GameResultScreenProps) {
+export function GameResultScreen({
+  game,
+  result,
+  onRetry,
+  onExit,
+  exitLabel = '게임 목록',
+}: GameResultScreenProps) {
   const content = gameContent[game.id];
   const colors = toneColors[game.tone];
 
@@ -76,8 +83,8 @@ export function GameResultScreen({ game, result, onRetry, onExit }: GameResultSc
         ) : null}
       </Body>
       <BottomActionBar
-        secondary={{ label: '다시', tone: 'neutral', onPress: onRetry }}
-        primary={{ label: '게임 목록', iconRight: 'ArrowRight', onPress: onExit }}
+        secondary={onRetry ? { label: '다시', tone: 'neutral', onPress: onRetry } : undefined}
+        primary={{ label: exitLabel, iconRight: 'ArrowRight', onPress: onExit }}
       />
     </Screen>
   );

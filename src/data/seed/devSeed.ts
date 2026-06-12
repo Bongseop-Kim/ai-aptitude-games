@@ -1,3 +1,4 @@
+import * as Crypto from 'expo-crypto';
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { clamp } from '../../domain/games/random';
@@ -111,17 +112,33 @@ export async function seedDevData(db: SQLiteDatabase, userId: string): Promise<D
 
   const existingMockExamCount = await getMockExamResultCount(db, userId);
   if (existingMockExamCount > 0) {
+    const proExamScore = randomInt(55, 95);
+    const proExamCreatedAt = formatSqliteUtc(new Date());
+    const proMockExamId = Crypto.randomUUID();
+
     await insertMockExamResult(
       db,
       userId,
       {
-        score: randomInt(55, 95),
+        score: proExamScore,
         durationMs: randomInt(19, 27) * MINUTE_MS,
         pro: true,
       },
-      { createdAt: formatSqliteUtc(new Date()) },
+      { id: proMockExamId, createdAt: proExamCreatedAt },
     );
-    return { gameResults, mockExams: 1, interviews };
+    await insertInterviewSession(
+      db,
+      userId,
+      {
+        company: mockJobPosting.company,
+        role: mockJobPosting.role,
+        score: clamp(proExamScore + randomInt(-8, 8), 40, 100),
+        questionCount: 8,
+        durationMs: randomInt(6, 10) * MINUTE_MS + randomInt(0, 45) * 1000,
+      },
+      { createdAt: proExamCreatedAt, mockExamId: proMockExamId },
+    );
+    return { gameResults, mockExams: 1, interviews: interviews + 1 };
   }
 
   let score = randomInt(58, 65);
@@ -129,6 +146,9 @@ export async function seedDevData(db: SQLiteDatabase, userId: string): Promise<D
     if (round > 0) {
       score = clamp(score + randomInt(-3, 8), 40, 100);
     }
+
+    const createdAt = formatSqliteUtc(weeklyMockExamDate(round));
+    const mockExamId = Crypto.randomUUID();
 
     await insertMockExamResult(
       db,
@@ -138,11 +158,23 @@ export async function seedDevData(db: SQLiteDatabase, userId: string): Promise<D
         durationMs: randomInt(19, 27) * MINUTE_MS,
         pro: round >= 4,
       },
-      { createdAt: formatSqliteUtc(weeklyMockExamDate(round)) },
+      { id: mockExamId, createdAt },
+    );
+    await insertInterviewSession(
+      db,
+      userId,
+      {
+        company: mockJobPosting.company,
+        role: mockJobPosting.role,
+        score: clamp(score + randomInt(-8, 8), 40, 100),
+        questionCount: 8,
+        durationMs: randomInt(6, 10) * MINUTE_MS + randomInt(0, 45) * 1000,
+      },
+      { createdAt, mockExamId },
     );
   }
 
-  return { gameResults, mockExams: 6, interviews };
+  return { gameResults, mockExams: 6, interviews: interviews + 6 };
 }
 
 export async function clearAllLocalData(db: SQLiteDatabase) {

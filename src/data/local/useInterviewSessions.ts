@@ -47,6 +47,23 @@ export function useInterviewSession(id: string | null) {
   });
 }
 
+export function useInterviewSessionForMockExam(mockExamId: string | null) {
+  const db = useSQLiteContext();
+  const { userId } = useAuth();
+
+  return useQuery({
+    queryKey: interviewSessionKeys.records(userId),
+    queryFn: () => {
+      if (!userId) {
+        throw new Error('Cannot load interview sessions without an authenticated user.');
+      }
+      return getInterviewSessionRecords(db, userId);
+    },
+    enabled: userId != null && mockExamId != null,
+    select: (records) => records.find((record) => record.mockExamId === mockExamId) ?? null,
+  });
+}
+
 export function useSaveInterviewSession() {
   const db = useSQLiteContext();
   const queryClient = useQueryClient();

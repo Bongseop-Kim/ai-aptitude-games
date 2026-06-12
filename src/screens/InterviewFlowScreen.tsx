@@ -8,6 +8,7 @@ import { StepProgress, type RecordMode, type UploadMode } from '../components/in
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { mockJobPosting, mockResume } from '../data/interviewFlow';
+import { useCompleteMockExamInterviewItem } from '../data/local/useMockExamSession';
 import { useSaveInterviewSession } from '../data/local/useInterviewSessions';
 import { getOverallInterviewScore, getWeakInterviewQuestions, interviewQuestions } from '../data/interviewSession';
 import type { InterviewQuestion } from '../data/interviewSession';
@@ -47,7 +48,7 @@ const phaseStepKey: Record<FlowPhase, 'resume' | 'job' | 'analysis' | 'record' |
 export function InterviewFlowScreen() {
   const router = useRouter();
   const navigation = useNavigation();
-  const { mode } = useLocalSearchParams<{ mode?: string }>();
+  const { mode, mockExamSessionId } = useLocalSearchParams<{ mode?: string; mockExamSessionId?: string }>();
   const initialRetry = mode === 'retry';
   const [phase, setPhase] = useState<FlowPhase>(initialRetry ? 'retry' : 'resume');
   const [isRetryRun, setIsRetryRun] = useState(initialRetry);
@@ -70,9 +71,12 @@ export function InterviewFlowScreen() {
   const [totalSeconds, setTotalSeconds] = useState(0);
   const [flowStartedAt, setFlowStartedAt] = useState(() => Date.now());
   const saveInterviewSession = useSaveInterviewSession();
+  const completeMockExamInterviewItem = useCompleteMockExamInterviewItem();
 
   const questions: readonly InterviewQuestion[] = isRetryRun ? getWeakInterviewQuestions() : interviewQuestions;
   const currentQuestion = questions[questionIndex] ?? questions[0];
+  const sessionId = typeof mockExamSessionId === 'string' ? mockExamSessionId : null;
+  const isMockExamMode = sessionId != null;
 
   useEffect(() => {
     if (phase !== 'record') {
@@ -215,13 +219,21 @@ export function InterviewFlowScreen() {
 
     try {
       const durationMs = Math.max(1000, Date.now() - flowStartedAt);
-      const id = await saveInterviewSession.mutateAsync({
+      const input = {
         company: mockJobPosting.company,
         role: mockJobPosting.role,
         score: getOverallInterviewScore(),
         questionCount: interviewQuestions.length,
         durationMs,
-      });
+      };
+
+      if (isMockExamMode) {
+        await completeMockExamInterviewItem.mutateAsync({ input, sessionId });
+        router.back();
+        return;
+      }
+
+      const id = await saveInterviewSession.mutateAsync(input);
       router.replace({ pathname: '/interview/[id]', params: { id } } as never);
     } catch {
       Alert.alert('면접을 저장하지 못했어요', '잠시 후 다시 시도해주세요.');
@@ -323,7 +335,8 @@ export function InterviewFlowScreen() {
           retry={isRetryRun}
           questionCount={questions.length}
           totalSeconds={totalSeconds}
-          saving={saveInterviewSession.isPending}
+          saving={saveInterviewSession.isPending || completeMockExamInterviewItem.isPending}
+          feedbackLabel={isMockExamMode ? '모의고사로 돌아가기' : undefined}
           onFeedback={openFeedback}
         />
       ) : null}

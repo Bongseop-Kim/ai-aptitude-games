@@ -1,7 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 export const LOCAL_DB_NAME = 'ai-aptitude-games.db';
-export const LOCAL_DB_SCHEMA_VERSION = 6;
+export const LOCAL_DB_SCHEMA_VERSION = 7;
 
 type SchemaVersionRow = {
   version: number;
@@ -87,6 +87,32 @@ const migrations: readonly { version: number; sql: string }[] = [
         synced INTEGER NOT NULL DEFAULT 0
       );
       CREATE INDEX IF NOT EXISTS idx_interview_sessions_unsynced ON interview_sessions (user_id) WHERE synced = 0;
+    `,
+  },
+  {
+    version: 7,
+    sql: `
+      -- Local-only in-progress sessions; final records sync through mock_exam_results.
+      CREATE TABLE mock_exam_sessions (
+        id TEXT PRIMARY KEY NOT NULL,
+        user_id TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      CREATE UNIQUE INDEX idx_mock_exam_sessions_user ON mock_exam_sessions (user_id);
+
+      -- Local-only completion tracker; synced is intentionally omitted.
+      CREATE TABLE mock_exam_session_items (
+        session_id TEXT NOT NULL,
+        item_key TEXT NOT NULL,
+        result_id TEXT NOT NULL,
+        score INTEGER NOT NULL,
+        duration_ms INTEGER NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        PRIMARY KEY (session_id, item_key)
+      );
+
+      ALTER TABLE game_results ADD COLUMN mock_exam_id TEXT;
+      ALTER TABLE interview_sessions ADD COLUMN mock_exam_id TEXT;
     `,
   },
 ];

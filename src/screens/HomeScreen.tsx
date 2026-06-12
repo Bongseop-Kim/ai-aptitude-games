@@ -19,6 +19,7 @@ import { ncsJob } from '../data/interview';
 import { mockJobPosting } from '../data/interviewFlow';
 import { getOverallInterviewScore } from '../data/interviewSession';
 import { useGamesWithProgress } from '../data/local/useGameResults';
+import { useActiveMockExamSession } from '../data/local/useMockExamSession';
 import { user } from '../data/user';
 import { toneColors } from '../domain/tone';
 import type { GameId } from '../domain/types';
@@ -232,8 +233,18 @@ function AllGamesSection() {
 }
 
 function MockExamCard() {
+  const router = useRouter();
+  const { data: session } = useActiveMockExamSession();
+  const completedCount = session?.items.length ?? 0;
+  const headline = session ? `모의고사 이어하기 · ${completedCount}/10 완료` : '9게임 + AI 면접';
+  const detail = session ? '완료한 항목은 다시 응시할 수 없어요' : '완주하면 5대 역량 리포트가 열려요';
+
   return (
-    <Pressable accessibilityLabel="모의고사 시작" accessibilityRole="button">
+    <Pressable
+      accessibilityLabel={session ? '모의고사 이어하기' : '모의고사 시작'}
+      accessibilityRole="button"
+      onPress={() => router.push({ pathname: '/mock-exam' } as never)}
+    >
       <Card bg="bg.neutralSolid" borderColor="stroke.neutralContrast" borderRadius="r5" p="x4">
         <HStack align="center" gap="x3">
           <Box alignItems="center" bg="bg.brandSolid" borderRadius="r4" height="x13" justifyContent="center" width="x13">
@@ -244,10 +255,10 @@ function MockExamCard() {
               모의고사
             </Text>
             <Text color="fg.neutralInverted" textStyle="t6Bold" maxLines={1}>
-              9게임 연속 · 22분
+              {headline}
             </Text>
             <Text color="fg.neutralSubtle" textStyle="t2Regular" maxLines={1}>
-              완주하면 5대 역량 리포트가 열려요
+              {detail}
             </Text>
           </VStack>
           <Icon name="ChevronRight" color="fg.neutralInverted" />

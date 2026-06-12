@@ -45,6 +45,7 @@ function RootStack() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="mock-exam" />
       <Stack.Screen name="reports/[id]" />
       <Stack.Screen name="games/[id]" options={{ gestureEnabled: false }} />
       <Stack.Screen name="interview/[id]" />

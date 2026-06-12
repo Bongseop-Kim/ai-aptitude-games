@@ -1,11 +1,12 @@
-import { Fragment, useState, type ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 import { Alert, ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
-import { BottomActionBar } from '../components/app/BottomActionBar';
 import { Header } from '../components/app/Header';
 import { SectionHead } from '../components/app/SectionHead';
 import { Screen } from '../components/app/Screen';
+import { FeedbackReportBody } from '../components/interview/FeedbackReportBody';
 import {
   CompetencyRadarChart,
   GrowthTrendChart,
@@ -29,6 +30,7 @@ import {
   reportStrengths,
   type ReportHighlight,
 } from '../data/reports';
+import { useInterviewSessionForMockExam } from '../data/local/useInterviewSessions';
 import { useMockExamRecord, useMockExamRecords } from '../data/local/useMockExamResults';
 import { Box } from '../design-system/components/Box';
 import { Grid } from '../design-system/components/Grid';
@@ -79,100 +81,50 @@ function weakestCompetency(competencies: ReportCompetency[]) {
 
 export function ReportDetailScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const recordId = typeof id === 'string' ? id : null;
-  const [sectionIndex, setSectionIndex] = useState(0);
   const { data: record, isLoading } = useMockExamRecord(recordId);
   const { data: records = [] } = useMockExamRecords();
-  const section = reportDetailSections[sectionIndex];
-  const isLastSection = sectionIndex >= reportDetailSections.length - 1;
-  const locked = Boolean(section.locked && !record?.pro);
   const canUseReportActions = !isLoading && Boolean(record);
 
-  function goNext() {
-    if (!isLastSection) {
-      setSectionIndex((current) => current + 1);
-      return;
-    }
-
-    router.back();
-  }
-
-  function goBack() {
-    if (sectionIndex === 0) {
-      router.back();
-      return;
-    }
-
-    setSectionIndex((current) => current - 1);
-  }
-
   return (
-    <Screen>
+    <Screen safeEdges={['top', 'left', 'right']}>
       <Header
-        title={section.title}
+        title="종합 리포트"
         subtitle={`모의고사 · ${record?.round ?? '-'}회차 리포트`}
         showBack
-        onBack={goBack}
+        onBack={() => router.back()}
         rightAction={canUseReportActions ? {
           icon: 'Share',
           label: '공유',
           onPress: showShareNotice,
         } : undefined}
-      >
-        <ReportDetailProgress sectionIndex={sectionIndex} />
-      </Header>
-      <Box flex={1} bleedX="spacingX.globalGutter">
+      />
+      <Box flex={1} bleedBottom="spacingY.componentDefault" bleedX="spacingX.globalGutter">
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1, paddingBottom: 16 }}
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + 16 }}
           showsVerticalScrollIndicator={false}
         >
           <Box px="spacingX.globalGutter" py="x3">
             {isLoading ? <ReportDetailSkeleton /> : null}
             {!isLoading && !record ? <MissingReport onBack={() => router.back()} /> : null}
             {!isLoading && record ? (
-              <LockedReportSection locked={locked}>
-                <ReportSectionBody sectionKey={section.key} record={record} records={records} />
-              </LockedReportSection>
+              <VStack gap="x8">
+                {reportDetailSections.map((section) => (
+                  <VStack key={section.key} gap="x3">
+                    {section.key !== 'cover' ? <SectionHead title={section.title} /> : null}
+                    <LockedReportSection locked={Boolean(section.locked && !record.pro)}>
+                      <ReportSectionBody sectionKey={section.key} record={record} records={records} />
+                    </LockedReportSection>
+                  </VStack>
+                ))}
+              </VStack>
             ) : null}
           </Box>
         </ScrollView>
       </Box>
-      {canUseReportActions ? (
-        <BottomActionBar
-          secondary={{
-            label: '공유',
-            iconLeft: 'Share',
-            onPress: showShareNotice,
-          }}
-          primary={{
-            label: isLastSection ? '완료' : '다음',
-            iconRight: isLastSection ? 'Check' : 'ArrowRight',
-            onPress: goNext,
-          }}
-        />
-      ) : null}
     </Screen>
-  );
-}
-
-type ReportDetailProgressProps = {
-  sectionIndex: number;
-};
-
-function ReportDetailProgress({ sectionIndex }: ReportDetailProgressProps) {
-  return (
-    <HStack gap="x1">
-      {reportDetailSections.map((item, index) => (
-        <Box
-          key={item.key}
-          bg={index <= sectionIndex ? 'bg.brandSolid' : 'stroke.neutralWeak'}
-          borderRadius="full"
-          flex={1}
-          height="x1"
-        />
-      ))}
-    </HStack>
   );
 }
 
@@ -276,6 +228,8 @@ function ReportSectionBody({ sectionKey, record, records }: ReportSectionBodyPro
       return <RadarSection />;
     case 'highlights':
       return <HighlightsSection />;
+    case 'interview':
+      return <InterviewFeedbackSection mockExamId={record.id} />;
     case 'resilience':
       return <ResilienceSection />;
     case 'pattern':
@@ -509,6 +463,23 @@ function HighlightRow({ item, index, tone }: HighlightRowProps) {
       </List.Suffix>
     </List.Item>
   );
+}
+
+function InterviewFeedbackSection({ mockExamId }: { mockExamId: string }) {
+  const { data: session, isLoading } = useInterviewSessionForMockExam(mockExamId);
+
+  if (isLoading) {
+    return (
+      <VStack gap="x3" minHeight="x16">
+        <Skeleton height="x8" width="full" />
+        <Skeleton borderRadius="r4" height="x16" width="full" />
+        <Skeleton borderRadius="r4" height="x16" width="full" />
+        <Skeleton borderRadius="r4" height="x16" width="full" />
+      </VStack>
+    );
+  }
+
+  return <FeedbackReportBody session={session ?? null} />;
 }
 
 function ResilienceSection() {

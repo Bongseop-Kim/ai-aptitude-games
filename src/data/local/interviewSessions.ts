@@ -14,6 +14,7 @@ export type InterviewSessionInput = {
 type InterviewSessionOptions = {
   id?: string;
   createdAt?: string;
+  mockExamId?: string;
 };
 
 type InterviewSessionRow = {
@@ -24,6 +25,7 @@ type InterviewSessionRow = {
   question_count: number;
   duration_ms: number;
   created_at: string;
+  mock_exam_id: string | null;
 };
 
 function toLocalDateLabel(sqliteUtcDatetime: string) {
@@ -56,6 +58,11 @@ export async function insertInterviewSession(
     input.durationMs,
   ];
 
+  if (options.mockExamId != null) {
+    columns.push('mock_exam_id');
+    values.push(options.mockExamId);
+  }
+
   if (options.createdAt != null) {
     columns.push('created_at');
     values.push(options.createdAt);
@@ -71,7 +78,7 @@ export async function insertInterviewSession(
 
 export async function getInterviewSessionRecords(db: SQLiteDatabase, userId: string) {
   const rows = await db.getAllAsync<InterviewSessionRow>(
-    'SELECT id, company, role, score, question_count, duration_ms, created_at FROM interview_sessions WHERE user_id = ? ORDER BY created_at ASC',
+    'SELECT id, company, role, score, question_count, duration_ms, created_at, mock_exam_id FROM interview_sessions WHERE user_id = ? ORDER BY created_at ASC',
     userId,
   );
 
@@ -89,6 +96,7 @@ export async function getInterviewSessionRecords(db: SQLiteDatabase, userId: str
       questionCount: row.question_count,
       duration: formatDuration(row.duration_ms),
       durationMs: row.duration_ms,
+      mockExamId: row.mock_exam_id,
     };
   });
 

@@ -401,12 +401,14 @@ export function RecordStepView({
 }
 
 export function FinishView({
+  feedbackLabel,
   retry,
   questionCount,
   totalSeconds,
   saving,
   onFeedback,
 }: {
+  feedbackLabel?: string;
   retry: boolean;
   questionCount: number;
   totalSeconds: number;
@@ -417,7 +419,7 @@ export function FinishView({
     <>
       <Body bottomPad="x4">
         <VStack align="center" flex={1} gap="x5" justify="center">
-          <Box alignItems="center" bg="bg.brandWeak" borderRadius="full" height={80} justifyContent="center" width={80}>
+          <Box alignItems="center" bg="bg.brandWeak" borderRadius="full" height="x16" justifyContent="center" width="x16">
             <Icon name="CircleCheck" color="fg.brand" size="large" />
           </Box>
           <VStack align="center" gap="x1">
@@ -435,7 +437,7 @@ export function FinishView({
       </Body>
       <BottomActionBar
         primary={{
-          label: retry ? '비교 결과 보기' : 'AI 피드백 받기',
+          label: feedbackLabel ?? (retry ? '비교 결과 보기' : 'AI 피드백 받기'),
           iconLeft: retry ? 'Target' : 'Sparkles',
           disabled: saving,
           onPress: onFeedback,

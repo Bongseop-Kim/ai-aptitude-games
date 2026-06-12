@@ -12,6 +12,7 @@ type BestScoreRow = {
 type GameResultOptions = {
   id?: string;
   createdAt?: string;
+  mockExamId?: string;
 };
 
 export async function insertGameResult(
@@ -24,6 +25,11 @@ export async function insertGameResult(
   const columns = ['id', 'user_id', 'game_id', 'score', 'accuracy', 'avg_response_ms'];
   const values = [id, userId, input.gameId, input.score, input.accuracy, input.avgResponseMs];
 
+  if (options.mockExamId != null) {
+    columns.push('mock_exam_id');
+    values.push(options.mockExamId);
+  }
+
   if (options.createdAt != null) {
     columns.push('created_at');
     values.push(options.createdAt);
@@ -33,6 +39,8 @@ export async function insertGameResult(
     `INSERT INTO game_results (${columns.join(', ')}) VALUES (${columns.map(() => '?').join(', ')})`,
     ...values,
   );
+
+  return id;
 }
 
 export async function getBestScores(db: SQLiteDatabase, userId: string) {
