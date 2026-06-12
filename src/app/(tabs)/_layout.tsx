@@ -34,6 +34,15 @@ export default function TabsLayout() {
         />
         <NativeTabs.Trigger.Label>게임</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="interview">
+        <NativeTabs.Trigger.Icon
+          src={{
+            default: require('../../../assets/tab-icons/interview-line.png'),
+            selected: require('../../../assets/tab-icons/interview-fill.png'),
+          }}
+        />
+        <NativeTabs.Trigger.Label>면접</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="reports">
         <NativeTabs.Trigger.Icon
           src={{

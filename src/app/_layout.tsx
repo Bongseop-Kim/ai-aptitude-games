@@ -1,10 +1,14 @@
+import { useEffect } from 'react';
 import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 
 import { LoginScreen } from '../components/auth/LoginScreen';
 import { useDesignSystemTheme } from '../design-system/provider';
 import { AppProviders } from '../providers/AppProviders';
 import { useAuth } from '../providers/AuthProvider';
+
+void SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   return (
@@ -16,9 +20,16 @@ export default function RootLayout() {
 
 function AuthGate() {
   const { isAuthenticated, isLoading } = useAuth();
-  const { mode } = useDesignSystemTheme();
+  const { fontsLoaded, mode } = useDesignSystemTheme();
+  const isReady = fontsLoaded && !isLoading;
 
-  if (isLoading) {
+  useEffect(() => {
+    if (!isReady) return;
+
+    void SplashScreen.hideAsync();
+  }, [isReady]);
+
+  if (!isReady) {
     return null;
   }
 
@@ -34,6 +45,7 @@ function RootStack() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="reports/[id]" />
       <Stack.Screen name="games/[id]" options={{ gestureEnabled: false }} />
     </Stack>
   );

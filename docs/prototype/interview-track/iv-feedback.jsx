@@ -2,9 +2,7 @@
 const { useState: useFB } = React;
 
 const IV_PEER = { content: 70, star: 63, voice: 76, gaze: 67, delivery: 71 };
-const qOverall = (q) => AXES.length > 0
-  ? Math.round(AXES.reduce((s, a) => s + q.scores[a.key], 0) / AXES.length)
-  : 0;
+const qOverall = (q) => Math.round(AXES.reduce((s, a) => s + q.scores[a.key], 0) / AXES.length);
 
 const IV_TOP_FIX = [
   { axis: 'star', icon: 'view_timeline', title: '결과(Result)로 마무리하기', body: '답변 4개에서 결과가 빠졌어요. "그래서 무엇이 좋아졌는지"를 수치로 닫아주세요.' },

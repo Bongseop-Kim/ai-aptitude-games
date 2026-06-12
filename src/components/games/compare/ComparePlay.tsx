@@ -90,7 +90,7 @@ function ComparePanel({ disabled, question, selectedSide, side, onPress }: Compa
 
           return (
             <Box
-              key={index}
+              key={`dot-${count}-${position.left}-${position.top}`}
               bg="fg.neutral"
               borderRadius="full"
               position="absolute"

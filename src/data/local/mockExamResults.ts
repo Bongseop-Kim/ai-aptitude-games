@@ -15,6 +15,7 @@ type MockExamResultOptions = {
 };
 
 type MockExamResultRow = {
+  id: string;
   score: number;
   duration_ms: number;
   pro: number;
@@ -56,18 +57,21 @@ export async function insertMockExamResult(
 
 export async function getMockExamRecords(db: SQLiteDatabase, userId: string) {
   const rows = await db.getAllAsync<MockExamResultRow>(
-    'SELECT score, duration_ms, pro, created_at FROM mock_exam_results WHERE user_id = ? ORDER BY created_at ASC',
+    'SELECT id, score, duration_ms, pro, created_at FROM mock_exam_results WHERE user_id = ? ORDER BY created_at ASC',
     userId,
   );
 
   const records: MockExamRecord[] = rows.map((row, index) => {
     const previousScore = rows[index - 1]?.score;
     return {
+      id: row.id,
       round: index + 1,
+      createdAt: row.created_at,
       dateLabel: toLocalDateLabel(row.created_at),
       score: row.score,
       delta: previousScore == null ? null : row.score - previousScore,
       duration: formatDuration(row.duration_ms),
+      durationMs: row.duration_ms,
       pro: row.pro === 1,
     };
   });

@@ -30,6 +30,24 @@ export function useMockExamRecords() {
   });
 }
 
+export function useMockExamRecord(id: string | null) {
+  const db = useSQLiteContext();
+  const { userId } = useAuth();
+
+  return useQuery({
+    queryKey: mockExamKeys.records(userId),
+    queryFn: () => {
+      if (!userId) {
+        throw new Error('Cannot load mock exam results without an authenticated user.');
+      }
+
+      return getMockExamRecords(db, userId);
+    },
+    enabled: userId != null && id != null,
+    select: (records) => records.find((record) => record.id === id) ?? null,
+  });
+}
+
 export function useSaveMockExamResult() {
   const db = useSQLiteContext();
   const queryClient = useQueryClient();

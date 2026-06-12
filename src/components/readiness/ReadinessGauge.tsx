@@ -25,6 +25,7 @@ export function ReadinessGauge({ score, size = 116, strokeWidth = 12 }: Readines
   const isFocused = useIsFocused();
   const colors = readinessTempColors(score);
   const clamped = clampScore(score);
+  const isCompact = size < 80;
   const trackColor = resolveColor(theme, colors.bg);
   const progressColor = resolveColor(theme, colors.text);
   const progress = useSharedValue(0);
@@ -69,11 +70,11 @@ export function ReadinessGauge({ score, size = 116, strokeWidth = 12 }: Readines
       </Canvas>
       <Float placement="middle-center">
         <VStack align="center" gap="x0_5">
-          <Text color={colors.text} textStyle="t10Bold" maxLines={1}>
-            {score}°
+          <Text color={colors.text} textStyle={isCompact ? 't5Bold' : 't10Bold'} maxLines={1}>
+            {isCompact ? score : `${score}°`}
           </Text>
           <Text color="fg.neutralMuted" textStyle="t2Medium" maxLines={1}>
-            준비도
+            {isCompact ? '점' : '준비도'}
           </Text>
         </VStack>
       </Float>

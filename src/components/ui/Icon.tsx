@@ -2,6 +2,8 @@ import type { LucideIcon } from 'lucide-react-native';
 import {
   ArrowLeft,
   ArrowRight,
+  Award,
+  BadgeCheck,
   Bell,
   Bus,
   Car,
@@ -9,6 +11,7 @@ import {
   Check,
   ChevronRight,
   Circle,
+  CircleCheck,
   CircleDot,
   CircleHelp,
   Clock,
@@ -27,6 +30,7 @@ import {
   Grid3x3,
   Hand,
   HandFist,
+  Info,
   Leaf,
   Lock,
   LogOut,
@@ -54,9 +58,11 @@ import {
   UserRoundPlus,
   UsersRound,
   Utensils,
+  Video,
   Volume2,
   Wheat,
   X,
+  Zap,
 } from 'lucide-react-native';
 
 import { useDesignSystemTheme } from '../../design-system/provider';
@@ -75,6 +81,8 @@ export type IconProps = {
 const lucideIconByName: Record<IconName, LucideIcon> = {
   ArrowLeft,
   ArrowRight,
+  Award,
+  BadgeCheck,
   Bell,
   Bus,
   Car,
@@ -82,6 +90,7 @@ const lucideIconByName: Record<IconName, LucideIcon> = {
   Check,
   ChevronRight,
   Circle,
+  CircleCheck,
   CircleDot,
   CircleHelp,
   Clock,
@@ -100,6 +109,7 @@ const lucideIconByName: Record<IconName, LucideIcon> = {
   Grid3x3,
   Hand,
   HandFist,
+  Info,
   Leaf,
   Lock,
   LogOut,
@@ -127,9 +137,11 @@ const lucideIconByName: Record<IconName, LucideIcon> = {
   UserRoundPlus,
   UsersRound,
   Utensils,
+  Video,
   Volume2,
   Wheat,
   X,
+  Zap,
 };
 
 const iconSizeToken = {

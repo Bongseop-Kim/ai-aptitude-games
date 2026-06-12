@@ -5,14 +5,17 @@ import type { BadgeTone } from '../../shared/types';
 
 export type { BadgeTone } from '../../shared/types';
 
+export type BadgeVariantTone = BadgeTone | 'brandSolid';
+
 export type BadgeProps = {
   label: string;
-  tone?: BadgeTone;
+  tone?: BadgeVariantTone;
   size?: 'small' | 'medium';
 };
 
-const badgeColors: Record<BadgeTone, { bg: ColorToken; color: ColorToken }> = {
+const badgeColors: Record<BadgeVariantTone, { bg: ColorToken; color: ColorToken }> = {
   brand: { bg: 'bg.brandWeak', color: 'fg.brand' },
+  brandSolid: { bg: 'bg.brandSolid', color: 'fg.neutralInverted' },
   critical: { bg: 'palette.red100', color: 'fg.critical' },
   informative: { bg: 'palette.blue100', color: 'fg.informative' },
   neutral: { bg: 'bg.neutralWeak', color: 'fg.neutralMuted' },

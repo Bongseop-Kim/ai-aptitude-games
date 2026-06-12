@@ -61,11 +61,14 @@ export type ReportCompetency = {
 };
 
 export type MockExamRecord = {
+  id: string;
   round: number;
+  createdAt: string;
   dateLabel: string;
   score: number;
   delta: number | null;
   duration: string;
+  durationMs: number;
   pro: boolean;
 };
 

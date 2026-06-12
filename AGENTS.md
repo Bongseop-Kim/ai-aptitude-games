@@ -71,6 +71,18 @@ Good:
 
 If an expression is difficult with existing Layout props or tokens, ask before adding an ad hoc implementation.
 
+## Layout Stability
+
+Never let content shift after first paint.
+
+- Async containers: fixed `height` or `minHeight`. Skeletons match the real component's size; render a fixed count for lists.
+- Keep list loading/empty states inside the `FlatList` via `ListEmptyComponent` — no separate component tree.
+- `<Image>`: explicit width/height in style (`uri` images collapse to `height: 0` until loaded).
+- Conditional visibility: `opacity: 0`, not unmounting.
+- Initial state: initial values or `useLayoutEffect`, not `useEffect`.
+- `SafeAreaProvider`: set `initialMetrics={initialWindowMetrics}`.
+- Animate only `transform`/`opacity` — never layout properties (`width`, `height`, `top`, `left`), including in Reanimated `useAnimatedStyle`.
+
 ## React
 
 React Compiler is enabled (Expo SDK default, opt-out only). Do not add manual `useMemo`, `useCallback`, or `React.memo` for performance — the compiler memoizes render computations automatically, including Skia object creation. Hoist pure computations to module-level functions for readability, not memoization.

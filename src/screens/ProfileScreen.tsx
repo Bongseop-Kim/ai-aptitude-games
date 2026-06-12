@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
+import { useState, type Dispatch, type SetStateAction } from 'react';
 import { Alert } from 'react-native';
 
 import { Header } from '../components/app/Header';
@@ -8,8 +8,8 @@ import { ProfileSummary } from '../components/profile/ProfileSummary';
 import { StatTile } from '../components/profile/StatTile';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { Icon } from '../components/ui/Icon';
-import { ListItem } from '../components/ui/ListItem';
+import { Icon, type IconName } from '../components/ui/Icon';
+import { List } from '../components/ui/List';
 import { Switch } from '../components/ui/Switch';
 import { games } from '../data/games';
 import { useGamesWithProgress } from '../data/local/useGameResults';
@@ -26,6 +26,7 @@ export function ProfileScreen() {
   const [pushEnabled, setPushEnabled] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isLinking, setIsLinking] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const gamesWithProgress = useGamesWithProgress();
   const doneCount = gamesWithProgress.filter((game) => game.status === 'done').length;
 
@@ -51,6 +52,26 @@ export function ProfileScreen() {
       });
   }
 
+  async function handleSignOut() {
+    if (isSigningOut) {
+      return;
+    }
+
+    setIsSigningOut(true);
+
+    try {
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        throw error;
+      }
+    } catch {
+      Alert.alert('로그아웃에 실패했어요', '잠시 후 다시 시도해주세요.');
+    } finally {
+      setIsSigningOut(false);
+    }
+  }
+
   return (
     <TabScreen header={<Header title="내 정보" />}>
       <ProfileSummary
@@ -70,44 +91,100 @@ export function ProfileScreen() {
 
       <SectionHead title="설정" />
       <Card py="x1">
-        <SwitchListItem
-          leadingIcon="Bell"
-          title="푸시 알림"
-          value={pushEnabled}
-          setValue={setPushEnabled}
-        />
-        <SwitchListItem
-          leadingIcon="Volume2"
-          title="효과음"
-          value={soundEnabled}
-          setValue={setSoundEnabled}
-        />
-        <ListItem leadingIcon="Clock" title="리마인드 시간" trailing="오후 9:00" showChevron />
-        <ListItem leadingIcon="Trophy" title="주간 랭킹" trailing="친구" showChevron />
-        <ListItem leadingIcon="UserRoundPlus" title="친구 초대" showChevron />
+        <List.Root>
+          <SwitchListItem
+            leadingIcon="Bell"
+            title="푸시 알림"
+            value={pushEnabled}
+            setValue={setPushEnabled}
+          />
+          <SwitchListItem
+            leadingIcon="Volume2"
+            title="효과음"
+            value={soundEnabled}
+            setValue={setSoundEnabled}
+          />
+          <List.Item>
+            <List.Prefix>
+              <Icon name="Clock" color="fg.brand" />
+            </List.Prefix>
+            <List.Content>
+              <List.Title>리마인드 시간</List.Title>
+            </List.Content>
+            <List.Suffix>
+              <Text color="fg.neutralMuted" textStyle="t3Medium" maxLines={1}>
+                오후 9:00
+              </Text>
+            </List.Suffix>
+          </List.Item>
+          <List.Item>
+            <List.Prefix>
+              <Icon name="Trophy" color="fg.brand" />
+            </List.Prefix>
+            <List.Content>
+              <List.Title>주간 랭킹</List.Title>
+            </List.Content>
+            <List.Suffix>
+              <Text color="fg.neutralMuted" textStyle="t3Medium" maxLines={1}>
+                친구
+              </Text>
+            </List.Suffix>
+          </List.Item>
+          <List.Item>
+            <List.Prefix>
+              <Icon name="UserRoundPlus" color="fg.brand" />
+            </List.Prefix>
+            <List.Content>
+              <List.Title>친구 초대</List.Title>
+            </List.Content>
+          </List.Item>
+        </List.Root>
       </Card>
 
       <SectionHead title="기타" />
       <Card py="x1">
-        <ListItem leadingIcon="CircleHelp" title="도움말 · 자주 묻는 질문" showChevron />
-        <ListItem leadingIcon="FileText" title="이용약관 · 개인정보처리방침" showChevron />
-        {isAnonymous ? (
-          // Signing out an anonymous session would orphan its server data,
-          // so the only exit for anonymous users is upgrading the account.
-          <ListItem
-            leadingIcon="User"
-            title={isLinking ? '연동 중...' : '카카오 계정 연동하기'}
-            showChevron={!isLinking}
-            onPress={handleLinkKakao}
-            disabled={isLinking}
-          />
-        ) : (
-          <ListItem
-            leadingIcon="LogOut"
-            title="로그아웃"
-            onPress={() => void supabase.auth.signOut()}
-          />
-        )}
+        <List.Root>
+          <List.Item>
+            <List.Prefix>
+              <Icon name="CircleHelp" color="fg.brand" />
+            </List.Prefix>
+            <List.Content>
+              <List.Title>도움말 · 자주 묻는 질문</List.Title>
+            </List.Content>
+          </List.Item>
+          <List.Item>
+            <List.Prefix>
+              <Icon name="FileText" color="fg.brand" />
+            </List.Prefix>
+            <List.Content>
+              <List.Title>이용약관 · 개인정보처리방침</List.Title>
+            </List.Content>
+          </List.Item>
+          {isAnonymous ? (
+            // Signing out an anonymous session would orphan its server data,
+            // so the only exit for anonymous users is upgrading the account.
+            <List.Item onPress={handleLinkKakao} disabled={isLinking}>
+              <List.Prefix>
+                <Icon name="User" color="fg.brand" />
+              </List.Prefix>
+              <List.Content>
+                <List.Title>{isLinking ? '연동 중...' : '카카오 계정 연동하기'}</List.Title>
+              </List.Content>
+              <List.Suffix>
+                {isLinking ? null : <Icon name="ChevronRight" size="small" />}
+              </List.Suffix>
+            </List.Item>
+          ) : (
+            <List.Item onPress={() => void handleSignOut()} disabled={isSigningOut}>
+              <List.Prefix>
+                <Icon name="LogOut" color="fg.brand" />
+              </List.Prefix>
+              <List.Content>
+                <List.Title>{isSigningOut ? '로그아웃 중...' : '로그아웃'}</List.Title>
+              </List.Content>
+            </List.Item>
+          )}
+        </List.Root>
       </Card>
 
       {__DEV__ ? <DevSeedSection /> : null}
@@ -120,22 +197,26 @@ export function ProfileScreen() {
 }
 
 type SwitchListItemProps = {
-  leadingIcon: Parameters<typeof ListItem>[0]['leadingIcon'];
+  leadingIcon: IconName;
   title: string;
   value: boolean;
   setValue: Dispatch<SetStateAction<boolean>>;
 };
 
 function SwitchListItem({ leadingIcon, title, value, setValue }: SwitchListItemProps) {
-  const onPress = useCallback(() => {
-    setValue((enabled) => !enabled);
-  }, [setValue]);
-  const trailing = useMemo(
-    () => <Switch label={title} value={value} onPress={onPress} />,
-    [onPress, title, value],
+  return (
+    <List.Item>
+      <List.Prefix>
+        <Icon name={leadingIcon} color="fg.brand" />
+      </List.Prefix>
+      <List.Content>
+        <List.Title>{title}</List.Title>
+      </List.Content>
+      <List.Suffix>
+        <Switch label={title} value={value} onPress={() => setValue((enabled) => !enabled)} />
+      </List.Suffix>
+    </List.Item>
   );
-
-  return <ListItem leadingIcon={leadingIcon} title={title} trailing={trailing} />;
 }
 
 function DevSeedSection() {

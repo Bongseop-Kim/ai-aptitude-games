@@ -72,6 +72,7 @@ export function Float({
 }: FloatProps) {
   const { theme } = useDesignSystemTheme();
   const [size, setSize] = useState<FloatSize>({ width: 0, height: 0 });
+  const [hasMeasured, setHasMeasured] = useState(false);
   const resolvedX = resolveLength(theme, offsetX);
   const resolvedY = resolveLength(theme, offsetY);
   const numericX = typeof resolvedX === 'number' ? resolvedX : 0;
@@ -79,13 +80,18 @@ export function Float({
 
   function handleLayout(event: LayoutChangeEvent) {
     const { height, width } = event.nativeEvent.layout;
+    setHasMeasured(true);
     setSize({ width, height });
   }
 
   return (
     <Box
       onLayout={handleLayout}
-      style={[placementStyle(placement, numericX, numericY, size), { zIndex }, style]}
+      style={[
+        placementStyle(placement, numericX, numericY, size),
+        { opacity: hasMeasured ? 1 : 0, zIndex },
+        style,
+      ]}
     >
       {children}
     </Box>

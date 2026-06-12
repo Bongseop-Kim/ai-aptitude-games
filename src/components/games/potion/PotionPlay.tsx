@@ -88,7 +88,7 @@ export function PotionPlay({ game, onFinish, onClose }: GamePlayProps) {
         <Grid columns={2} gap="x2">
           {question.ingredients.map((ingredient, index) => (
             <Box
-              key={`${ingredient}-${index}`}
+              key={`ingredient-${index + 1}-${ingredient}`}
               alignItems="center"
               bg={colors.bg}
               borderColor={colors.border}

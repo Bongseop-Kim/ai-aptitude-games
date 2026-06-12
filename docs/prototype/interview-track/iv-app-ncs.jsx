@@ -1,7 +1,7 @@
-// iv-app.jsx — 실전 면접 트랙 라우터 + 하단탭 + Tweaks 패널 + 마운트
-const { useState: useApp, useCallback: useAppCb, useRef: useAppRef, useEffect: useAppE } = React;
+// iv-app-ncs.jsx — 실전 면접 트랙 (NCS·AI Hub 반영) 라우터 + 하단탭 + Tweaks
+const { useState: useAppN, useCallback: useAppNCb, useRef: useAppNRef, useEffect: useAppNE } = React;
 
-const IV_TABS = [
+const IVN_TABS = [
   { value: 'home', label: '홈', icon: 'home' },
   { value: 'games', label: '게임', icon: 'stadia_controller' },
   { value: 'interview', label: '면접', icon: 'videocam' },
@@ -9,41 +9,44 @@ const IV_TABS = [
   { value: 'me', label: '내 정보', icon: 'person' },
 ];
 
-const IV_ROUTE = {
-  ivHub: 'InterviewHub',
+// route → component name on window. NCS 반영 화면은 새 컴포넌트로, 나머지는 원본 재사용.
+const IVN_ROUTE = {
+  ivHomeRoot: 'SaeumHomeRoot',
+  ivHub: 'InterviewHubB',
   ivStub: 'IVStub',
   ivResume: 'IVResume',
-  ivJob: 'IVJob',
-  ivAnalysis: 'IVAnalysis',
+  ivJob: 'IVJobNCS',
+  ivAnalysis: 'IVAnalysisNCS',
   ivInterview: 'IVInterview',
-  ivFeedback: 'IVFeedback',
+  ivFeedback: 'IVFeedbackNCS',
   ivRetry: 'IVRetry',
+  ivSource: 'SourceDisclosureScreen',
 };
-const TAB_LIKE = ['ivHub', 'ivStub'];
+const TAB_LIKE_N = ['ivHub', 'ivStub', 'ivHomeRoot'];
 
-const IV_TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+const IVN_TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "unlockPro": false
 }/*EDITMODE-END*/;
 
-function InterviewTrackApp() {
-  const [t, setTweak] = useTweaks(IV_TWEAK_DEFAULTS);
-  const [stack, setStack] = useApp([{ name: 'ivHub', params: {} }]);
-  const [toast, setToast] = useApp(null);
-  const tref = useAppRef(null);
-  const scrollRef = useAppRef(null);
+function InterviewTrackAppNCS() {
+  const [t, setTweak] = useTweaks(IVN_TWEAK_DEFAULTS);
+  const [stack, setStack] = useAppN([{ name: 'ivHub', params: {} }]);
+  const [toast, setToast] = useAppN(null);
+  const tref = useAppNRef(null);
+  const scrollRef = useAppNRef(null);
 
   const cur = stack[stack.length - 1];
 
-  const showToast = useAppCb((msg, opts = {}) => {
+  const showToast = useAppNCb((msg, opts = {}) => {
     setToast({ msg, ...opts }); clearTimeout(tref.current);
     tref.current = setTimeout(() => setToast(null), opts.duration || 2200);
   }, []);
-  const nav = useAppCb((name, params = {}) => setStack(s => [...s, { name, params }]), []);
-  const back = useAppCb(() => setStack(s => (s.length > 1 ? s.slice(0, -1) : s)), []);
-  const replace = useAppCb((name, params = {}) => setStack(s => [...s.slice(0, -1), { name, params }]), []);
-  const resetTo = useAppCb((name, params = {}) => setStack([{ name, params }]), []);
+  const nav = useAppNCb((name, params = {}) => setStack(s => [...s, { name, params }]), []);
+  const back = useAppNCb(() => setStack(s => (s.length > 1 ? s.slice(0, -1) : s)), []);
+  const replace = useAppNCb((name, params = {}) => setStack(s => [...s.slice(0, -1), { name, params }]), []);
+  const resetTo = useAppNCb((name, params = {}) => setStack([{ name, params }]), []);
 
-  useAppE(() => { if (scrollRef.current) scrollRef.current.scrollTop = 0; }, [stack.length, cur.name]);
+  useAppNE(() => { if (scrollRef.current) scrollRef.current.scrollTop = 0; }, [stack.length, cur.name, cur.params?.tab]);
 
   const ctx = {
     nav, back, replace, resetTo, route: cur, params: cur.params || {},
@@ -51,11 +54,15 @@ function InterviewTrackApp() {
     showToast,
   };
 
-  const showTabs = TAB_LIKE.includes(cur.name);
-  const curTab = cur.name === 'ivStub' ? (cur.params.tab || 'home') : 'interview';
-  const Comp = window[IV_ROUTE[cur.name]];
+  const showTabs = TAB_LIKE_N.includes(cur.name);
+  const curTab = cur.name === 'ivHomeRoot' ? 'home' : cur.name === 'ivStub' ? (cur.params.tab || 'home') : 'interview';
+  const Comp = window[IVN_ROUTE[cur.name]];
 
-  const onTab = (v) => { if (v === 'interview') resetTo('ivHub'); else resetTo('ivStub', { tab: v }); };
+  const onTab = (v) => {
+    if (v === 'interview') resetTo('ivHub');
+    else if (v === 'home') resetTo('ivHomeRoot');
+    else resetTo('ivStub', { tab: v });
+  };
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 0', background: 'var(--mossy-color-bg-layer-basement)' }}>
@@ -69,7 +76,7 @@ function InterviewTrackApp() {
 
           {showTabs && (
             <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 30 }}>
-              <BottomNav items={IV_TABS} value={curTab} onChange={onTab} style={{ paddingBottom: 24, background: T.floating }} />
+              <BottomNav items={IVN_TABS} value={curTab} onChange={onTab} style={{ paddingBottom: 24, background: T.floating }} />
             </div>
           )}
 
@@ -92,4 +99,4 @@ function InterviewTrackApp() {
   );
 }
 
-Object.assign(window, { InterviewTrackApp });
+Object.assign(window, { InterviewTrackAppNCS });
