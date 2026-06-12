@@ -108,7 +108,7 @@ export function createMemoryRounds(): MemoryRound[] {
       answer: answerFor(sequence, index),
     }));
 
-    if (rounds.every((round, index) => round.answer === targets[index]) && isValidRoundSet(rounds)) {
+    if (rounds.length === targets.length && rounds.every((round, index) => round.answer === targets[index]) && isValidRoundSet(rounds)) {
       return rounds;
     }
   }

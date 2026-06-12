@@ -187,8 +187,8 @@ export function getOverallInterviewScore() {
 }
 
 export function getWeakInterviewQuestions() {
-  return [...interviewQuestions]
-    .sort((left, right) => (
+  return interviewQuestions
+    .toSorted((left, right) => (
       left.scores.star + left.scores.content - (right.scores.star + right.scores.content)
     ))
     .slice(0, 3);
