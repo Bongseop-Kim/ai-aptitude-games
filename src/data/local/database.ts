@@ -118,13 +118,7 @@ const migrations: readonly { version: number; sql: string }[] = [
   {
     version: 8,
     sql: `
-      DELETE FROM game_results;
-      DELETE FROM mock_exam_results;
-      DELETE FROM interview_sessions;
-      DELETE FROM mock_exam_session_items;
-      DELETE FROM mock_exam_sessions;
-
-      CREATE TABLE game_result_rounds (
+      CREATE TABLE IF NOT EXISTS game_result_rounds (
         id TEXT PRIMARY KEY NOT NULL,
         result_id TEXT NOT NULL,
         user_id TEXT NOT NULL,
@@ -135,11 +129,11 @@ const migrations: readonly { version: number; sql: string }[] = [
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         synced INTEGER NOT NULL DEFAULT 0
       );
-      CREATE INDEX idx_game_result_rounds_result_id ON game_result_rounds (result_id);
-      CREATE UNIQUE INDEX idx_game_result_rounds_result_round ON game_result_rounds (result_id, round_index);
-      CREATE INDEX idx_game_result_rounds_unsynced ON game_result_rounds (user_id) WHERE synced = 0;
+      CREATE INDEX IF NOT EXISTS idx_game_result_rounds_result_id ON game_result_rounds (result_id);
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_game_result_rounds_result_round ON game_result_rounds (result_id, round_index);
+      CREATE INDEX IF NOT EXISTS idx_game_result_rounds_unsynced ON game_result_rounds (user_id) WHERE synced = 0;
 
-      CREATE TABLE mock_exam_result_items (
+      CREATE TABLE IF NOT EXISTS mock_exam_result_items (
         mock_exam_id TEXT NOT NULL,
         item_key TEXT NOT NULL,
         user_id TEXT NOT NULL,
@@ -152,31 +146,73 @@ const migrations: readonly { version: number; sql: string }[] = [
         PRIMARY KEY (mock_exam_id, item_key),
         CHECK ((game_result_id IS NOT NULL) != (interview_session_id IS NOT NULL))
       );
-      CREATE INDEX idx_mock_exam_result_items_unsynced ON mock_exam_result_items (user_id) WHERE synced = 0;
+      CREATE INDEX IF NOT EXISTS idx_mock_exam_result_items_unsynced ON mock_exam_result_items (user_id) WHERE synced = 0;
     `,
   },
   {
     version: 9,
     sql: `
-      DROP TABLE IF EXISTS mock_exam_result_items;
-      CREATE TABLE mock_exam_result_items (
-        mock_exam_id TEXT NOT NULL,
-        item_key TEXT NOT NULL,
-        user_id TEXT NOT NULL,
-        game_result_id TEXT,
-        interview_session_id TEXT,
-        score INTEGER NOT NULL,
-        duration_ms INTEGER NOT NULL,
-        completed_at TEXT NOT NULL,
-        synced INTEGER NOT NULL DEFAULT 0,
-        PRIMARY KEY (mock_exam_id, item_key),
-        CHECK ((game_result_id IS NOT NULL) != (interview_session_id IS NOT NULL))
-      );
       CREATE UNIQUE INDEX IF NOT EXISTS idx_game_result_rounds_result_round ON game_result_rounds (result_id, round_index);
-      CREATE INDEX idx_mock_exam_result_items_unsynced ON mock_exam_result_items (user_id) WHERE synced = 0;
+      CREATE INDEX IF NOT EXISTS idx_mock_exam_result_items_unsynced ON mock_exam_result_items (user_id) WHERE synced = 0;
     `,
   },
 ];
+
+async function migrateMockExamResultItems(db: SQLiteDatabase) {
+  const columns = await db.getAllAsync<{ name: string }>('PRAGMA table_info(mock_exam_result_items)');
+  const hasLegacyResultId = columns.some((column) => column.name === 'result_id');
+  if (!hasLegacyResultId) {
+    return;
+  }
+
+  const legacyColumns = await db.getAllAsync<{ name: string }>(
+    'PRAGMA table_info(mock_exam_result_items_legacy)',
+  );
+  if (legacyColumns.length === 0) {
+    await db.execAsync('ALTER TABLE mock_exam_result_items RENAME TO mock_exam_result_items_legacy;');
+  }
+
+  await db.execAsync(`
+    CREATE TABLE IF NOT EXISTS mock_exam_result_items (
+      mock_exam_id TEXT NOT NULL,
+      item_key TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      game_result_id TEXT,
+      interview_session_id TEXT,
+      score INTEGER NOT NULL,
+      duration_ms INTEGER NOT NULL,
+      completed_at TEXT NOT NULL,
+      synced INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (mock_exam_id, item_key),
+      CHECK ((game_result_id IS NOT NULL) != (interview_session_id IS NOT NULL))
+    );
+  `);
+
+  await db.runAsync(`
+    INSERT OR IGNORE INTO mock_exam_result_items (
+      mock_exam_id,
+      item_key,
+      user_id,
+      game_result_id,
+      interview_session_id,
+      score,
+      duration_ms,
+      completed_at,
+      synced
+    )
+    SELECT
+      mock_exam_id,
+      item_key,
+      user_id,
+      CASE WHEN item_key = 'interview' THEN NULL ELSE result_id END,
+      CASE WHEN item_key = 'interview' THEN result_id ELSE NULL END,
+      score,
+      duration_ms,
+      completed_at,
+      synced
+    FROM mock_exam_result_items_legacy
+  `);
+}
 
 export async function migrateLocalDb(db: SQLiteDatabase) {
   await db.execAsync(`
@@ -203,6 +239,9 @@ export async function migrateLocalDb(db: SQLiteDatabase) {
     }
 
     await db.withTransactionAsync(async () => {
+      if (migration.version === 9) {
+        await migrateMockExamResultItems(db);
+      }
       if (migration.sql.trim()) {
         await db.execAsync(migration.sql);
       }

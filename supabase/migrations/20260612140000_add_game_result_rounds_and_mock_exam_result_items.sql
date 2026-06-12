@@ -38,6 +38,10 @@ CREATE INDEX mock_exam_result_items_game_result_id_idx ON public.mock_exam_resul
 
 CREATE INDEX mock_exam_result_items_interview_session_id_idx ON public.mock_exam_result_items USING btree (interview_session_id) WHERE interview_session_id IS NOT NULL;
 
+CREATE UNIQUE INDEX game_results_id_user_id_key ON public.game_results USING btree (id, user_id);
+
+CREATE UNIQUE INDEX interview_sessions_id_user_id_key ON public.interview_sessions USING btree (id, user_id);
+
 alter table "public"."game_result_rounds" add constraint "game_result_rounds_pkey" PRIMARY KEY using index "game_result_rounds_pkey";
 
 alter table "public"."game_result_rounds" add constraint "game_result_rounds_result_id_round_index_key" UNIQUE using index "game_result_rounds_result_id_round_index_key";
@@ -60,9 +64,17 @@ alter table "public"."mock_exam_result_items" add constraint "mock_exam_result_i
 
 alter table "public"."mock_exam_result_items" validate constraint "mock_exam_result_items_game_result_id_fkey";
 
+alter table "public"."mock_exam_result_items" add constraint "mock_exam_result_items_game_result_owner_fkey" FOREIGN KEY (game_result_id, user_id) REFERENCES public.game_results(id, user_id) ON DELETE CASCADE not valid;
+
+alter table "public"."mock_exam_result_items" validate constraint "mock_exam_result_items_game_result_owner_fkey";
+
 alter table "public"."mock_exam_result_items" add constraint "mock_exam_result_items_interview_session_id_fkey" FOREIGN KEY (interview_session_id) REFERENCES public.interview_sessions(id) ON DELETE CASCADE not valid;
 
 alter table "public"."mock_exam_result_items" validate constraint "mock_exam_result_items_interview_session_id_fkey";
+
+alter table "public"."mock_exam_result_items" add constraint "mock_exam_result_items_interview_session_owner_fkey" FOREIGN KEY (interview_session_id, user_id) REFERENCES public.interview_sessions(id, user_id) ON DELETE CASCADE not valid;
+
+alter table "public"."mock_exam_result_items" validate constraint "mock_exam_result_items_interview_session_owner_fkey";
 
 alter table "public"."mock_exam_result_items" add constraint "mock_exam_result_items_one_result_reference_check" CHECK (((game_result_id IS NOT NULL) AND (interview_session_id IS NULL)) OR ((game_result_id IS NULL) AND (interview_session_id IS NOT NULL))) not valid;
 
@@ -75,6 +87,8 @@ alter table "public"."mock_exam_result_items" validate constraint "mock_exam_res
 grant insert on table "public"."game_result_rounds" to "authenticated";
 
 grant select on table "public"."game_result_rounds" to "authenticated";
+
+grant update on table "public"."game_result_rounds" to "authenticated";
 
 grant delete on table "public"."game_result_rounds" to "service_role";
 
@@ -107,6 +121,8 @@ revoke update on table "public"."game_result_rounds" from "anon";
 grant insert on table "public"."mock_exam_result_items" to "authenticated";
 
 grant select on table "public"."mock_exam_result_items" to "authenticated";
+
+grant update on table "public"."mock_exam_result_items" to "authenticated";
 
 grant delete on table "public"."mock_exam_result_items" to "service_role";
 
@@ -150,6 +166,14 @@ for select
 to authenticated
 using ((( SELECT auth.uid() AS uid) = user_id));
 
+create policy "users can update own game result rounds"
+on "public"."game_result_rounds"
+as permissive
+for update
+to authenticated
+using ((( SELECT auth.uid() AS uid) = user_id))
+with check ((( SELECT auth.uid() AS uid) = user_id));
+
 create policy "users can insert own mock exam result items"
 on "public"."mock_exam_result_items"
 as permissive
@@ -163,3 +187,11 @@ as permissive
 for select
 to authenticated
 using ((( SELECT auth.uid() AS uid) = user_id));
+
+create policy "users can update own mock exam result items"
+on "public"."mock_exam_result_items"
+as permissive
+for update
+to authenticated
+using ((( SELECT auth.uid() AS uid) = user_id))
+with check ((( SELECT auth.uid() AS uid) = user_id));

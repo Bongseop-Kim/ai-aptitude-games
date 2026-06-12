@@ -15,6 +15,7 @@ import { Box } from '../../design-system/components/Box';
 import { Grid } from '../../design-system/components/Grid';
 import { HStack, VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
+import type { TokenLength } from '../../design-system/components/style-props';
 import {
   ANALYSIS_LOADING_STEPS,
   INTERVIEW_STEPS,
@@ -73,9 +74,9 @@ const uploadTabs = [
 ] as const;
 
 const uploadCardHeight = 'x42_5';
-const gaugeSize = {
-  medium: 92,
-  large: 110,
+const gaugeSize: Record<'medium' | 'large', TokenLength> = {
+  medium: 'x23',
+  large: 'x27_5',
 } as const;
 const gaugeStroke = {
   default: 9,

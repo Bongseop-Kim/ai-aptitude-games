@@ -13,7 +13,6 @@ export type TextAreaProps = Omit<TextInputProps, 'multiline' | 'style'> & {
 };
 
 const DEFAULT_TEXT_AREA_HEIGHT: TokenLength = 'x34';
-const DEFAULT_TEXT_AREA_HEIGHT_PX = 136;
 const DEFAULT_TEXT_AREA_PADDING = 12;
 
 export function TextArea({ height = DEFAULT_TEXT_AREA_HEIGHT, placeholderTextColor, ...props }: TextAreaProps) {
@@ -22,7 +21,7 @@ export function TextArea({ height = DEFAULT_TEXT_AREA_HEIGHT, placeholderTextCol
   const padding = resolveLength(theme, 'x3');
   const resolvedHeight = resolveLength(theme, height);
   const resolvedNumericHeight =
-    typeof resolvedHeight === 'number' ? resolvedHeight : DEFAULT_TEXT_AREA_HEIGHT_PX;
+    typeof resolvedHeight === 'number' ? resolvedHeight : theme.dimension.x.x34;
   const resolvedPadding = typeof padding === 'number' ? padding : DEFAULT_TEXT_AREA_PADDING;
 
   return (

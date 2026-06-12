@@ -5,14 +5,14 @@ import { Box } from '../../design-system/components/Box';
 import { Float } from '../../design-system/components/Float';
 import { VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
-import { resolveColor } from '../../design-system/components/style-props';
+import { resolveColor, resolveLength, type TokenLength } from '../../design-system/components/style-props';
 import { useDesignSystemTheme } from '../../design-system/provider';
 import { readinessTempColors } from '../../domain/readiness';
 import { Canvas, Easing, Path, Skia, useSharedValue, withTiming } from '../../lib/native-motion';
 
 export type ReadinessGaugeProps = {
   score: number;
-  size?: number;
+  size?: TokenLength;
   strokeWidth?: number;
 };
 
@@ -20,19 +20,23 @@ function clampScore(score: number) {
   return Math.max(0, Math.min(100, score));
 }
 
-export function ReadinessGauge({ score, size = 116, strokeWidth = 12 }: ReadinessGaugeProps) {
+const defaultGaugeSize: TokenLength = 'x29';
+
+export function ReadinessGauge({ score, size = defaultGaugeSize, strokeWidth = 12 }: ReadinessGaugeProps) {
   const { theme } = useDesignSystemTheme();
+  const resolvedSize = resolveLength(theme, size);
+  const numericSize = typeof resolvedSize === 'number' ? resolvedSize : theme.dimension.x.x29;
   const isFocused = useIsFocused();
   const colors = readinessTempColors(score);
   const clamped = clampScore(score);
-  const isCompact = size < 80;
+  const isCompact = numericSize < 80;
   const trackColor = resolveColor(theme, colors.bg);
   const progressColor = resolveColor(theme, colors.text);
   const progress = useSharedValue(0);
   const inset = strokeWidth / 2;
   const path = Skia.PathBuilder.Make()
     .addArc(
-      { x: inset, y: inset, width: size - strokeWidth, height: size - strokeWidth },
+      { x: inset, y: inset, width: numericSize - strokeWidth, height: numericSize - strokeWidth },
       -90,
       359.99,
     )
@@ -52,11 +56,11 @@ export function ReadinessGauge({ score, size = 116, strokeWidth = 12 }: Readines
       accessibilityLabel={`준비도 ${score}도`}
       accessibilityRole="progressbar"
       accessibilityValue={{ min: 0, max: 100, now: clamped }}
-      height={size}
+      height={numericSize}
       position="relative"
-      width={size}
+      width={numericSize}
     >
-      <Canvas style={{ width: size, height: size }}>
+      <Canvas style={{ width: numericSize, height: numericSize }}>
         <Path path={path} style="stroke" strokeWidth={strokeWidth} color={trackColor} />
         <Path
           path={path}
