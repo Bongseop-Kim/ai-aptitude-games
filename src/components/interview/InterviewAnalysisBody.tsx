@@ -102,6 +102,32 @@ export function InterviewAnalysisBody({ interview }: InterviewAnalysisBodyProps)
         </Card>
       </VStack>
 
+      {interview.delivery_details && interview.delivery_details.length > 0 ? (
+        <VStack gap="x2">
+          <SectionHead title="전달력 세부" />
+          <Card>
+            <List.Root>
+              {interview.delivery_details.map((detail, index) => (
+                <Fragment key={index}>
+                  {index > 0 ? <List.Divider /> : null}
+                  <HStack align="center" gap="x3" py="x2">
+                    <Box width="x16">
+                      <Text textStyle="t3Medium" maxLines={2}>
+                        {detail.label}
+                      </Text>
+                    </Box>
+                    <Box flex={1}>
+                      <ProgressBar value={detail.value} layout="inline" />
+                    </Box>
+                    <Text textStyle="t5Bold">{detail.value}</Text>
+                  </HStack>
+                </Fragment>
+              ))}
+            </List.Root>
+          </Card>
+        </VStack>
+      ) : null}
+
       {interview.ncs_units.length > 0 ? (
         <VStack gap="x2">
           <SectionHead title="NCS 능력단위" />

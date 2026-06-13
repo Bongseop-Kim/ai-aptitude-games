@@ -2,6 +2,7 @@ import { File } from 'expo-file-system';
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { supabase } from '../../lib/supabase';
+import { mediaSpecForExtension } from '../../domain/interviewMedia';
 import {
   getInterviewAnswerById,
   getPendingMediaAnswers,
@@ -14,13 +15,8 @@ import { pushUnsyncedInterviewAnswers } from '../sync/interviewAnswersSync';
 import { deleteRecording } from './interviewRecordingFiles';
 
 const MEDIA_BUCKET = 'interview-media';
-const MEDIA_CONTENT_TYPE = 'audio/mp4';
 
 const inFlightAnswerIds = new Set<string>();
-
-function storagePath(userId: string, row: InterviewAnswerRow) {
-  return `${userId}/${row.sessionId}/${row.questionId}.m4a`;
-}
 
 async function uploadSingle(db: SQLiteDatabase, userId: string, row: InterviewAnswerRow) {
   if (inFlightAnswerIds.has(row.id)) {
@@ -41,11 +37,12 @@ async function uploadSingle(db: SQLiteDatabase, userId: string, row: InterviewAn
     }
 
     const bytes = await file.bytes();
-    const path = storagePath(userId, row);
+    const spec = mediaSpecForExtension(row.mediaLocalUri ?? row.mediaPath ?? '');
+    const path = `${userId}/${row.sessionId}/${row.questionId}.${spec.extension}`;
 
     const { error: uploadError } = await supabase.storage
       .from(MEDIA_BUCKET)
-      .upload(path, bytes.buffer as ArrayBuffer, { contentType: MEDIA_CONTENT_TYPE, upsert: true });
+      .upload(path, bytes.buffer as ArrayBuffer, { contentType: spec.contentType, upsert: true });
     if (uploadError) {
       if (__DEV__) {
         console.warn('[interviewMediaUpload] storage upload failed:', row.id, uploadError.message);

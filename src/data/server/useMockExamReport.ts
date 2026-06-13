@@ -24,6 +24,8 @@ export type ReportSectionStates = {
   overall: ReportSectionState;
   competencies: ReportSectionState;
   highlights: ReportSectionState;
+  resilience: ReportSectionState;
+  pattern: ReportSectionState;
   coach: ReportSectionState;
   interview: ReportSectionState;
 };
@@ -34,6 +36,8 @@ export function getReportSectionStates(row: MockExamReportRow | null): ReportSec
       overall: 'pending',
       competencies: 'pending',
       highlights: 'pending',
+      resilience: 'pending',
+      pattern: 'pending',
       coach: 'pending',
       interview: 'pending',
     };
@@ -43,6 +47,8 @@ export function getReportSectionStates(row: MockExamReportRow | null): ReportSec
       overall: 'failed',
       competencies: 'failed',
       highlights: 'failed',
+      resilience: 'failed',
+      pattern: 'failed',
       coach: 'failed',
       interview: 'failed',
     };
@@ -63,6 +69,8 @@ export function getReportSectionStates(row: MockExamReportRow | null): ReportSec
     overall: r?.overall != null ? 'ready' : 'pending',
     competencies: r?.competencies != null ? 'ready' : 'pending',
     highlights: r?.highlights != null ? 'ready' : 'pending',
+    resilience: r?.resilience != null ? 'ready' : 'pending',
+    pattern: r?.response_pattern != null ? 'ready' : 'pending',
     coach: r?.coach != null ? 'ready' : 'pending',
     interview: interviewState,
   };
@@ -75,8 +83,9 @@ function computeRefetchInterval(
   if (row?.status === 'failed') return false;
   if (row?.status === 'done' && row.report != null) {
     const states = getReportSectionStates(row);
-    const allSectionsReady = Object.values(states).every((state) => state !== 'pending');
-    if (allSectionsReady && row.report.interview?.status !== 'pending') {
+    const CORE_KEYS = ['overall', 'competencies', 'highlights', 'coach'] as const;
+    const coreReady = CORE_KEYS.every((k) => states[k] !== 'pending');
+    if (coreReady && row.report.interview?.status !== 'pending') {
       return false;
     }
   }

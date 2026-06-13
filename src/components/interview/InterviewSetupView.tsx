@@ -15,12 +15,14 @@ import { Text } from '../../design-system/components/Text';
 import { useJobPostingCatalog, useMyJobPostings, type JobPostingRow } from '../../data/server/useJobPostings';
 import { useResumes, type ResumeRow } from '../../data/server/useResumes';
 import { jobFamilyLabel } from '../../domain/jobFamily';
+import type { MediaKind } from '../../domain/interviewMedia';
 
 const PICKER_CARD_HEIGHT = 'x16';
 
 export type InterviewSetupViewProps = {
   selectedPosting: JobPostingRow | null;
   selectedResume: ResumeRow | null;
+  mediaKind: MediaKind;
   micDenied: boolean;
   canAskMicAgain: boolean;
   starting: boolean;
@@ -33,6 +35,7 @@ export type InterviewSetupViewProps = {
 export function InterviewSetupView({
   selectedPosting,
   selectedResume,
+  mediaKind,
   micDenied,
   canAskMicAgain,
   starting,
@@ -143,7 +146,11 @@ export function InterviewSetupView({
           </VStack>
 
           {micDenied ? (
-            <MicPermissionCard canAskAgain={canAskMicAgain} onRequestAgain={onRequestMicAgain} />
+            <MicPermissionCard
+              mediaKind={mediaKind}
+              canAskAgain={canAskMicAgain}
+              onRequestAgain={onRequestMicAgain}
+            />
           ) : null}
         </VStack>
       </Body>
@@ -290,25 +297,36 @@ function PickerRow({
 }
 
 function MicPermissionCard({
+  mediaKind,
   canAskAgain,
   onRequestAgain,
 }: {
+  mediaKind: MediaKind;
   canAskAgain: boolean;
   onRequestAgain: () => void;
 }) {
+  const isVideo = mediaKind === 'video';
   return (
     <Card bg="palette.yellow100" borderColor="stroke.neutralSubtle" p="x3" gap="x2">
       <HStack align="center" gap="x2">
-        <Icon name="Mic" color="fg.warning" />
-        <Text textStyle="t4Bold">마이크 권한이 필요해요</Text>
+        <Icon name={isVideo ? 'Video' : 'Mic'} color="fg.warning" />
+        <Text textStyle="t4Bold">{isVideo ? '카메라·마이크 권한이 필요해요' : '마이크 권한이 필요해요'}</Text>
       </HStack>
       <Text color="fg.neutralMuted" textStyle="t3Regular">
-        답변을 녹음하려면 마이크 접근을 허용해 주세요.
+        {isVideo
+          ? '영상 답변을 녹화하려면 카메라·마이크 접근을 허용해 주세요.'
+          : '답변을 녹음하려면 마이크 접근을 허용해 주세요.'}
       </Text>
       <HStack gap="x2">
         {canAskAgain ? (
           <Box flex={1}>
-            <Button label="허용 다시 요청" variant="outline" iconLeft="Mic" fullWidth onPress={onRequestAgain} />
+            <Button
+              label="허용 다시 요청"
+              variant="outline"
+              iconLeft={isVideo ? 'Video' : 'Mic'}
+              fullWidth
+              onPress={onRequestAgain}
+            />
           </Box>
         ) : (
           <Box flex={1}>

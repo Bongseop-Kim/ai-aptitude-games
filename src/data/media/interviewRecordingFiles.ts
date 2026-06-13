@@ -1,5 +1,7 @@
 import { Directory, File, Paths } from 'expo-file-system';
 
+import type { MediaSpec } from '../../domain/interviewMedia';
+
 const ROOT_DIR = 'interview-media';
 
 function sessionDirectory(sessionDraftId: string) {
@@ -12,11 +14,12 @@ export async function persistRecording(
   sessionDraftId: string,
   questionId: string,
   cacheUri: string,
+  spec: MediaSpec,
 ) {
   const directory = sessionDirectory(sessionDraftId);
   directory.create({ intermediates: true, idempotent: true });
 
-  const target = new File(directory, `${questionId}.m4a`);
+  const target = new File(directory, `${questionId}.${spec.extension}`);
   const source = new File(cacheUri);
   await source.move(target, { overwrite: true });
 

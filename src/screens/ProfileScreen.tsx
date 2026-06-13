@@ -4,6 +4,7 @@ import { Alert } from 'react-native';
 import { Header } from '../components/app/Header';
 import { SectionHead } from '../components/app/SectionHead';
 import { TabScreen } from '../components/app/TabScreen';
+import { BirthYearBandSheet } from '../components/profile/BirthYearBandSheet';
 import { JobFamilySheet } from '../components/profile/JobFamilySheet';
 import { ProfileSummary } from '../components/profile/ProfileSummary';
 import { StatTile } from '../components/profile/StatTile';
@@ -19,6 +20,7 @@ import { useClearDevData, useSeedDevData } from '../data/seed/useSeedDevData';
 import { user } from '../data/user';
 import { HStack, VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
+import { birthYearBandLabel } from '../domain/birthYearBand';
 import { jobFamilyLabel } from '../domain/jobFamily';
 import { IdentityConflictError, linkKakao } from '../lib/auth';
 import { supabase } from '../lib/supabase';
@@ -31,6 +33,7 @@ export function ProfileScreen() {
   const [isLinking, setIsLinking] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [jobFamilyVisible, setJobFamilyVisible] = useState(false);
+  const [birthBandVisible, setBirthBandVisible] = useState(false);
   const { data: profile } = useProfile();
   const gamesWithProgress = useGamesWithProgress();
   const doneCount = gamesWithProgress.filter((game) => game.status === 'done').length;
@@ -113,12 +116,33 @@ export function ProfileScreen() {
               </HStack>
             </List.Suffix>
           </List.Item>
+          <List.Item onPress={() => setBirthBandVisible(true)}>
+            <List.Prefix>
+              <Icon name="Timeline" color="fg.brand" />
+            </List.Prefix>
+            <List.Content>
+              <List.Title>출생 연도</List.Title>
+            </List.Content>
+            <List.Suffix>
+              <HStack align="center" gap="x1">
+                <Text color="fg.neutralMuted" textStyle="t3Medium" maxLines={1}>
+                  {birthYearBandLabel(profile?.birthYearBand) ?? '비공개'}
+                </Text>
+                <Icon name="ChevronRight" size="small" />
+              </HStack>
+            </List.Suffix>
+          </List.Item>
         </List.Root>
       </Card>
       <JobFamilySheet
         visible={jobFamilyVisible}
         current={profile?.field ?? null}
         onClose={() => setJobFamilyVisible(false)}
+      />
+      <BirthYearBandSheet
+        visible={birthBandVisible}
+        current={profile?.birthYearBand ?? null}
+        onClose={() => setBirthBandVisible(false)}
       />
 
       <SectionHead title="설정" />
