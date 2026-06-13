@@ -15,12 +15,12 @@ import { Grid } from '../design-system/components/Grid';
 import { HStack, VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
 import { games } from '../data/games';
-import { ncsJob } from '../data/interview';
-import { mockJobPosting } from '../data/interviewFlow';
-import { getOverallInterviewScore } from '../data/interviewSession';
 import { useGamesWithProgress } from '../data/local/useGameResults';
+import { useInterviewSessions } from '../data/local/useInterviewSessions';
 import { useActiveMockExamSession } from '../data/local/useMockExamSession';
+import { useProfile } from '../data/server/useProfile';
 import { user } from '../data/user';
+import { jobFamilyLabel } from '../domain/jobFamily';
 import { toneColors } from '../domain/tone';
 import type { GameId } from '../domain/types';
 import type { BadgeTone } from '../shared/types';
@@ -109,7 +109,33 @@ function Greeting() {
 
 function ReadinessSummary() {
   const router = useRouter();
-  const recentInterviewScore = getOverallInterviewScore();
+  const { data: sessions } = useInterviewSessions();
+  const { data: profile } = useProfile();
+  const latest = sessions?.[0] ?? null;
+  const fieldLabel = jobFamilyLabel(profile?.field);
+  const jobTag = fieldLabel != null ? `${fieldLabel} · NCS 기반` : 'NCS 기반';
+
+  let interviewLine: React.ReactNode;
+  if (latest == null) {
+    interviewLine = (
+      <Text color="fg.neutralMuted" textStyle="t3Regular">
+        아직 면접 기록이 없어요
+      </Text>
+    );
+  } else if (latest.score > 0) {
+    interviewLine = (
+      <Text color="fg.neutralMuted" textStyle="t3Regular">
+        최근 모의 면접 <Text color="fg.neutral" textStyle="t3Bold">{latest.score}점</Text> · {latest.company}{' '}
+        {latest.role}
+      </Text>
+    );
+  } else {
+    interviewLine = (
+      <Text color="fg.neutralMuted" textStyle="t3Regular">
+        최근 모의 면접 · {latest.company} {latest.role}
+      </Text>
+    );
+  }
 
   return (
     <Card gap="x4" p="x4">
@@ -123,12 +149,9 @@ function ReadinessSummary() {
             <Badge label={user.readiness.percentileLabel} tone="positive" size="small" />
           </HStack>
           <HStack>
-            <Tag label={`${ncsJob.name} · NCS 기반`} tone="brand" selected />
+            <Tag label={jobTag} tone="brand" selected />
           </HStack>
-          <Text color="fg.neutralMuted" textStyle="t3Regular">
-            최근 모의 면접 <Text color="fg.neutral" textStyle="t3Bold">{recentInterviewScore}점</Text> · {mockJobPosting.company}{' '}
-            {mockJobPosting.role}
-          </Text>
+          {interviewLine}
         </VStack>
       </HStack>
       <Box bg="stroke.neutralWeak" height="x0_5" />

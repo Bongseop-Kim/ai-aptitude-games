@@ -1,22 +1,25 @@
+import { useState } from 'react';
 import { useRouter } from 'expo-router';
 
 import { Header } from '../components/app/Header';
 import { SectionHead } from '../components/app/SectionHead';
 import { TabScreen } from '../components/app/TabScreen';
+import { JobFamilySheet } from '../components/profile/JobFamilySheet';
 import { ReadinessGauge } from '../components/readiness/ReadinessGauge';
-import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Icon, type IconName } from '../components/ui/Icon';
 import { IconButton } from '../components/ui/IconButton';
 import { List } from '../components/ui/List';
 import { Skeleton } from '../components/ui/Skeleton';
-import { Tag } from '../components/ui/Tag';
 import { useInterviewSessions } from '../data/local/useInterviewSessions';
+import { useProfile } from '../data/server/useProfile';
+import { useResumes } from '../data/server/useResumes';
+import { useMyJobPostings } from '../data/server/useJobPostings';
 import { Box } from '../design-system/components/Box';
 import { HStack, VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
-import { ncsJob } from '../data/interview';
+import { jobFamilyLabel } from '../domain/jobFamily';
 import type { InterviewSessionRecord } from '../domain/types';
 
 export function InterviewScreen() {
@@ -36,16 +39,17 @@ export function InterviewScreen() {
         />
       }
     >
-      <NcsJobCard />
+      <JobFamilyCard />
       <StartInterviewCard />
       <Button
-        label="이력서로 시작하기"
+        label="면접 시작하기"
         variant="solid"
         tone="brand"
         iconLeft="Zap"
         fullWidth
         onPress={() => router.push('/interview/new' as never)}
       />
+      <InterviewPrepSection />
       <VStack gap="x2">
         <SectionHead
           title="지난 면접"
@@ -75,39 +79,90 @@ export function InterviewScreen() {
   );
 }
 
-function NcsJobCard() {
+function JobFamilyCard() {
+  const { data: profile } = useProfile();
+  const [sheetVisible, setSheetVisible] = useState(false);
+  const label = jobFamilyLabel(profile?.field);
+
   return (
     <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" gap="x3" p="x4">
-      <HStack align="center" gap="x2">
-        <Badge label="국가직무능력표준(NCS) 기반" tone="brand" size="small" />
-      </HStack>
-      <HStack align="flexStart" gap="x3">
-        <IconTile icon="Award" bg="bg.layerDefault" color="fg.brand" />
+      <HStack align="center" gap="x3">
+        <IconTile icon="Target" bg="bg.layerDefault" color="fg.brand" />
         <VStack flex={1} gap="x0_5">
           <Text color="fg.neutralMuted" textStyle="t2Medium" maxLines={1}>
-            {ncsJob.standard} 기반 분류
+            목표 직무
           </Text>
           <Text textStyle="t7Bold" maxLines={1}>
-            {ncsJob.name}
-          </Text>
-          <Text color="fg.neutralMuted" textStyle="t2Regular" maxLines={1}>
-            지원 공고에 맞춰 자동 분류했어요
+            {label ?? '직무를 선택해주세요'}
           </Text>
         </VStack>
-        <IconButton name="Pencil" label="직무 변경" variant="weak" disabled />
+        <IconButton name="Pencil" label="직무 변경" variant="weak" onPress={() => setSheetVisible(true)} />
       </HStack>
-      <HStack align="center" gap="x1_5">
-        <Icon name="CircleCheck" color="fg.positive" size="small" />
-        <Text textStyle="t3Bold" maxLines={1}>
-          매핑 신뢰도 {ncsJob.confidence}%
-        </Text>
-      </HStack>
-      <HStack gap="x1_5" wrap>
-        {ncsJob.units.map((unit) => (
-          <Tag key={unit} label={unit} tone="brand" />
-        ))}
-      </HStack>
+      <JobFamilySheet
+        visible={sheetVisible}
+        current={profile?.field ?? null}
+        onClose={() => setSheetVisible(false)}
+      />
     </Card>
+  );
+}
+
+function InterviewPrepSection() {
+  const router = useRouter();
+  const { data: resumes } = useResumes();
+  const { data: postings } = useMyJobPostings();
+  const resumeValue = resumes != null ? `${resumes.length}개` : null;
+  const postingValue = postings != null ? `${postings.length}개` : null;
+
+  return (
+    <VStack gap="x2">
+      <SectionHead title="면접 준비" />
+      <Card py="x1">
+        <List.Root>
+          <List.Item accessibilityLabel="내 이력서" onPress={() => router.push('/interview/resumes' as never)}>
+            <List.Prefix>
+              <Icon name="FileText" color="fg.brand" />
+            </List.Prefix>
+            <List.Content>
+              <List.Title>내 이력서</List.Title>
+            </List.Content>
+            <List.Suffix>
+              <Box alignItems="flexEnd" minWidth="x10">
+                {resumeValue ? (
+                  <Text color="fg.neutralMuted" textStyle="t3Medium" maxLines={1}>
+                    {resumeValue}
+                  </Text>
+                ) : (
+                  <Skeleton height="x4" width="x8" />
+                )}
+              </Box>
+              <Icon name="ChevronRight" size="small" />
+            </List.Suffix>
+          </List.Item>
+          <List.Divider />
+          <List.Item accessibilityLabel="채용공고" onPress={() => router.push('/interview/postings' as never)}>
+            <List.Prefix>
+              <Icon name="Building2" color="fg.brand" />
+            </List.Prefix>
+            <List.Content>
+              <List.Title>채용공고</List.Title>
+            </List.Content>
+            <List.Suffix>
+              <Box alignItems="flexEnd" minWidth="x10">
+                {postingValue ? (
+                  <Text color="fg.neutralMuted" textStyle="t3Medium" maxLines={1}>
+                    {postingValue}
+                  </Text>
+                ) : (
+                  <Skeleton height="x4" width="x8" />
+                )}
+              </Box>
+              <Icon name="ChevronRight" size="small" />
+            </List.Suffix>
+          </List.Item>
+        </List.Root>
+      </Card>
+    </VStack>
   );
 }
 
@@ -180,7 +235,7 @@ function InterviewSessionRowSkeleton() {
 
 function EmptyInterviewSessions() {
   return (
-    <Card minHeight={132}>
+    <Card minHeight="x34">
       <VStack align="center" flex={1} gap="x2" justify="center">
         <Icon name="Video" color="fg.neutralSubtle" />
         <Text align="center" color="fg.neutralMuted" textStyle="t4Regular">

@@ -4,6 +4,7 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import type { GameResultInput } from '../../domain/games/results';
 import type { GameId } from '../../domain/types';
 import { insertGameResult } from './gameResults';
+import { insertInterviewAnswers, type InterviewAnswerInput } from './interviewAnswers';
 import { insertInterviewSession, type InterviewSessionInput } from './interviewSessions';
 import { insertMockExamResult } from './mockExamResults';
 
@@ -114,11 +115,19 @@ export async function completeMockExamInterviewItem(
   userId: string,
   sessionId: string,
   input: InterviewSessionInput,
+  answers: readonly InterviewAnswerInput[] = [],
+  options: { resumeId?: string; jobPostingId?: string; interviewSessionId?: string } = {},
 ) {
   let resultId = '';
 
   await db.withTransactionAsync(async () => {
-    resultId = await insertInterviewSession(db, userId, input, { mockExamId: sessionId });
+    resultId = await insertInterviewSession(db, userId, input, {
+      id: options.interviewSessionId,
+      mockExamId: sessionId,
+      resumeId: options.resumeId,
+      jobPostingId: options.jobPostingId,
+    });
+    await insertInterviewAnswers(db, userId, resultId, answers);
     await db.runAsync(
       'INSERT INTO mock_exam_session_items (session_id, item_key, result_id, score, duration_ms) VALUES (?, ?, ?, ?, ?)',
       sessionId,

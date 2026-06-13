@@ -5,10 +5,12 @@ import type { GameResultInput } from '../../domain/games/results';
 import { useAuth } from '../../providers/AuthProvider';
 import { pushUnsyncedGameResultRounds } from '../sync/gameResultRoundsSync';
 import { pushUnsyncedGameResults } from '../sync/gameResultsSync';
+import { pushUnsyncedInterviewAnswers } from '../sync/interviewAnswersSync';
 import { pushUnsyncedInterviewSessions } from '../sync/interviewSessionsSync';
 import { pushUnsyncedMockExamResultItems } from '../sync/mockExamResultItemsSync';
 import { pushUnsyncedMockExamResults } from '../sync/mockExamResultsSync';
 import { gameResultKeys } from './useGameResults';
+import { interviewAnswerKeys } from './useInterviewAnswers';
 import { interviewSessionKeys } from './useInterviewSessions';
 import { mockExamKeys } from './useMockExamResults';
 import {
@@ -19,6 +21,7 @@ import {
   getActiveMockExamSession,
   startMockExamSession,
 } from './mockExamSessions';
+import type { InterviewAnswerInput } from './interviewAnswers';
 import type { InterviewSessionInput } from './interviewSessions';
 
 export const mockExamSessionKeys = {
@@ -132,21 +135,37 @@ export function useCompleteMockExamInterviewItem() {
     mutationFn: ({
       input,
       sessionId,
+      answers = [],
+      resumeId,
+      jobPostingId,
+      interviewSessionId,
     }: {
       input: InterviewSessionInput;
       sessionId: string;
+      answers?: readonly InterviewAnswerInput[];
+      resumeId?: string;
+      jobPostingId?: string;
+      interviewSessionId?: string;
     }) => {
       if (!userId) {
         throw new Error('Cannot complete a mock exam interview without an authenticated user.');
       }
-      return completeMockExamInterviewItem(db, userId, sessionId, input);
+      return completeMockExamInterviewItem(db, userId, sessionId, input, answers, {
+        resumeId,
+        jobPostingId,
+        interviewSessionId,
+      });
     },
     retry: 2,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: mockExamSessionKeys.all });
       void queryClient.invalidateQueries({ queryKey: interviewSessionKeys.all });
+      void queryClient.invalidateQueries({ queryKey: interviewAnswerKeys.all });
       if (userId) {
-        void pushUnsyncedInterviewSessions(db, userId);
+        void (async () => {
+          await pushUnsyncedInterviewSessions(db, userId);
+          await pushUnsyncedInterviewAnswers(db, userId);
+        })();
       }
     },
     onError: (error) => {
@@ -178,6 +197,7 @@ export function useFinalizeMockExamSession() {
           await pushUnsyncedMockExamResults(db, userId);
           await pushUnsyncedGameResults(db, userId);
           await pushUnsyncedInterviewSessions(db, userId);
+          await pushUnsyncedInterviewAnswers(db, userId);
           await pushUnsyncedGameResultRounds(db, userId);
           await pushUnsyncedMockExamResultItems(db, userId);
         })();

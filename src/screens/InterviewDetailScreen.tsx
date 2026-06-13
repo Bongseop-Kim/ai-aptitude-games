@@ -1,5 +1,6 @@
 import { Alert, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSQLiteContext } from 'expo-sqlite';
 
 import { BottomActionBar } from '../components/app/BottomActionBar';
 import { Header } from '../components/app/Header';
@@ -8,11 +9,14 @@ import { FeedbackReportBody } from '../components/interview/FeedbackReportBody';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Skeleton } from '../components/ui/Skeleton';
+import { useInterviewAnswers } from '../data/local/useInterviewAnswers';
 import { useInterviewSession } from '../data/local/useInterviewSessions';
+import { retryInterviewMediaUpload } from '../data/media/interviewMediaUpload';
 import { Box } from '../design-system/components/Box';
 import { useDesignSystemTheme } from '../design-system/provider';
 import { VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
+import { useAuth } from '../providers/AuthProvider';
 
 function showShareNotice() {
   Alert.alert('공유 준비 중', '피드백 카드는 다음 업데이트에서 저장할 수 있어요.');
@@ -20,14 +24,19 @@ function showShareNotice() {
 
 export function InterviewDetailScreen() {
   const router = useRouter();
+  const db = useSQLiteContext();
+  const { userId } = useAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
   const recordId = typeof id === 'string' ? id : null;
   const { data: session, isLoading } = useInterviewSession(recordId);
+  const { data: answers = [] } = useInterviewAnswers(session?.id ?? null);
   const canUseActions = !isLoading && Boolean(session);
   const { theme } = useDesignSystemTheme();
 
-  function goRetry() {
-    router.push({ pathname: '/interview/new', params: { mode: 'retry' } } as never);
+  function retryUpload(answerId: string) {
+    if (userId) {
+      void retryInterviewMediaUpload(db, userId, answerId);
+    }
   }
 
   return (
@@ -52,22 +61,24 @@ export function InterviewDetailScreen() {
             {isLoading ? <InterviewDetailSkeleton /> : null}
             {!isLoading && !session ? <MissingInterviewSession onBack={() => router.back()} /> : null}
             {!isLoading && session ? (
-              <FeedbackReportBody session={session} />
+              // Standalone training interviews have no AI analysis in P1 —
+              // the body stays in its measured stage (interview = null).
+              <FeedbackReportBody
+                session={session}
+                answers={answers}
+                interview={null}
+                uploads={{ retry: retryUpload }}
+              />
             ) : null}
           </Box>
         </ScrollView>
       </Box>
       {canUseActions ? (
         <BottomActionBar
-          secondary={{
+          primary={{
             label: '공유',
             iconLeft: 'Share',
             onPress: showShareNotice,
-          }}
-          primary={{
-            label: '약점 재도전',
-            iconRight: 'RotateCcw',
-            onPress: goRetry,
           }}
         />
       ) : null}

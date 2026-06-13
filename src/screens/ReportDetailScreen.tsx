@@ -6,9 +6,12 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Header } from '../components/app/Header';
 import { SectionHead } from '../components/app/SectionHead';
 import { Screen } from '../components/app/Screen';
+import { BottomActionBar } from '../components/app/BottomActionBar';
 import { FeedbackReportBody } from '../components/interview/FeedbackReportBody';
+import { AnalysisStatusCard } from '../components/reports/AnalysisStatusCard';
+import { CompetencySection } from '../components/reports/CompetencySection';
 import { GamesSection } from '../components/reports/GamesSection';
-import { GrowthTrendChart } from '../components/reports/ReportCharts';
+import { GrowthTrendChart, PercentileBar } from '../components/reports/ReportCharts';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Icon } from '../components/ui/Icon';
@@ -20,16 +23,36 @@ import { gameContent } from '../data/gameContent';
 import { games } from '../data/games';
 import { reportDetailSections } from '../data/reports';
 import { useInterviewSessionForMockExam } from '../data/local/useInterviewSessions';
+import { useInterviewAnswers } from '../data/local/useInterviewAnswers';
 import { useGameResultsForMockExam } from '../data/local/useGameResults';
 import { useMockExamRecord, useMockExamRecords } from '../data/local/useMockExamResults';
+import { useMockExamReport, getReportSectionStates } from '../data/server/useMockExamReport';
+import { retryInterviewMediaUpload } from '../data/media/interviewMediaUpload';
+import { useAuth } from '../providers/AuthProvider';
 import { Box } from '../design-system/components/Box';
 import { Grid } from '../design-system/components/Grid';
 import { HStack, VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
 import { useDesignSystemTheme } from '../design-system/provider';
+import type {
+  MockExamReport,
+  ReportCoach,
+  ReportCompetencyScore,
+  ReportHighlights,
+  ReportOverall,
+} from '../domain/report';
 import type { MockExamRecord, ReportSectionKey } from '../domain/types';
+import type { ReportSectionStates } from '../data/server/useMockExamReport';
+import { useSQLiteContext } from 'expo-sqlite';
 
 const coverFeatureSections = reportDetailSections.slice(1);
+const COMPETENCY_LABELS: Record<ReportCompetencyScore['key'], string> = {
+  trust: '신뢰',
+  strategy: '전략',
+  relationship: '관계',
+  value: '가치',
+  fit: '조직적합',
+};
 
 function showShareNotice() {
   Alert.alert('공유 준비 중', '공유 카드는 다음 업데이트에서 저장할 수 있어요.');
@@ -61,14 +84,15 @@ function previousRecordFor(record: MockExamRecord, records: MockExamRecord[]) {
   return records.find((item) => item.round === record.round - 1) ?? null;
 }
 
+function gameNameFor(gameId: string) {
+  return games.find((game) => game.id === gameId)?.name ?? gameId;
+}
+
 export function ReportDetailScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { theme } = useDesignSystemTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const recordId = typeof id === 'string' ? id : null;
   const { data: record, isLoading } = useMockExamRecord(recordId);
-  const { data: records = [] } = useMockExamRecords();
   const canUseReportActions = !isLoading && Boolean(record);
 
   return (
@@ -84,36 +108,120 @@ export function ReportDetailScreen() {
           onPress: showShareNotice,
         } : undefined}
       />
+      {isLoading ? <LoadingBody /> : null}
+      {!isLoading && !record ? <MissingReportBody onBack={() => router.back()} /> : null}
+      {!isLoading && record ? <ReportContent record={record} /> : null}
+    </Screen>
+  );
+}
+
+function LoadingBody() {
+  const insets = useSafeAreaInsets();
+  const { theme } = useDesignSystemTheme();
+
+  return (
+    <Box flex={1} bleedBottom="spacingY.componentDefault" bleedX="spacingX.globalGutter">
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + theme.dimension.spacingX.globalGutter }}
+        showsVerticalScrollIndicator={false}
+      >
+        <Box px="spacingX.globalGutter" py="x3">
+          <ReportDetailSkeleton />
+        </Box>
+      </ScrollView>
+    </Box>
+  );
+}
+
+function MissingReportBody({ onBack }: { onBack: () => void }) {
+  const insets = useSafeAreaInsets();
+  const { theme } = useDesignSystemTheme();
+
+  return (
+    <Box flex={1} bleedBottom="spacingY.componentDefault" bleedX="spacingX.globalGutter">
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + theme.dimension.spacingX.globalGutter }}
+        showsVerticalScrollIndicator={false}
+      >
+        <Box px="spacingX.globalGutter" py="x3">
+          <MissingReport onBack={onBack} />
+        </Box>
+      </ScrollView>
+    </Box>
+  );
+}
+
+function ReportContent({ record }: { record: MockExamRecord }) {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { theme } = useDesignSystemTheme();
+  const { data: records = [] } = useMockExamRecords();
+  const reportQuery = useMockExamReport(record.id, record.createdAt);
+  const row = reportQuery.data ?? null;
+  const states = getReportSectionStates(row);
+  const report = row?.status === 'done' ? row.report : null;
+  const previousRecord = previousRecordFor(record, records);
+  const onRetryReport = () => void reportQuery.refetch();
+
+  const cta = resolveBottomCta(report, record);
+
+  return (
+    <>
       <Box flex={1} bleedBottom="spacingY.componentDefault" bleedX="spacingX.globalGutter">
         <ScrollView
           contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + theme.dimension.spacingX.globalGutter }}
           showsVerticalScrollIndicator={false}
         >
           <Box px="spacingX.globalGutter" py="x3">
-            {isLoading ? <ReportDetailSkeleton /> : null}
-            {!isLoading && !record ? <MissingReport onBack={() => router.back()} /> : null}
-            {!isLoading && record ? (
-              <VStack gap="x8">
-                {reportDetailSections.map((section) => (
-                  <VStack key={section.key} gap="x3">
-                    {section.key !== 'cover' ? <SectionHead title={section.title} /> : null}
-                    <LockedReportSection locked={Boolean(section.locked && !record.pro)}>
-                      <ReportSectionBody
-                        sectionKey={section.key}
-                        record={record}
-                        records={records}
-                        previousRecord={previousRecordFor(record, records)}
-                      />
-                    </LockedReportSection>
-                  </VStack>
-                ))}
-              </VStack>
-            ) : null}
+            <VStack gap="x8">
+              {reportDetailSections.map((section) => (
+                <VStack key={section.key} gap="x3">
+                  {section.key !== 'cover' ? <SectionHead title={section.title} /> : null}
+                  <LockedReportSection locked={Boolean(section.locked && !record.pro)}>
+                    <ReportSectionBody
+                      sectionKey={section.key}
+                      record={record}
+                      records={records}
+                      previousRecord={previousRecord}
+                      report={report}
+                      states={states}
+                      onRetryReport={onRetryReport}
+                    />
+                  </LockedReportSection>
+                </VStack>
+              ))}
+            </VStack>
           </Box>
         </ScrollView>
       </Box>
-    </Screen>
+      <Box px="spacingX.globalGutter" style={{ paddingBottom: insets.bottom }}>
+        <BottomActionBar
+          primary={{
+            label: cta.label,
+            iconRight: 'ArrowRight',
+            onPress: () => router.push({ pathname: '/games/[id]', params: { id: cta.gameId } } as never),
+          }}
+        />
+      </Box>
+    </>
   );
+}
+
+function resolveBottomCta(report: MockExamReport | null, record: MockExamRecord): { label: string; gameId: string } {
+  const growth = report?.highlights?.growth_areas?.[0];
+  if (growth) {
+    return {
+      label: `보완 게임 ${growth.action.minutes}분 훈련하기`,
+      gameId: growth.action.game_id,
+    };
+  }
+  return { label: '보완 게임 5분 훈련하기', gameId: weakestLocalGameId(record) };
+}
+
+function weakestLocalGameId(_record: MockExamRecord): string {
+  // Local fallback resolves the actual weakest game inside CoverSection via game
+  // results; without that data the first game route is a safe default.
+  return games[0].id;
 }
 
 function ReportDetailSkeleton() {
@@ -202,67 +310,56 @@ function LockedReportSection({ locked, children }: LockedReportSectionProps) {
   );
 }
 
-function AnalysisPendingCard() {
-  return (
-    <Card minHeight="x16">
-      <HStack align="center" gap="x3">
-        <Box
-          alignItems="center"
-          bg="bg.brandWeak"
-          borderRadius="full"
-          height="x10"
-          justifyContent="center"
-          width="x10"
-        >
-          <Icon name="Clock" color="fg.brand" />
-        </Box>
-        <VStack flex={1} gap="x1">
-          <Text textStyle="t4Bold">결과를 분석하고 있어요</Text>
-          <Text color="fg.neutralMuted" textStyle="t2Regular">
-            게임 기록을 바탕으로 역량을 계산하는 중이에요. 잠시 후 다시 확인해주세요.
-          </Text>
-        </VStack>
-      </HStack>
-    </Card>
-  );
-}
-
 type ReportSectionBodyProps = {
   sectionKey: ReportSectionKey;
   record: MockExamRecord;
   records: MockExamRecord[];
   previousRecord: MockExamRecord | null;
+  report: MockExamReport | null;
+  states: ReportSectionStates;
+  onRetryReport: () => void;
 };
 
-function ReportSectionBody({ sectionKey, record, records, previousRecord }: ReportSectionBodyProps) {
+function ReportSectionBody({
+  sectionKey,
+  record,
+  records,
+  previousRecord,
+  report,
+  states,
+  onRetryReport,
+}: ReportSectionBodyProps) {
   switch (sectionKey) {
     case 'cover':
-      return <CoverSection record={record} records={records} />;
+      return <CoverSection record={record} records={records} overall={report?.overall ?? null} competencies={report?.competencies ?? null} state={states.overall} />;
     case 'games':
       return <GamesSection record={record} previousRecord={previousRecord} />;
-    case 'radar':
-      return <RadarSection />;
+    case 'competencies':
+      return <CompetenciesSection competencies={report?.competencies ?? null} state={states.competencies} onRetry={onRetryReport} />;
     case 'highlights':
-      return <HighlightsSection record={record} />;
+      return <HighlightsSection record={record} highlights={report?.highlights ?? null} state={states.highlights} />;
     case 'interview':
-      return <InterviewFeedbackSection mockExamId={record.id} />;
+      return <InterviewFeedbackSection mockExamId={record.id} report={report} state={states.interview} />;
     case 'resilience':
-      return <ResilienceSection />;
+      return <AnalysisStatusCard variant="pending" />;
     case 'pattern':
-      return <PatternSection />;
+      return <AnalysisStatusCard variant="pending" />;
     case 'peer':
-      return <GrowthSection record={record} records={records} />;
+      return <GrowthSection record={record} records={records} overall={report?.overall ?? null} />;
     case 'coach':
-      return <CoachSection />;
+      return <CoachSection coach={report?.coach ?? null} state={states.coach} onRetry={onRetryReport} />;
   }
 }
 
-type RecordSectionProps = {
+type CoverSectionProps = {
   record: MockExamRecord;
-  records?: MockExamRecord[];
+  records: MockExamRecord[];
+  overall: ReportOverall | null;
+  competencies: ReportCompetencyScore[] | null;
+  state: ReportSectionStates['overall'];
 };
 
-function CoverSection({ record, records = [] }: RecordSectionProps) {
+function CoverSection({ record, records, overall, competencies, state }: CoverSectionProps) {
   const results = useGameResultsForMockExam(record.id);
   const firstRecord = records.find((item) => item.round === 1);
   const firstDelta = firstRecord ? record.score - firstRecord.score : 0;
@@ -272,6 +369,12 @@ function CoverSection({ record, records = [] }: RecordSectionProps) {
     .sort((a, b) => (b.result?.score ?? 0) - (a.result?.score ?? 0));
   const strongest = rankedGames[0];
   const weakest = rankedGames[rankedGames.length - 1];
+
+  const score = overall?.score ?? record.score;
+  const range = overall?.score_range ?? null;
+  const showRange = range != null && range[0] !== range[1];
+
+  const competencyTiles = resolveCompetencyTiles(competencies);
 
   return (
     <VStack gap="x3">
@@ -287,39 +390,80 @@ function CoverSection({ record, records = [] }: RecordSectionProps) {
 
       <Card bg="bg.brandWeak" borderColor="stroke.brandWeak">
         <HStack align="center" gap="x4">
-          <ReadinessGauge score={record.score} size={108} />
+          <ReadinessGauge score={score} size={108} />
           <VStack flex={1} gap="x1">
             <Text color="fg.neutralMuted" textStyle="t2Regular">
               종합 준비도
             </Text>
             <HStack align="center" gap="x1_5">
-              <Text textStyle="t10Bold">{record.score}</Text>
+              <Text textStyle="t10Bold">{score}</Text>
               <Text color="fg.neutralSubtle" textStyle="t3Regular">/ 100</Text>
             </HStack>
-            <Box style={{ opacity: record.round === 1 ? 0 : 1 }}>
-              <Badge
-                label={`첫 회차 대비 ${formatScoreDelta(firstDelta)}`}
-                tone={firstDelta >= 0 ? 'positive' : 'critical'}
-              />
+            {/* Range slot: reserved so server arrival doesn't shift layout. */}
+            <Box style={{ opacity: showRange ? 1 : 0 }}>
+              <Text color="fg.neutralSubtle" textStyle="t3Regular">
+                {range ? `${range[0]}~${range[1]} 범위` : '0~0 범위'}
+              </Text>
             </Box>
+            {overall ? (
+              <Box style={{ opacity: record.round === 1 ? 0 : 1 }}>
+                <Badge
+                  label={`첫 회차 대비 ${formatScoreDelta(firstDelta)}`}
+                  tone={firstDelta >= 0 ? 'positive' : 'critical'}
+                />
+              </Box>
+            ) : (
+              <Badge label="분석 중" tone="neutral" size="small" />
+            )}
           </VStack>
         </HStack>
       </Card>
 
+      {overall?.summary ? (
+        <Card>
+          <Text color="fg.neutralMuted" textStyle="t3Regular">
+            {overall.summary}
+          </Text>
+        </Card>
+      ) : null}
+
       <Grid columns={2} gap="x2">
-        <InsightTile
-          label="강한 영역"
-          title={strongest ? `${strongest.game.name} · ${strongest.result?.score}` : '확인 중'}
-          description={strongest?.game.description ?? '게임 기록을 확인하고 있어요.'}
-          tone="positive"
-        />
-        <InsightTile
-          label="보완 영역"
-          title={weakest ? `${weakest.game.name} · ${weakest.result?.score}` : '확인 중'}
-          description={weakest?.game.description ?? '게임 기록을 확인하고 있어요.'}
-          tone="warning"
-        />
+        {competencyTiles ? (
+          <>
+            <InsightTile
+              label="강한 영역"
+              title={`${COMPETENCY_LABELS[competencyTiles.max.key]} · ${competencyTiles.max.score}`}
+              description={competencyTiles.max.note}
+              tone="positive"
+            />
+            <InsightTile
+              label="보완 영역"
+              title={`${COMPETENCY_LABELS[competencyTiles.min.key]} · ${competencyTiles.min.score}`}
+              description={competencyTiles.min.note}
+              tone="warning"
+            />
+          </>
+        ) : (
+          <>
+            <InsightTile
+              label="강한 영역"
+              title={strongest ? `${strongest.game.name} · ${strongest.result?.score}` : '확인 중'}
+              description={strongest?.game.description ?? '게임 기록을 확인하고 있어요.'}
+              tone="positive"
+            />
+            <InsightTile
+              label="보완 영역"
+              title={weakest ? `${weakest.game.name} · ${weakest.result?.score}` : '확인 중'}
+              description={weakest?.game.description ?? '게임 기록을 확인하고 있어요.'}
+              tone="warning"
+            />
+          </>
+        )}
       </Grid>
+
+      {state === 'pending' ? (
+        <Badge label="분석 중" tone="neutral" size="small" />
+      ) : null}
 
       <SectionHead title="이 리포트에는" />
       <Card py="x1">
@@ -331,6 +475,19 @@ function CoverSection({ record, records = [] }: RecordSectionProps) {
       </Card>
     </VStack>
   );
+}
+
+function resolveCompetencyTiles(competencies: ReportCompetencyScore[] | null) {
+  if (competencies == null || competencies.length === 0) {
+    return null;
+  }
+  let max = competencies[0];
+  let min = competencies[0];
+  for (const item of competencies) {
+    if (item.score > max.score) max = item;
+    if (item.score < min.score) min = item;
+  }
+  return { max, min };
 }
 
 type InsightTileProps = {
@@ -388,11 +545,94 @@ function ReportFeatureRow({ index, title, locked }: ReportFeatureRowProps) {
   );
 }
 
-function RadarSection() {
-  return <AnalysisPendingCard />;
+type CompetenciesSectionProps = {
+  competencies: ReportCompetencyScore[] | null;
+  state: ReportSectionStates['competencies'];
+  onRetry: () => void;
+};
+
+function CompetenciesSection({ competencies, state, onRetry }: CompetenciesSectionProps) {
+  if (state === 'failed') {
+    return <AnalysisStatusCard variant="failed" minHeight="x60" onRetry={onRetry} />;
+  }
+  if (competencies == null || state !== 'ready') {
+    return <AnalysisStatusCard variant="pending" minHeight="x60" />;
+  }
+  return <CompetencySection competencies={competencies} />;
 }
 
-function HighlightsSection({ record }: RecordSectionProps) {
+type HighlightsSectionProps = {
+  record: MockExamRecord;
+  highlights: ReportHighlights | null;
+  state: ReportSectionStates['highlights'];
+};
+
+function HighlightsSection({ record, highlights }: HighlightsSectionProps) {
+  if (highlights) {
+    return <ServerHighlights highlights={highlights} />;
+  }
+  return <LocalHighlights record={record} />;
+}
+
+function ServerHighlights({ highlights }: { highlights: ReportHighlights }) {
+  const router = useRouter();
+
+  return (
+    <VStack gap="x3">
+      <Text textStyle="t8Bold">뭘 잘하고, 뭘 보완할까</Text>
+      <VStack gap="x2">
+        <HStack align="center" gap="x1_5">
+          <Icon name="TrendingUp" color="fg.positive" size="small" />
+          <Text textStyle="t4Bold">강점 Top 3</Text>
+        </HStack>
+        <List.Root>
+          {highlights.strengths.map((item, index) => (
+            <Fragment key={`${item.game_id}-${index}`}>
+              {index > 0 ? <List.Divider /> : null}
+              <HighlightRow
+                gameName={gameNameFor(item.game_id)}
+                skill={item.skill}
+                note={item.note}
+                score={item.score}
+                index={index}
+                tone="positive"
+              />
+            </Fragment>
+          ))}
+        </List.Root>
+      </VStack>
+      <VStack gap="x2">
+        <HStack align="center" gap="x1_5">
+          <Icon name="CircleDot" color="mannerTemp.l4Text" size="small" />
+          <Text textStyle="t4Bold">보완 Top 3</Text>
+        </HStack>
+        <List.Root>
+          {highlights.growth_areas.map((item, index) => (
+            <Fragment key={`${item.game_id}-${index}`}>
+              {index > 0 ? <List.Divider /> : null}
+              <HighlightRow
+                gameName={gameNameFor(item.game_id)}
+                skill={item.skill}
+                note={item.note}
+                score={item.score}
+                index={index}
+                tone="warning"
+                action={{
+                  label: `이 게임 ${item.action.minutes}분 훈련하기`,
+                  onPress: () =>
+                    router.push({ pathname: '/games/[id]', params: { id: item.action.game_id } } as never),
+                }}
+              />
+            </Fragment>
+          ))}
+        </List.Root>
+      </VStack>
+    </VStack>
+  );
+}
+
+function LocalHighlights({ record }: { record: MockExamRecord }) {
+  const router = useRouter();
   const results = useGameResultsForMockExam(record.id);
   const rankedGames = games
     .map((game) => ({ game, result: results.data?.[game.id] }))
@@ -443,13 +683,16 @@ function HighlightsSection({ record }: RecordSectionProps) {
             <Fragment key={item.game.id}>
               {index > 0 ? <List.Divider /> : null}
               <HighlightRow
-                gameId={item.game.id}
                 gameName={item.game.name}
-                minutes={item.game.minutes}
                 skill={item.game.skill}
                 score={item.result?.score ?? 0}
                 index={index}
                 tone="warning"
+                action={{
+                  label: `이 게임 ${item.game.minutes}분 훈련하기`,
+                  onPress: () =>
+                    router.push({ pathname: '/games/[id]', params: { id: item.game.id } } as never),
+                }}
               />
             </Fragment>
           ))}
@@ -460,18 +703,16 @@ function HighlightsSection({ record }: RecordSectionProps) {
 }
 
 type HighlightRowProps = {
-  gameId?: string;
   gameName: string;
-  minutes?: number;
   skill: string;
+  note?: string;
   score: number;
   index: number;
   tone: 'positive' | 'warning';
+  action?: { label: string; onPress: () => void };
 };
 
-function HighlightRow({ gameId, gameName, minutes, skill, score, index, tone }: HighlightRowProps) {
-  const router = useRouter();
-
+function HighlightRow({ gameName, skill, note, score, index, tone, action }: HighlightRowProps) {
   return (
     <List.Item>
       <List.Prefix>
@@ -479,14 +720,9 @@ function HighlightRow({ gameId, gameName, minutes, skill, score, index, tone }: 
       </List.Prefix>
       <List.Content>
         <List.Title>{gameName}</List.Title>
-        <List.Detail>{skill}</List.Detail>
-        {gameId && minutes ? (
-          <Button
-            label={`이 게임 ${minutes}분 훈련하기`}
-            size="small"
-            variant="weak"
-            onPress={() => router.push({ pathname: '/games/[id]', params: { id: gameId } } as never)}
-          />
+        <List.Detail>{note ?? skill}</List.Detail>
+        {action ? (
+          <Button label={action.label} size="small" variant="weak" onPress={action.onPress} />
         ) : null}
       </List.Content>
       <List.Suffix>
@@ -498,8 +734,21 @@ function HighlightRow({ gameId, gameName, minutes, skill, score, index, tone }: 
   );
 }
 
-function InterviewFeedbackSection({ mockExamId }: { mockExamId: string }) {
+type InterviewFeedbackSectionProps = {
+  mockExamId: string;
+  report: MockExamReport | null;
+  state: ReportSectionStates['interview'];
+};
+
+function InterviewFeedbackSection({ mockExamId, report }: InterviewFeedbackSectionProps) {
+  const db = useSQLiteContext();
+  const { userId } = useAuth();
   const { data: session, isLoading } = useInterviewSessionForMockExam(mockExamId);
+  const {
+    data: answers = [],
+    isLoading: answersLoading,
+    isFetching: answersFetching,
+  } = useInterviewAnswers(session?.id ?? null);
 
   if (isLoading) {
     return (
@@ -510,28 +759,36 @@ function InterviewFeedbackSection({ mockExamId }: { mockExamId: string }) {
     );
   }
 
-  return <FeedbackReportBody session={session ?? null} />;
-}
-
-function ResilienceSection() {
-  return <AnalysisPendingCard />;
-}
-
-function PatternSection() {
-  return <AnalysisPendingCard />;
+  return (
+    <FeedbackReportBody
+      session={session ?? null}
+      answers={answers}
+      answersLoading={answersLoading || answersFetching}
+      interview={report?.interview ?? null}
+      uploads={{
+        retry: (answerId: string) => {
+          if (userId) {
+            void retryInterviewMediaUpload(db, userId, answerId);
+          }
+        },
+      }}
+    />
+  );
 }
 
 type GrowthSectionProps = {
   record: MockExamRecord;
   records: MockExamRecord[];
+  overall: ReportOverall | null;
 };
 
-function GrowthSection({ record, records }: GrowthSectionProps) {
+function GrowthSection({ record, records, overall }: GrowthSectionProps) {
   const chronologicalRecords = records
     .filter((item) => item.round <= record.round)
     .reverse();
   const scores = chronologicalRecords.map((item) => item.score);
   const delta = record.score - (scores[0] ?? record.score);
+  const showPeer = overall?.percentile != null && overall.cohort != null;
 
   return (
     <VStack gap="x3">
@@ -555,10 +812,79 @@ function GrowthSection({ record, records }: GrowthSectionProps) {
           </VStack>
         )}
       </Card>
+      {showPeer && overall ? (
+        <Card>
+          <VStack gap="x2">
+            <Text color="fg.neutralMuted" textStyle="t2Regular">
+              {overall.cohort?.label} {overall.cohort?.n.toLocaleString()}명 기준 · 상위 {overall.percentile}%
+            </Text>
+            <PercentileBar percentile={overall.percentile ?? 50} />
+          </VStack>
+        </Card>
+      ) : null}
     </VStack>
   );
 }
 
-function CoachSection() {
-  return <AnalysisPendingCard />;
+type CoachSectionProps = {
+  coach: ReportCoach | null;
+  state: ReportSectionStates['coach'];
+  onRetry: () => void;
+};
+
+function CoachSection({ coach, state, onRetry }: CoachSectionProps) {
+  const router = useRouter();
+
+  if (state === 'failed') {
+    return <AnalysisStatusCard variant="failed" minHeight="x60" onRetry={onRetry} />;
+  }
+  if (coach == null || state !== 'ready') {
+    return <AnalysisStatusCard variant="pending" minHeight="x60" />;
+  }
+
+  return (
+    <VStack gap="x3">
+      <Card bg="bg.brandWeak" borderColor="stroke.brandWeak">
+        <VStack gap="x1">
+          <Text textStyle="t5Bold">{coach.insight.title}</Text>
+          <Text color="fg.neutralMuted" textStyle="t3Regular">
+            {coach.insight.body}
+          </Text>
+        </VStack>
+      </Card>
+      <Card py="x1">
+        <List.Root>
+          {coach.plan.map((item, index) => (
+            <Fragment key={`${item.day_range}-${index}`}>
+              {index > 0 ? <List.Divider /> : null}
+              <List.Item
+                onPress={() =>
+                  router.push(
+                    item.game_id === 'mock-exam'
+                      ? ({ pathname: '/mock-exam' } as never)
+                      : ({ pathname: '/games/[id]', params: { id: item.game_id } } as never),
+                  )
+                }
+              >
+                <List.Prefix>
+                  <Badge label={item.day_range} tone="brand" size="small" />
+                </List.Prefix>
+                <List.Content>
+                  <List.Title>
+                    {item.game_id === 'mock-exam' ? '모의고사 재도전' : gameNameFor(item.game_id)}
+                  </List.Title>
+                  <List.Detail>
+                    {item.level_label} · {item.minutes_per_day}분/일
+                  </List.Detail>
+                </List.Content>
+                <List.Suffix>
+                  <Icon name="ChevronRight" color="fg.neutralSubtle" size="small" />
+                </List.Suffix>
+              </List.Item>
+            </Fragment>
+          ))}
+        </List.Root>
+      </Card>
+    </VStack>
+  );
 }

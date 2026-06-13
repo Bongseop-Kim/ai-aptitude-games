@@ -3,8 +3,10 @@ import { AppState } from 'react-native';
 import { useSQLiteContext } from 'expo-sqlite';
 
 import { useAuth } from '../../providers/AuthProvider';
+import { resumePendingInterviewMediaUploads } from '../media/interviewMediaUpload';
 import { pushUnsyncedGameResultRounds } from './gameResultRoundsSync';
 import { pushUnsyncedGameResults } from './gameResultsSync';
+import { pushUnsyncedInterviewAnswers } from './interviewAnswersSync';
 import { pushUnsyncedInterviewSessions } from './interviewSessionsSync';
 import { pushUnsyncedMockExamResultItems } from './mockExamResultItemsSync';
 import { pushUnsyncedMockExamResults } from './mockExamResultsSync';
@@ -13,8 +15,10 @@ async function pushAllUnsynced(db: ReturnType<typeof useSQLiteContext>, userId: 
   await pushUnsyncedMockExamResults(db, userId);
   await pushUnsyncedGameResults(db, userId);
   await pushUnsyncedInterviewSessions(db, userId);
+  await pushUnsyncedInterviewAnswers(db, userId);
   await pushUnsyncedGameResultRounds(db, userId);
   await pushUnsyncedMockExamResultItems(db, userId);
+  await resumePendingInterviewMediaUploads(db, userId);
 }
 
 /**

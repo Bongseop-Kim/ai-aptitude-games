@@ -7,7 +7,6 @@ import { HStack, VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
 import { resolveColor } from '../../design-system/components/style-props';
 import { useDesignSystemTheme } from '../../design-system/provider';
-import type { ReportCompetency } from '../../domain/types';
 import {
   Canvas,
   Circle,
@@ -36,6 +35,12 @@ const RESPONSE_PATTERN_POINTS = [
   { id: 'baseline-5', x: 0.55, y: 0.5 },
   { id: 'baseline-6', x: 0.5, y: 0.57 },
 ] as const;
+const BULLET_BAR_TOKENS = {
+  trackHeight: 'x1_5',
+  markerHeight: 'x3',
+  markerWidth: 'x0_5',
+  radius: 'r1_5',
+} as const;
 
 function clamp(value: number, min = 0, max = 100) {
   'worklet';
@@ -54,22 +59,6 @@ function buildPolylinePath(points: Point[]) {
     builder.lineTo(point.x, point.y);
   });
 
-  return builder.detach();
-}
-
-function buildPolygonPath(points: Point[]) {
-  const builder = Skia.PathBuilder.Make();
-
-  points.forEach((point, index) => {
-    if (index === 0) {
-      builder.moveTo(point.x, point.y);
-      return;
-    }
-
-    builder.lineTo(point.x, point.y);
-  });
-
-  builder.close();
   return builder.detach();
 }
 
@@ -104,113 +93,69 @@ function useFocusProgress(duration = 600) {
   return progress;
 }
 
-export type CompetencyRadarChartProps = {
-  competencies: ReportCompetency[];
+export type BulletBarProps = {
+  value: number;
+  peerMedian?: number | null;
 };
 
-export function CompetencyRadarChart({ competencies }: CompetencyRadarChartProps) {
+// Cloned from readiness/ProgressBar — track + animated fill (transform/opacity-safe
+// via Skia), plus an optional peer-median marker. score_range is shown on the cover
+// only, never here.
+export function BulletBar({ value, peerMedian = null }: BulletBarProps) {
   const { theme } = useDesignSystemTheme();
   const { size, onLayout } = useMeasuredChart();
-  const progress = useFocusProgress();
-  const brandColor = resolveColor(theme, 'bg.brandSolid');
-  const brandWeakColor = resolveColor(theme, 'bg.brandWeak');
-  const gridColor = resolveColor(theme, 'stroke.neutralWeak');
-  const peerColor = resolveColor(theme, 'fg.neutralSubtle');
-  const center = { x: size.width / 2, y: size.height / 2 };
-  const radius = Math.max(0, Math.min(size.width, size.height) / 2 - 12);
-  const angles = competencies.map((_, index) => -Math.PI / 2 + (Math.PI * 2 * index) / competencies.length);
-  const gridPaths = [0.25, 0.5, 0.75, 1].map((scale) => buildPolygonPath(
-    angles.map((angle) => ({
-      x: center.x + Math.cos(angle) * radius * scale,
-      y: center.y + Math.sin(angle) * radius * scale,
-    })),
-  ));
-  const peerPath = buildPolygonPath(
-    angles.map((angle) => ({
-      x: center.x + Math.cos(angle) * radius * 0.7,
-      y: center.y + Math.sin(angle) * radius * 0.7,
-    })),
+  const progress = useFocusProgress(400);
+  const clamped = clamp(value);
+  const trackColor = resolveColor(theme, 'bg.neutralWeak');
+  const fillColor = resolveColor(theme, 'bg.brandSolid');
+  const markerColor = resolveColor(theme, 'fg.neutral');
+  const fillWidth = useDerivedValue(
+    () => (size.width * clamped) / 100 * progress.value,
+    [size.width, clamped],
   );
-  const userPoints = competencies.map((competency, index) => {
-    const value = clamp(competency.score) / 100;
-    return {
-      x: center.x + Math.cos(angles[index]) * radius * value,
-      y: center.y + Math.sin(angles[index]) * radius * value,
-    };
-  });
-  const userPath = buildPolygonPath(userPoints);
+  const trackHeight = theme.dimension.x[BULLET_BAR_TOKENS.trackHeight];
+  const markerHeight = theme.dimension.x[BULLET_BAR_TOKENS.markerHeight];
+  const markerWidth = theme.dimension.x[BULLET_BAR_TOKENS.markerWidth];
+  const trackRadius = theme.radius[BULLET_BAR_TOKENS.radius];
+  const hasMarker = peerMedian != null;
+  const markerX = hasMarker
+    ? Math.max(0, Math.min(size.width - markerWidth, (size.width * clamp(peerMedian)) / 100))
+    : 0;
+  const clip =
+    size.width > 0
+      ? Skia.RRectXY(Skia.XYWHRect(0, (markerHeight - trackHeight) / 2, size.width, trackHeight), trackRadius, trackRadius)
+      : null;
 
   return (
-    <VStack gap="x2">
-      <Box
-        accessibilityLabel="5대 역량 레이더 차트"
-        accessibilityRole="image"
-        height={210}
-        onLayout={onLayout}
-        width="full"
-      >
-        <Canvas style={{ width: '100%', height: '100%' }}>
-          {size.width > 0 ? (
-            <>
-              {gridPaths.map((path, index) => (
-                <Path
-                  key={index}
-                  path={path}
-                  color={gridColor}
-                  style="stroke"
-                  strokeWidth={1}
-                />
-              ))}
-              {angles.map((angle, index) => (
-                <Path
-                  key={`axis-${index}`}
-                  path={buildPolylinePath([
-                    center,
-                    {
-                      x: center.x + Math.cos(angle) * radius,
-                      y: center.y + Math.sin(angle) * radius,
-                    },
-                  ])}
-                  color={gridColor}
-                  style="stroke"
-                  strokeWidth={1}
-                />
-              ))}
-              <Path path={peerPath} color={peerColor} style="stroke" strokeWidth={1.5} />
-              <Path path={userPath} color={brandWeakColor} />
-              <Path
-                path={userPath}
-                color={brandColor}
-                style="stroke"
-                strokeWidth={2.5}
-                strokeJoin="round"
-                start={0}
-                end={progress}
-              />
-              {userPoints.map((point, index) => (
-                <Circle
-                  key={`${competencies[index].key}-${competencies[index].score}`}
-                  cx={point.x}
-                  cy={point.y}
-                  r={4}
-                  color={brandColor}
-                />
-              ))}
-            </>
-          ) : null}
-        </Canvas>
-      </Box>
-      <HStack align="center" justify="center" gap="x4">
-        <HStack align="center" gap="x1_5">
-          <Box bg="bg.brandSolid" borderRadius="full" height="x1" width="x4" />
-          <Text color="fg.neutralMuted" textStyle="t2Regular">나</Text>
-        </HStack>
-        <HStack align="center" gap="x1_5">
-          <Box bg="bg.neutralWeak" borderRadius="full" height="x1" width="x4" />
-          <Text color="fg.neutralSubtle" textStyle="t2Regular">또래 평균</Text>
-        </HStack>
-      </HStack>
-    </VStack>
+    <Box
+      accessibilityRole="progressbar"
+      accessibilityValue={{ min: 0, max: 100, now: clamped }}
+      flex={1}
+      height={markerHeight}
+      onLayout={onLayout}
+      width="full"
+    >
+      <Canvas style={{ width: '100%', height: '100%' }}>
+        {size.width > 0 && clip ? (
+          <>
+            <RoundedRect
+              x={0}
+              y={(markerHeight - trackHeight) / 2}
+              width={size.width}
+              height={trackHeight}
+              r={trackRadius}
+              color={trackColor}
+            />
+            <Group clip={clip}>
+              <Rect x={0} y={(markerHeight - trackHeight) / 2} width={fillWidth} height={trackHeight} color={fillColor} />
+            </Group>
+            {hasMarker ? (
+              <Rect x={markerX} y={0} width={markerWidth} height={markerHeight} color={markerColor} />
+            ) : null}
+          </>
+        ) : null}
+      </Canvas>
+    </Box>
   );
 }
 
