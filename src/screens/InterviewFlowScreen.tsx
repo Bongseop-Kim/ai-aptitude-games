@@ -243,9 +243,15 @@ export function InterviewFlowScreen() {
   // cap). A native auto-stop would resolve the promise with nothing consuming it,
   // leaving the UI stuck in 'rec'.
   function beginVideoRecording() {
+    const camera = cameraRef.current;
+    if (!camera || typeof camera.recordAsync !== 'function') {
+      Alert.alert('녹음을 시작하지 못했어요', '잠시 후 다시 시도해주세요.');
+      return;
+    }
+
     try {
       // recordAsync resolves only when recording stops — stash the promise.
-      recordingPromiseRef.current = cameraRef.current?.recordAsync() ?? null;
+      recordingPromiseRef.current = camera.recordAsync();
     } catch {
       Alert.alert('녹음을 시작하지 못했어요', '잠시 후 다시 시도해주세요.');
       return;
@@ -293,7 +299,7 @@ export function InterviewFlowScreen() {
     try {
       if (mediaSpec.kind === 'video') {
         cameraRef.current?.stopRecording();
-        const result = await recordingPromiseRef.current;
+        const result = await recordingPromiseRef.current!;
         recordingPromiseRef.current = null;
         const cacheUri = result?.uri;
         if (cacheUri) {

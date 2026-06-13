@@ -12,3 +12,16 @@ alter table "public"."profiles"
 -- comparison. Null = not consented. Timestamp (not boolean) keeps an audit trail.
 alter table "public"."profiles"
   add column "birth_year_band_consent_at" timestamptz;
+
+alter table "public"."profiles"
+  add constraint "profiles_birth_year_band_pairing_chk"
+  check (
+    (
+      birth_year_band is null
+      and birth_year_band_consent_at is null
+    )
+    or (
+      birth_year_band is not null
+      and birth_year_band_consent_at is not null
+    )
+  );
