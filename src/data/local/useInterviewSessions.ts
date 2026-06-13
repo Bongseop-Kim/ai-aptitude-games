@@ -1,13 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useSQLiteContext } from 'expo-sqlite';
 
 import { useAuth } from '../../providers/AuthProvider';
-import { pushUnsyncedInterviewSessions } from '../sync/interviewSessionsSync';
-import {
-  getInterviewSessionRecords,
-  insertInterviewSession,
-  type InterviewSessionInput,
-} from './interviewSessions';
+import { getInterviewSessionRecords } from './interviewSessions';
 
 export const interviewSessionKeys = {
   all: ['interview-sessions'] as const,
@@ -64,29 +59,3 @@ export function useInterviewSessionForMockExam(mockExamId: string | null) {
   });
 }
 
-export function useSaveInterviewSession() {
-  const db = useSQLiteContext();
-  const queryClient = useQueryClient();
-  const { userId } = useAuth();
-
-  return useMutation({
-    mutationFn: (input: InterviewSessionInput) => {
-      if (!userId) {
-        throw new Error('Cannot save an interview session without an authenticated user.');
-      }
-      return insertInterviewSession(db, userId, input);
-    },
-    retry: 2,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: interviewSessionKeys.all });
-      if (userId) {
-        void pushUnsyncedInterviewSessions(db, userId);
-      }
-    },
-    onError: (error) => {
-      if (__DEV__) {
-        console.warn('[useSaveInterviewSession] save failed:', error);
-      }
-    },
-  });
-}

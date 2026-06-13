@@ -27,15 +27,24 @@
 ## 2. 전체 데이터 흐름
 
 ```
+[앱: 면접 준비 — 사전·비차단]
+  이력서 업로드(비공개) / 채용공고 URL 등록(공유 카탈로그)  ← server-confirmed
+        │  webhook ── resumes / job_postings insert 시
+        ▼
+[Python 분석 서버]
+  이력서·공고 파싱 → analysis + question_materials 기록 (5-5장)
+  resumes.analysis / job_postings.analysis (status: pending → done | failed)
+        │  server read (React Query) — 면접 시작 시 분석 완료(done) 자산만 선택
+        ▼
 [앱: 모의고사 진행]
-  게임 9종 + 면접 → SQLite (local-first, 원시 기록)
+  게임 9종 + 면접(공고 필수·이력서 선택) → SQLite (local-first, 원시 기록)
         │  outbox 동기화 (silent, upsert onConflict:id)
         ▼
 [Supabase: 원시 데이터]
   game_results / game_result_rounds / mock_exam_results /
   mock_exam_result_items / interview_sessions / interview_answers
   + Storage: 면접 미디어 (server-confirmed 업로드)
-        │  트리거 (webhook 또는 폴링) ── mock_exam_results insert 시
+        │  webhook ── mock_exam_results insert 시
         ▼
 [Python 분석 서버]
   원시 데이터 조회 → NCS·AI-HUB 기반 산출 → 결과 기록
@@ -43,7 +52,7 @@
         ▼
 [Supabase: 분석 결과]
   mock_exam_reports (status: pending → done)
-        │  server read (React Query)
+        │  server read (React Query, 캡 있는 폴링)
         ▼
 [앱: 리포트 화면 렌더]
 ```
@@ -54,7 +63,9 @@
 | --- | --- | --- |
 | 게임·모의고사 원시 기록 | local-first | SQLite가 source of truth. outbox로 silent 동기화. 동기화 실패가 UI를 막지 않는다. |
 | 면접 미디어(음성/영상) | server-confirmed | 명시적 업로드 상태(로딩·실패·재시도)를 가진다. 분석의 입력이므로 유실되면 안 된다. |
-| 분석 결과(`mock_exam_reports`) | server read | React Query로 조회. `pending` 동안 폴링 또는 Realtime 구독. |
+| 이력서(`resumes`)·공고(`job_postings`) 등록 | server-confirmed | 업로드/등록은 명시적 로딩·실패 상태. 거절될 수 있는 쓰기 — silent 아님. |
+| 이력서·공고 분석 결과, 공고 공유 카탈로그 | server read | React Query 조회. `pending` 동안 캡 있는 폴링. 공고 카탈로그는 타 사용자가 분석 완료한 행도 포함. |
+| 분석 결과(`mock_exam_reports`) | server read | React Query로 조회. `pending` 동안 캡 있는 폴링(Realtime 미사용 확정). |
 
 ## 3. 수집 사양 (앱)
 
@@ -133,34 +144,55 @@ CREATE TABLE interview_answers (
   question_id TEXT NOT NULL,
   question_text TEXT NOT NULL,
   category TEXT NOT NULL,                -- 오프닝/지원 동기/경험/...
+  question_source TEXT NOT NULL DEFAULT 'generic',  -- generic | job_posting | resume (3-4장)
   prep_ms INTEGER NOT NULL,              -- 준비 시간
   answer_ms INTEGER NOT NULL,            -- 답변 시간
   retake_count INTEGER NOT NULL DEFAULT 0,
+  media_local_uri TEXT,                  -- 로컬 전용(미동기화). 업로드 전·재시도용 기기 파일 경로
   media_path TEXT,                       -- Storage 경로. 업로드 성공 후 기록
   media_status TEXT NOT NULL DEFAULT 'none',  -- none | uploading | uploaded | failed
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   synced INTEGER NOT NULL DEFAULT 0
 );
+-- (session_id, question_id) 유니크 — 재응답(retake)은 새 행이 아니라 같은 행을 갱신
 ```
 
 - 미디어 Storage 경로 규약: `interview-media/{user_id}/{session_id}/{question_id}.m4a`
 - 미디어 업로드는 server-confirmed: 실패 시 사용자에게 보이는 재시도 UI를 가진다.
   메타데이터 행(`interview_answers`)은 local-first로 즉시 저장하고, `media_status`만
-  업로드 결과에 따라 갱신한다.
-- `company`/`role`/이력서·공고 텍스트는 현재 fixture(`mockJobPosting`)다. 질문 생성과
-  매칭 분석이 성립하려면 resume/job 단계의 실제 입력을 함께 전송해야 한다(P1,
-  별도 테이블 `interview_contexts` 또는 `interview_sessions` 컬럼 확장으로 후속 결정).
+  업로드 결과에 따라 갱신한다. 재응답은 같은 Storage 경로를 덮어쓴다(`upsert`).
+
+#### `resumes` / `job_postings` — 면접 준비 자산 (P1, 사전 분석)
+
+이력서·채용공고는 면접 흐름 **밖에서** 미리 등록하고 분석 서버가 비동기로 처리한다.
+면접 시작 시에는 분석 완료(`done`)된 자산을 **고르기만** 한다 — 흐름 중 분석 대기 없음.
+(기존 면접 내 resume → job → analysis 단계와 `interview_contexts` 안은 폐기.)
+
+- `resumes` — **비공개**(본인만). 여러 개 업로드 가능(파일 또는 텍스트 붙여넣기).
+  파일은 Storage `resumes/{user_id}/{resume_id}/{filename}`. 업로드는 server-confirmed.
+  `status: pending → processing → done | failed`, 분석 결과는 `analysis JSONB`(5-5장).
+- `job_postings` — **공유 카탈로그**. URL 등록 시 `url_normalized`로 dedupe하여 다른
+  사용자가 이미 분석 완료한 공고를 그대로 재사용한다. 스크래핑 실패(`failed`) 시 본문
+  붙여넣기(`source='manual'`) 폴백. 서버가 `company`/`role`/`job_family`로 정규화.
+  RLS: `status='done'`이거나 본인이 등록한 행만 SELECT(타인의 실패 행·원문 비노출).
+- `interview_sessions`에 `resume_id`(nullable)·`job_posting_id`(nullable) 참조 추가.
+  면접 시작 조건: **공고 필수, 이력서 선택** — 이력서가 없으면 직무 기반 일반 질문(3-4장).
+- 직무(job family)는 기존 `profiles.field`(it/biz/mkt/design/fin/etc)를 **온보딩 필수
+  입력으로 승격**해 사용한다. 별도 컬럼 신설 없음.
 
 #### 프로필 코호트 (P2)
 
 또래 백분위의 코호트 정의용. 선택 입력 + 동의 플로우 전제.
 
-- `profiles.birth_year_band` (예: "1995-1999"), `profiles.target_job_family` (NCS 직군)
+- `profiles.birth_year_band` (예: "1995-1999"). 직군은 P1에서 `profiles.field`가
+  온보딩 필수로 승격되어 이미 확보된다(위 3-2장).
 
 ### 3-3. 모의고사 단계별 수집 매핑
 
 | 단계 | 이벤트 | 기록 |
 | --- | --- | --- |
+| (사전) 이력서 업로드 / 공고 등록 | 면접 준비 화면 | `resumes`/`job_postings` 행 + Storage 파일. server-confirmed, 등록 즉시 "분석 중" |
+| 면접 셋업 | 공고(필수)·이력서(선택) 선택 | 질문 구성(3-4장) + `interview_sessions.resume_id`/`job_posting_id` 확정 |
 | 게임 라운드 응답 | `choose()` | `game_result_rounds` 1행 (메모리 적립 → 게임 종료 시 일괄 insert) |
 | 게임 종료 | `onFinish` | `game_results` 1행 + rounds 일괄 + `mock_exam_session_items` |
 | 면접 질문 준비 시작 | record 진입 | `prep_ms` 측정 시작 |
@@ -168,7 +200,21 @@ CREATE TABLE interview_answers (
 | 면접 재응답 | `retakeAnswer` | `retake_count` 증가, 기존 미디어 교체 |
 | 면접 종료 | `openFeedback` | `interview_sessions` + `interview_answers` N행 + 미디어 업로드 시작 |
 | 회차 완료 | `finalizeMockExamSessionIfComplete` | `mock_exam_results` 1행 + `mock_exam_result_items` 이관 (삭제 금지) |
-| 저장 직후/로그인/포그라운드 | sync 트리거 | 신규 테이블 모두 기존 outbox 패턴으로 push |
+| 저장 직후/로그인/포그라운드 | sync 트리거 | 신규 테이블 모두 기존 outbox 패턴으로 push + 미완료 미디어 업로드 재개 |
+
+### 3-4. 면접 질문 구성 (비차단)
+
+질문 세트는 면접 시작 시 **이미 fetch된 분석 결과만으로 동기 구성**한다. 어떤 경우에도
+질문 생성을 기다리지 않는다. 총 8문항:
+
+1. 오프닝 — 직군별 일반 질문 뱅크(로컬 데이터)
+2. 선택한 공고의 `analysis.question_materials` (최대 ~3)
+3. 선택한 이력서의 `analysis.question_materials` (최대 ~3, 이력서 미선택 시 생략)
+4. 남은 슬롯은 직군별 일반 질문으로 채움(카테고리 중복 회피), 가치/마무리 일반 질문으로 종료
+
+각 질문의 출처는 `interview_answers.question_source`(generic | job_posting | resume)로
+기록되어 분석 서버의 입력이 된다. `question_id`는 `jp-…`/`rs-…`/`generic-…` prefix로
+세션 내 충돌을 막는다.
 
 ## 4. 표시 사양 (리포트 화면 섹션 계약)
 
@@ -210,14 +256,24 @@ CREATE TABLE interview_answers (
 | `mock_exam_result_items` | 10 | item_key, score, duration_ms, completed_at |
 | `game_results` | 9 | game_id, score, accuracy, avg_response_ms |
 | `game_result_rounds` | 게임당 8~20 | round_index, correct, response_ms, level_params |
-| `interview_sessions` | 1 | company, role, question_count, duration_ms |
-| `interview_answers` | 8 | question_id, question_text, category, prep_ms, answer_ms, retake_count, media_path |
+| `interview_sessions` | 1 | company, role, question_count, duration_ms, resume_id, job_posting_id |
+| `interview_answers` | 8 | question_id, question_text, category, question_source, prep_ms, answer_ms, retake_count, media_path |
+| `job_postings` | 1 (세션이 참조) | company, role, job_family, analysis (5-5장) |
+| `resumes` | 0~1 (세션이 참조) | analysis (5-5장) + Storage `resumes/` 원본 파일 |
 | Storage `interview-media/` | 8 파일 | 음성(.m4a), 추후 영상 |
 
 ### 5-2. 트리거
 
-권장: `mock_exam_results` insert에 대한 Supabase Database Webhook → 분석 서버 엔드포인트
-호출. (대안: 분석 서버가 `mock_exam_reports`가 없는 `mock_exam_results`를 주기 폴링.)
+Supabase Database Webhook(INSERT) 3종 → 분석 서버 엔드포인트 호출. webhook 등록은
+마이그레이션이 아닌 대시보드 수동 단계다(공유 시크릿 헤더 포함).
+
+| 테이블 | 시점 | 분석 작업 |
+| --- | --- | --- |
+| `mock_exam_results` | 회차 완료 | 리포트 산출 → `mock_exam_reports` |
+| `resumes` | 이력서 등록 | 파싱·분석 → `resumes.analysis` |
+| `job_postings` | 공고 등록 | 수집(스크래핑/원문)·분석 → `job_postings.analysis` |
+
+(대안: 분석 서버가 `mock_exam_reports`가 없는 `mock_exam_results`를 주기 폴링.)
 
 - 분석 서버는 수신 즉시 `mock_exam_reports`에 `status='processing'` 행을 upsert한다.
 - 게임 분석과 면접 분석(STT·음성 피처)은 소요 시간이 다르므로 **부분 완료를 허용**한다:
@@ -241,7 +297,10 @@ CREATE TABLE mock_exam_reports (
 ```
 
 앱 조회: `select * from mock_exam_reports where mock_exam_id = ?`
-(React Query, `status != 'done'`이면 폴링 또는 Realtime 구독)
+(React Query, `status != 'done'`이면 캡 있는 폴링 — 회차 생성 후 2분까지 5초 간격,
+이후 30초 간격, 15분 경과 시 중단. 화면 포커스 시 재조회가 수동 탈출구.
+Realtime 미사용 확정. `report.interview.status`가 `pending`이면 status='done'이어도
+폴링 유지 — 부분 완료 허용.)
 
 ### 5-4. `report` JSON 스키마
 
@@ -372,12 +431,44 @@ P2 블록(resilience, response_pattern, delivery_details)은 null 허용**이며
 null이면 해당 표시를 숨기거나 자기 비교로 폴백한다. 점수·등급·인사이트 텍스트는
 status='done'이면 필수.
 
+### 5-5. 사전 분석 계약 — `resumes` / `job_postings`
+
+상태 기계는 공통: `pending → processing → done | failed`. `status`/`analysis`/`error`는
+분석 서버(service role)만 기록하고 앱은 읽기 전용이다. insert webhook 수신 시
+`processing`으로 전이하고, 완료 시 `analysis`를 채운다.
+
+```jsonc
+// job_postings.analysis (status='done'이면 필수)
+{
+  "company": "되고시스템",
+  "role": "백엔드 개발자",
+  "job_family": "it",                  // profiles.field와 동일 enum
+  "requirements": ["..."],
+  "keywords": ["..."],
+  "question_materials": [
+    { "question_id": "jp-<posting_id>-1", "category": "직무", "text": "...", "why": "..." }
+  ]
+}
+
+// resumes.analysis (status='done'이면 필수)
+{
+  "skills": ["..."],
+  "experiences": ["..."],
+  "question_materials": [
+    { "question_id": "rs-<resume_id>-1", "category": "경험", "text": "...", "why": "..." }
+  ]
+}
+```
+
+`question_materials`는 3-4장 질문 구성의 입력이다. 서버는 `company`/`role`/`job_family`
+**컬럼**도 함께 갱신해 카탈로그 목록 표시가 `analysis` 파싱 없이 가능하게 한다.
+
 ## 6. 단계별 도입
 
 | 단계 | 앱 | 분석 서버 |
 | --- | --- | --- |
 | **P0** | v8 마이그레이션(`game_result_rounds`, `mock_exam_result_items`) + 라운드 수집 + 항목 보존. 게임별 결과 섹션 신설(로컬 데이터). 하드코딩 통계 문구 제거. 면접 fixture 표시 제거 → 실측치 + "준비 중". Top3를 로컬 게임 점수로 임시 구성 | (없음 — 데이터 축적 시작) |
-| **P1** | `mock_exam_reports` 조회 + 섹션별 pending 상태. 역량 불릿 차트. 면접 음성 녹음·업로드 + `interview_answers` | webhook 수신, overall/competencies/highlights/coach 산출, 면접 STT·음성 축(content/star/voice) 분석 |
+| **P1** | `mock_exam_reports` 조회(캡 있는 폴링) + 섹션별 pending 상태. 역량 불릿 차트. 면접 음성 녹음·업로드 + `interview_answers`. 이력서 업로드·공고 등록(공유 카탈로그) + 면접 시작 선택 흐름(공고 필수·이력서 선택). 온보딩 직군 입력(`profiles.field`) 필수화. 질문 합성(3-4장, 비차단). fixture 기반 재도전 모드 제거(P2에서 실데이터로 재도입). 단독 훈련 면접은 실측치만 표시 | webhook 3종 수신(mock_exam_results·resumes·job_postings), overall/competencies/highlights/coach 산출, 면접 STT·음성 축(content/star/voice) 분석, 이력서·공고 비동기 분석 + question_materials 산출(5-5장) |
 | **P2** | 또래 백분위 표시 + 코호트 프로필 입력. Pro 섹션(복원력·응답 패턴) 실데이터 전환. 면접 영상(gaze/delivery) | rounds 기반 resilience/response_pattern, 코호트 분포 집계, 영상 분석 |
 
 ## 7. 근거 (요약)
@@ -391,7 +482,16 @@ status='done'이면 필수.
 
 ## 관련 코드
 
-- 표시: `src/screens/ReportDetailScreen.tsx`, `src/components/interview/FeedbackReportBody.tsx`, `src/components/reports/ReportCharts.tsx`
-- 수집: `src/components/games/useRoundPlay.ts`, `src/screens/InterviewFlowScreen.tsx`, `src/data/local/mockExamSessions.ts`
-- 동기화: `src/data/sync/*.ts` (outbox 패턴 — 신규 테이블도 동일 패턴 적용)
-- 교체 대상 fixture: `src/data/reports.ts`, `src/data/interviewSession.ts`, `ReportDetailScreen.tsx` 상단 상수
+- 표시: `src/screens/ReportDetailScreen.tsx`, `src/components/reports/CompetencySection.tsx`,
+  `src/components/reports/AnalysisStatusCard.tsx`, `src/components/reports/ReportCharts.tsx`,
+  `src/components/interview/FeedbackReportBody.tsx` (+ `InterviewAnalysisBody` ·
+  `QuestionFeedbackAccordion` · `InterviewAnswersMeasuredList`)
+- 수집: `src/components/games/useRoundPlay.ts`, `src/screens/InterviewFlowScreen.tsx`,
+  `src/components/interview/InterviewSetupView.tsx`, `src/data/local/mockExamSessions.ts`,
+  `src/data/local/interviewAnswers.ts`
+- 동기화: `src/data/sync/*.ts` (outbox 패턴), 미디어 업로드 `src/data/media/interviewMediaUpload.ts` ·
+  `src/data/media/interviewRecordingFiles.ts`
+- 서버 읽기: `src/data/server/useMockExamReport.ts`, `useResumes.ts`, `useJobPostings.ts`, `useProfile.ts`
+- 질문 구성: `src/domain/composeInterviewQuestions.ts`, `src/data/interview/genericQuestionBank.ts`
+- 면접 준비 화면: `src/screens/interview/ResumeLibraryScreen.tsx`, `PostingCatalogScreen.tsx`,
+  `src/screens/OnboardingScreen.tsx`

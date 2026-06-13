@@ -1,7 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 export const LOCAL_DB_NAME = 'ai-aptitude-games.db';
-export const LOCAL_DB_SCHEMA_VERSION = 9;
+export const LOCAL_DB_SCHEMA_VERSION = 10;
 
 type SchemaVersionRow = {
   version: number;
@@ -154,6 +154,35 @@ const migrations: readonly { version: number; sql: string }[] = [
     sql: `
       CREATE UNIQUE INDEX IF NOT EXISTS idx_game_result_rounds_result_round ON game_result_rounds (result_id, round_index);
       CREATE INDEX IF NOT EXISTS idx_mock_exam_result_items_unsynced ON mock_exam_result_items (user_id) WHERE synced = 0;
+    `,
+  },
+  {
+    version: 10,
+    sql: `
+      CREATE TABLE IF NOT EXISTS interview_answers (
+        id TEXT PRIMARY KEY NOT NULL,
+        session_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        question_id TEXT NOT NULL,
+        question_text TEXT NOT NULL,
+        category TEXT NOT NULL,
+        question_source TEXT NOT NULL DEFAULT 'generic',
+        prep_ms INTEGER NOT NULL,
+        answer_ms INTEGER NOT NULL,
+        retake_count INTEGER NOT NULL DEFAULT 0,
+        media_local_uri TEXT,
+        media_path TEXT,
+        media_status TEXT NOT NULL DEFAULT 'none',
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        synced INTEGER NOT NULL DEFAULT 0
+      );
+      CREATE INDEX IF NOT EXISTS idx_interview_answers_session_id ON interview_answers (session_id);
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_interview_answers_session_question ON interview_answers (session_id, question_id);
+      CREATE INDEX IF NOT EXISTS idx_interview_answers_unsynced ON interview_answers (user_id) WHERE synced = 0;
+      CREATE INDEX IF NOT EXISTS idx_interview_answers_media_pending ON interview_answers (user_id) WHERE media_status IN ('uploading', 'failed');
+
+      ALTER TABLE interview_sessions ADD COLUMN resume_id TEXT;
+      ALTER TABLE interview_sessions ADD COLUMN job_posting_id TEXT;
     `,
   },
 ];

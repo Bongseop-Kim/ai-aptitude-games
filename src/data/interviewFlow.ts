@@ -1,6 +1,6 @@
 import type { BadgeTone, IconName } from '../shared/types';
 
-export type InterviewStepKey = 'resume' | 'job' | 'analysis' | 'record' | 'feedback' | 'retry';
+export type InterviewStepKey = 'setup' | 'record' | 'feedback';
 
 export type InterviewAxisKey = 'content' | 'star' | 'voice' | 'gaze' | 'delivery';
 
@@ -19,12 +19,9 @@ export const INTERVIEW_STEPS: readonly {
   label: string;
   icon: IconName;
 }[] = [
-  { key: 'resume', n: 1, label: '이력서', icon: 'FileText' },
-  { key: 'job', n: 2, label: '채용공고', icon: 'Building2' },
-  { key: 'analysis', n: 3, label: 'AI 분석', icon: 'Sparkles' },
-  { key: 'record', n: 4, label: '모의 면접', icon: 'Video' },
-  { key: 'feedback', n: 5, label: '피드백', icon: 'ChartNoAxesColumnIncreasing' },
-  { key: 'retry', n: 6, label: '재도전', icon: 'RotateCcw' },
+  { key: 'setup', n: 1, label: '준비', icon: 'FileText' },
+  { key: 'record', n: 2, label: '답변', icon: 'Video' },
+  { key: 'feedback', n: 3, label: '완료', icon: 'CircleCheck' },
 ];
 
 export const INTERVIEW_AXES: readonly InterviewAxis[] = [
@@ -51,51 +48,3 @@ export const STAR_GUIDE = [
   { key: 'A', label: '행동', hint: '내가 한 일' },
   { key: 'R', label: '결과', hint: '수치·배움' },
 ] as const;
-
-export const ANALYSIS_LOADING_STEPS = [
-  '이력서 핵심 역량 추출',
-  '채용공고 요건 파싱',
-  '역량 ↔ 요건 매칭',
-  '약점·갭 식별',
-  '맞춤 질문 8개 생성',
-] as const;
-
-export const mockResume = {
-  name: '김준비',
-  role: '프론트엔드 엔지니어',
-  years: '경력 3년',
-  file: '김준비_이력서_2026.pdf',
-  skills: ['React', 'TypeScript', 'Next.js', '디자인 시스템', 'Jest', 'GraphQL'],
-  highlights: [
-    '커머스 웹 프론트엔드 리드 (MAU 80만)',
-    '사내 디자인 시스템 0→1 구축',
-    'LCP 4.1s → 1.8s 성능 개선',
-  ],
-};
-
-export const mockJobPosting = {
-  company: '리플로우',
-  role: '프론트엔드 엔지니어 (Senior)',
-  type: '정규직 · 서울 성수',
-  source: 'reflow.team/careers/fe-senior',
-  must: ['React · TypeScript 3년+', '디자인 시스템 설계/운영', '웹 성능 최적화', '협업·코드리뷰 문화'],
-  nice: ['Next.js App Router', '디자인-엔지니어링 협업', '오픈소스 기여'],
-};
-
-export const mockMatch = {
-  score: 78,
-  matched: [
-    { key: 'React · TypeScript', note: '3년 실무 — 요건 충족', hit: true },
-    { key: '디자인 시스템', note: '0→1 구축 경험 — 강한 매칭', hit: true },
-    { key: '웹 성능 최적화', note: 'LCP 56% 개선 사례', hit: true },
-    { key: 'Next.js App Router', note: '경험 명시 없음 — 보완 권장', hit: false },
-    { key: '리더십·코드리뷰', note: '리드 경험 있으나 근거 약함', hit: false },
-  ],
-};
-
-export function matchLabel(score: number) {
-  if (score >= 80) return '아주 강한 매칭';
-  if (score >= 70) return '강한 매칭';
-  if (score >= 55) return '보통 매칭';
-  return '보완 필요';
-}

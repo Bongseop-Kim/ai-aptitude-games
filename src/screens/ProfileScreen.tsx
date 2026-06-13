@@ -4,6 +4,7 @@ import { Alert } from 'react-native';
 import { Header } from '../components/app/Header';
 import { SectionHead } from '../components/app/SectionHead';
 import { TabScreen } from '../components/app/TabScreen';
+import { JobFamilySheet } from '../components/profile/JobFamilySheet';
 import { ProfileSummary } from '../components/profile/ProfileSummary';
 import { StatTile } from '../components/profile/StatTile';
 import { Button } from '../components/ui/Button';
@@ -13,10 +14,12 @@ import { List } from '../components/ui/List';
 import { Switch } from '../components/ui/Switch';
 import { games } from '../data/games';
 import { useGamesWithProgress } from '../data/local/useGameResults';
+import { useProfile } from '../data/server/useProfile';
 import { useClearDevData, useSeedDevData } from '../data/seed/useSeedDevData';
 import { user } from '../data/user';
 import { HStack, VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
+import { jobFamilyLabel } from '../domain/jobFamily';
 import { IdentityConflictError, linkKakao } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../providers/AuthProvider';
@@ -27,6 +30,8 @@ export function ProfileScreen() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isLinking, setIsLinking] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [jobFamilyVisible, setJobFamilyVisible] = useState(false);
+  const { data: profile } = useProfile();
   const gamesWithProgress = useGamesWithProgress();
   const doneCount = gamesWithProgress.filter((game) => game.status === 'done').length;
 
@@ -88,6 +93,33 @@ export function ProfileScreen() {
 
       <SectionHead title="구독" />
       <ProBanner />
+
+      <SectionHead title="면접" />
+      <Card py="x1">
+        <List.Root>
+          <List.Item onPress={() => setJobFamilyVisible(true)}>
+            <List.Prefix>
+              <Icon name="Building2" color="fg.brand" />
+            </List.Prefix>
+            <List.Content>
+              <List.Title>목표 직무</List.Title>
+            </List.Content>
+            <List.Suffix>
+              <HStack align="center" gap="x1">
+                <Text color="fg.neutralMuted" textStyle="t3Medium" maxLines={1}>
+                  {jobFamilyLabel(profile?.field) ?? '미설정'}
+                </Text>
+                <Icon name="ChevronRight" size="small" />
+              </HStack>
+            </List.Suffix>
+          </List.Item>
+        </List.Root>
+      </Card>
+      <JobFamilySheet
+        visible={jobFamilyVisible}
+        current={profile?.field ?? null}
+        onClose={() => setJobFamilyVisible(false)}
+      />
 
       <SectionHead title="설정" />
       <Card py="x1">

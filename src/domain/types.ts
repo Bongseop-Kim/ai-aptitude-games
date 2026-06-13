@@ -46,21 +46,13 @@ export type ReadinessLevel = 'seed' | 'sprout' | 'steady' | 'strong';
 export type ReportSectionKey =
   | 'cover'
   | 'games'
-  | 'radar'
+  | 'competencies'
   | 'highlights'
   | 'interview'
   | 'resilience'
   | 'pattern'
   | 'peer'
   | 'coach';
-
-export type ReportCompetency = {
-  key: 'trust' | 'strategy' | 'relationship' | 'value' | 'fit';
-  label: string;
-  description: string;
-  score: number;
-  tone: Tone;
-};
 
 export type MockExamRecord = {
   id: string;

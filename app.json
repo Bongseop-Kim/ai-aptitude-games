@@ -46,6 +46,12 @@
           "cameraPermission": "모의 면접 영상 답변을 위해 카메라 접근이 필요해요.",
           "recordAudioAndroid": false
         }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "면접 답변 녹음을 위해 마이크 접근이 필요해요."
+        }
       ]
     ]
   }

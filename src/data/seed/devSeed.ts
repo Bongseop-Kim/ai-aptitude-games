@@ -14,7 +14,9 @@ import { games } from '../games';
 import { insertGameResult } from '../local/gameResults';
 import { insertInterviewSession } from '../local/interviewSessions';
 import { getMockExamResultCount, insertMockExamResult } from '../local/mockExamResults';
-import { mockJobPosting } from '../interviewFlow';
+
+const SEED_INTERVIEW_COMPANY = '리플로우';
+const SEED_INTERVIEW_ROLE = '프론트엔드 엔지니어';
 
 export type DevSeedSummary = {
   gameResults: number;
@@ -171,8 +173,8 @@ async function seedMockExamRound(
       db,
       userId,
       {
-        company: mockJobPosting.company,
-        role: mockJobPosting.role,
+        company: SEED_INTERVIEW_COMPANY,
+        role: SEED_INTERVIEW_ROLE,
         score: interviewScore,
         questionCount: 8,
         durationMs: interviewDurationMs,
@@ -222,8 +224,8 @@ export async function seedDevData(db: SQLiteDatabase, userId: string): Promise<D
 
   const interviewSessions = [
     {
-      company: mockJobPosting.company,
-      role: mockJobPosting.role,
+      company: SEED_INTERVIEW_COMPANY,
+      role: SEED_INTERVIEW_ROLE,
       score: randomInt(60, 68),
       questionCount: 8,
       durationMs: randomInt(6, 8) * MINUTE_MS + randomInt(0, 45) * 1000,

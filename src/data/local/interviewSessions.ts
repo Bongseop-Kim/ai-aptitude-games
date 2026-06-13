@@ -15,6 +15,8 @@ type InterviewSessionOptions = {
   id?: string;
   createdAt?: string;
   mockExamId?: string;
+  resumeId?: string;
+  jobPostingId?: string;
 };
 
 type InterviewSessionRow = {
@@ -78,6 +80,16 @@ export async function insertInterviewSession(
   if (options.mockExamId != null) {
     columns.push('mock_exam_id');
     values.push(options.mockExamId);
+  }
+
+  if (options.resumeId != null) {
+    columns.push('resume_id');
+    values.push(options.resumeId);
+  }
+
+  if (options.jobPostingId != null) {
+    columns.push('job_posting_id');
+    values.push(options.jobPostingId);
   }
 
   if (options.createdAt != null) {

@@ -1,82 +1,99 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert } from 'react-native';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import * as Crypto from 'expo-crypto';
+import {
+  AudioModule,
+  RecordingPresets,
+  setAudioModeAsync,
+  useAudioRecorder,
+} from 'expo-audio';
+import { useSQLiteContext } from 'expo-sqlite';
 
 import { Header } from '../components/app/Header';
 import { Screen } from '../components/app/Screen';
-import { StepProgress, type RecordMode, type UploadMode } from '../components/interview/InterviewFlowParts';
+import { InterviewSetupView } from '../components/interview/InterviewSetupView';
+import { StepProgress, type RecordMode } from '../components/interview/InterviewFlowParts';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { mockJobPosting, mockResume } from '../data/interviewFlow';
+import { composeInterviewQuestions, type InterviewPromptQuestion } from '../domain/composeInterviewQuestions';
+import { jobFamilyLabel } from '../domain/jobFamily';
+import type { JobFamily } from '../domain/report';
+import type { InterviewAnswerInput } from '../data/local/interviewAnswers';
+import { useSaveInterviewOutcome } from '../data/local/useInterviewAnswers';
 import { useCompleteMockExamInterviewItem } from '../data/local/useMockExamSession';
-import { useSaveInterviewSession } from '../data/local/useInterviewSessions';
-import { getOverallInterviewScore, getWeakInterviewQuestions, interviewQuestions } from '../data/interviewSession';
-import type { InterviewQuestion } from '../data/interviewSession';
+import { uploadPendingInterviewMedia } from '../data/media/interviewMediaUpload';
+import {
+  deleteSessionRecordings,
+  persistRecording,
+} from '../data/media/interviewRecordingFiles';
+import { useProfile } from '../data/server/useProfile';
+import type { JobPostingRow } from '../data/server/useJobPostings';
+import type { ResumeRow } from '../data/server/useResumes';
+import { useAuth } from '../providers/AuthProvider';
 import { Box } from '../design-system/components/Box';
 import { VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
-import {
-  AnalysisStepView,
-  FinishView,
-  JobStepView,
-  RecordStepView,
-  ResumeStepView,
-  RetryStepView,
-} from './interview/InterviewStepViews';
+import { FinishView, RecordStepView } from './interview/InterviewStepViews';
+import type { InterviewStepKey } from '../data/interviewFlow';
 
-type FlowPhase = 'resume' | 'job' | 'analysis' | 'record' | 'finish' | 'retry';
-type AnalysisPhase = 'loading' | 'result';
+type FlowPhase = 'setup' | 'record' | 'finish';
 
 const phaseTitles: Record<FlowPhase, string> = {
-  resume: '이력서 등록',
-  job: '채용공고 등록',
-  analysis: 'AI 분석 중',
+  setup: '면접 준비',
   record: '모의 면접',
   finish: '면접 완료',
-  retry: '약점 질문 다시 풀기',
 };
 
-const phaseStepKey: Record<FlowPhase, 'resume' | 'job' | 'analysis' | 'record' | 'feedback' | 'retry'> = {
-  resume: 'resume',
-  job: 'job',
-  analysis: 'analysis',
+const phaseStepKey: Record<FlowPhase, InterviewStepKey> = {
+  setup: 'setup',
   record: 'record',
   finish: 'feedback',
-  retry: 'retry',
+};
+
+type AnswerDraft = {
+  question: InterviewPromptQuestion;
+  prepMs: number;
+  answerMs: number;
+  retakeCount: number;
+  mediaLocalUri: string | null;
 };
 
 export function InterviewFlowScreen() {
   const router = useRouter();
   const navigation = useNavigation();
-  const { mode, mockExamSessionId } = useLocalSearchParams<{ mode?: string; mockExamSessionId?: string }>();
-  const initialRetry = mode === 'retry';
-  const [phase, setPhase] = useState<FlowPhase>(initialRetry ? 'retry' : 'resume');
-  const [isRetryRun, setIsRetryRun] = useState(initialRetry);
-  const [resumeMode, setResumeMode] = useState<UploadMode>('file');
-  const [resumeFileName, setResumeFileName] = useState<string | null>(null);
-  const [resumePaste, setResumePaste] = useState('');
-  const [resumeParsing, setResumeParsing] = useState(false);
-  const [resumeParsed, setResumeParsed] = useState(false);
-  const [jobMode, setJobMode] = useState<UploadMode>('paste');
-  const [jobFileName, setJobFileName] = useState<string | null>(null);
-  const [jobPaste, setJobPaste] = useState('');
-  const [jobParsing, setJobParsing] = useState(false);
-  const [jobParsed, setJobParsed] = useState(false);
-  const [ncsSheetVisible, setNcsSheetVisible] = useState(false);
-  const [selectedNcsCode, setSelectedNcsCode] = useState('20010206');
-  const [analysisPhase, setAnalysisPhase] = useState<AnalysisPhase>('loading');
+  const db = useSQLiteContext();
+  const { userId } = useAuth();
+  const { mockExamSessionId } = useLocalSearchParams<{ mockExamSessionId?: string }>();
+  const mockExamId = typeof mockExamSessionId === 'string' ? mockExamSessionId : null;
+  const isMockExamMode = mockExamId != null;
+
+  const profile = useProfile();
+  const saveInterviewOutcome = useSaveInterviewOutcome();
+  const completeMockExamInterviewItem = useCompleteMockExamInterviewItem();
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+
+  const [phase, setPhase] = useState<FlowPhase>('setup');
+  const [selectedPosting, setSelectedPosting] = useState<JobPostingRow | null>(null);
+  const [selectedResume, setSelectedResume] = useState<ResumeRow | null>(null);
+  const [micDenied, setMicDenied] = useState(false);
+  const [canAskMicAgain, setCanAskMicAgain] = useState(true);
+  const [starting, setStarting] = useState(false);
+
+  const [questions, setQuestions] = useState<InterviewPromptQuestion[]>([]);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [recordMode, setRecordMode] = useState<RecordMode>('ready');
   const [elapsed, setElapsed] = useState(0);
   const [totalSeconds, setTotalSeconds] = useState(0);
-  const [flowStartedAt, setFlowStartedAt] = useState(() => Date.now());
-  const saveInterviewSession = useSaveInterviewSession();
-  const completeMockExamInterviewItem = useCompleteMockExamInterviewItem();
 
-  const questions: readonly InterviewQuestion[] = isRetryRun ? getWeakInterviewQuestions() : interviewQuestions;
-  const currentQuestion = questions[questionIndex] ?? questions[0];
-  const sessionId = typeof mockExamSessionId === 'string' ? mockExamSessionId : null;
-  const isMockExamMode = sessionId != null;
+  const [sessionDraftId] = useState(() => Crypto.randomUUID());
+  const flowStartedAtRef = useRef<number>(0);
+  const prepStartRef = useRef<number>(0);
+  const recordStartRef = useRef<number>(0);
+  const answersRef = useRef<AnswerDraft[]>([]);
+  const audioModeReadyRef = useRef(false);
+
+  const currentQuestion = questions[questionIndex] ?? null;
 
   useEffect(() => {
     if (phase !== 'record') {
@@ -90,11 +107,23 @@ export function InterviewFlowScreen() {
         {
           text: '그만두기',
           style: 'destructive',
-          onPress: () => navigation.dispatch(event.data.action),
+          onPress: () => {
+            void (async () => {
+              if (recorder.isRecording) {
+                try {
+                  await recorder.stop();
+                } catch {
+                  // ignore — best effort
+                }
+              }
+              deleteSessionRecordings(sessionDraftId);
+              navigation.dispatch(event.data.action);
+            })();
+          },
         },
       ]);
     });
-  }, [navigation, phase]);
+  }, [navigation, phase, recorder, sessionDraftId]);
 
   useEffect(() => {
     if (phase !== 'record' || recordMode !== 'rec') {
@@ -113,163 +142,227 @@ export function InterviewFlowScreen() {
   }
 
   function goBack() {
-    if (phase === 'resume' || phase === 'retry') {
+    if (phase === 'record') {
+      // beforeRemove guard handles the confirm + cleanup.
       close();
       return;
     }
-    if (phase === 'job') {
-      setPhase('resume');
+    close();
+  }
+
+  async function handleStart() {
+    if (!selectedPosting || starting) {
       return;
     }
-    if (phase === 'analysis') {
-      setPhase('job');
-      return;
-    }
-    if (phase === 'record') {
-      setPhase(isRetryRun ? 'retry' : 'analysis');
+
+    setStarting(true);
+    try {
+      const permission = await AudioModule.requestRecordingPermissionsAsync();
+      if (!permission.granted) {
+        setMicDenied(true);
+        setCanAskMicAgain(permission.canAskAgain ?? false);
+        return;
+      }
+      setMicDenied(false);
+
+      const jobFamily: JobFamily =
+        selectedPosting.jobFamily ?? profile.data?.field ?? 'etc';
+      const composed = composeInterviewQuestions({
+        jobFamily,
+        postingMaterials: selectedPosting.analysis?.question_materials,
+        resumeMaterials: selectedResume?.analysis?.question_materials,
+      });
+
+      answersRef.current = [];
+      flowStartedAtRef.current = Date.now();
+      prepStartRef.current = Date.now();
+      setQuestions(composed);
+      setQuestionIndex(0);
       setRecordMode('ready');
       setElapsed(0);
-      return;
-    }
-    if (phase === 'finish') {
+      setTotalSeconds(0);
       setPhase('record');
-      setRecordMode('ready');
-      setElapsed(0);
+    } finally {
+      setStarting(false);
     }
   }
 
-  function startResumeFileParse() {
-    setResumeFileName(mockResume.file);
-    setResumeParsing(true);
-    setResumeParsed(false);
-    setTimeout(() => {
-      setResumeParsing(false);
-      setResumeParsed(true);
-    }, 900);
+  async function requestMicAgain() {
+    const permission = await AudioModule.requestRecordingPermissionsAsync();
+    if (permission.granted) {
+      setMicDenied(false);
+    } else {
+      setCanAskMicAgain(permission.canAskAgain ?? false);
+    }
   }
 
-  function clearResumeFile() {
-    setResumeFileName(null);
-    setResumeParsed(false);
-  }
+  async function startRecording() {
+    if (!currentQuestion) {
+      return;
+    }
 
-  function startJobFileParse() {
-    setJobFileName('리플로우_FE_채용공고.pdf');
-    startJobAnalysis();
-  }
+    try {
+      if (!audioModeReadyRef.current) {
+        await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+        audioModeReadyRef.current = true;
+      }
+      await recorder.prepareToRecordAsync();
+      recorder.record();
+    } catch {
+      Alert.alert('녹음을 시작하지 못했어요', '잠시 후 다시 시도해주세요.');
+      return;
+    }
 
-  function clearJobFile() {
-    setJobFileName(null);
-    setJobParsed(false);
-  }
-
-  function startJobAnalysis() {
-    setJobParsing(true);
-    setJobParsed(false);
-    setTimeout(() => {
-      setJobParsing(false);
-      setJobParsed(true);
-    }, 900);
-  }
-
-  function enterRecord(retry = false) {
-    setIsRetryRun(retry);
-    setQuestionIndex(0);
-    setRecordMode('ready');
-    setElapsed(0);
-    setTotalSeconds(0);
-    setFlowStartedAt(Date.now());
-    setPhase('record');
-  }
-
-  function startRecording() {
+    recordStartRef.current = Date.now();
     setElapsed(0);
     setRecordMode('rec');
   }
 
-  function stopRecording() {
-    const answerSeconds = Math.max(1, elapsed);
-    setTotalSeconds((current) => current + answerSeconds);
+  async function stopRecording() {
+    if (!currentQuestion) {
+      return;
+    }
+
+    let mediaLocalUri: string | null = null;
+    try {
+      await recorder.stop();
+      const cacheUri = recorder.uri;
+      if (cacheUri) {
+        mediaLocalUri = await persistRecording(sessionDraftId, currentQuestion.id, cacheUri);
+      }
+    } catch {
+      mediaLocalUri = null;
+    }
+
+    const answerMs = Math.max(1000, Date.now() - recordStartRef.current);
+    const existing = answersRef.current.find((draft) => draft.question.id === currentQuestion.id);
+
+    if (existing) {
+      // Retake: keep frozen prepMs, bump retake count, replace media.
+      existing.answerMs = answerMs;
+      existing.retakeCount += 1;
+      existing.mediaLocalUri = mediaLocalUri;
+    } else {
+      const prepMs = Math.max(0, recordStartRef.current - prepStartRef.current);
+      answersRef.current.push({
+        question: currentQuestion,
+        prepMs,
+        answerMs,
+        retakeCount: 0,
+        mediaLocalUri,
+      });
+    }
+
+    setTotalSeconds((current) => current + Math.round(answerMs / 1000));
     setRecordMode('review');
   }
 
-  function retakeAnswer() {
+  async function retakeAnswer() {
+    if (!currentQuestion) {
+      return;
+    }
+
+    try {
+      await recorder.prepareToRecordAsync();
+      recorder.record();
+    } catch {
+      Alert.alert('녹음을 시작하지 못했어요', '잠시 후 다시 시도해주세요.');
+      return;
+    }
+
+    recordStartRef.current = Date.now();
     setElapsed(0);
     setRecordMode('rec');
   }
 
   function nextQuestion() {
     if (questionIndex >= questions.length - 1) {
-      const measuredSeconds = Math.max(1, Math.ceil((Date.now() - flowStartedAt) / 1000));
+      const measuredSeconds = Math.max(1, Math.ceil((Date.now() - flowStartedAtRef.current) / 1000));
       setTotalSeconds((current) => Math.max(current, measuredSeconds));
       setPhase('finish');
       return;
     }
 
+    prepStartRef.current = Date.now();
     setQuestionIndex((current) => current + 1);
     setRecordMode('ready');
     setElapsed(0);
   }
 
   async function openFeedback() {
-    if (isRetryRun) {
-      setPhase('retry');
+    if (!selectedPosting) {
       return;
     }
 
+    const drafts = answersRef.current;
+    if (drafts.length === 0) {
+      Alert.alert('녹음된 답변이 없어요', '질문에 답변한 뒤 다시 시도해주세요.');
+      return;
+    }
+
+    const company = selectedPosting.company ?? '회사 미상';
+    const role = selectedPosting.role ?? jobFamilyLabel(selectedPosting.jobFamily) ?? '직무 미상';
+    const durationMs = Math.max(1000, Date.now() - flowStartedAtRef.current);
+    const answers: InterviewAnswerInput[] = drafts.map((draft) => ({
+      questionId: draft.question.id,
+      questionText: draft.question.text,
+      category: draft.question.category,
+      questionSource: draft.question.source,
+      prepMs: draft.prepMs,
+      answerMs: draft.answerMs,
+      retakeCount: draft.retakeCount,
+      mediaLocalUri: draft.mediaLocalUri,
+    }));
+
+    const input = {
+      company,
+      role,
+      score: 0,
+      questionCount: drafts.length,
+      durationMs,
+    };
+    const interviewSessionId = sessionDraftId;
+
     try {
-      if (interviewQuestions.length === 0) {
-        Alert.alert('면접 질문이 없어요', '질문을 만든 뒤 다시 시도해주세요.');
-        return;
-      }
-
-      const score = getOverallInterviewScore();
-      const safeScore = Number.isFinite(score) ? score : 0;
-      const durationMs = Math.max(1000, Date.now() - flowStartedAt);
-      const input = {
-        company: mockJobPosting.company,
-        role: mockJobPosting.role,
-        score: safeScore,
-        questionCount: interviewQuestions.length,
-        durationMs,
-      };
-
       if (isMockExamMode) {
-        await completeMockExamInterviewItem.mutateAsync({ input, sessionId });
+        await completeMockExamInterviewItem.mutateAsync({
+          input,
+          sessionId: mockExamId,
+          answers,
+          resumeId: selectedResume?.id,
+          jobPostingId: selectedPosting.id,
+          interviewSessionId,
+        });
+        if (userId) {
+          void uploadPendingInterviewMedia(db, userId);
+        }
         router.back();
         return;
       }
 
-      const id = await saveInterviewSession.mutateAsync(input);
+      const id = await saveInterviewOutcome.mutateAsync({
+        session: input,
+        answers,
+        resumeId: selectedResume?.id,
+        jobPostingId: selectedPosting.id,
+        interviewSessionId,
+      });
+      if (userId) {
+        void uploadPendingInterviewMedia(db, userId);
+      }
       router.replace({ pathname: '/interview/[id]', params: { id } } as never);
     } catch {
       Alert.alert('면접을 저장하지 못했어요', '잠시 후 다시 시도해주세요.');
     }
   }
 
-  if (!currentQuestion) {
-    return (
-      <Screen>
-        <Header title="실전 면접" showBack onBack={close} />
-        <Box flex={1} justifyContent="center" px="spacingX.globalGutter">
-          <Card>
-            <VStack align="center" gap="x3">
-              <Text align="center" color="fg.neutralMuted" textStyle="t4Regular">
-                준비된 질문을 찾지 못했어요.
-              </Text>
-              <Button label="면접 탭으로" variant="weak" onPress={close} />
-            </VStack>
-          </Card>
-        </Box>
-      </Screen>
-    );
-  }
+  const saving = saveInterviewOutcome.isPending || completeMockExamInterviewItem.isPending;
 
   return (
     <Screen>
       <Header
-        title={phase === 'analysis' && analysisPhase === 'result' ? 'AI 분석 결과' : phaseTitles[phase]}
-        subtitle={phase === 'record' && isRetryRun ? '약점 다시 면접' : 'STEP 기반 실전 면접'}
+        title={phaseTitles[phase]}
+        subtitle="공고 기반 실전 면접"
         showBack
         onBack={goBack}
         rightAction={{
@@ -280,75 +373,53 @@ export function InterviewFlowScreen() {
       >
         <StepProgress stepKey={phaseStepKey[phase]} />
       </Header>
-      {phase === 'resume' ? (
-        <ResumeStepView
-          mode={resumeMode}
-          fileName={resumeFileName}
-          paste={resumePaste}
-          parsing={resumeParsing}
-          parsed={resumeParsed}
-          onModeChange={setResumeMode}
-          onFilePress={startResumeFileParse}
-          onFileClear={clearResumeFile}
-          onPasteChange={setResumePaste}
-          onNext={() => setPhase('job')}
-        />
-      ) : null}
-      {phase === 'job' ? (
-        <JobStepView
-          mode={jobMode}
-          fileName={jobFileName}
-          paste={jobPaste}
-          parsing={jobParsing}
-          parsed={jobParsed}
-          sheetVisible={ncsSheetVisible}
-          selectedNcsCode={selectedNcsCode}
-          onModeChange={setJobMode}
-          onFilePress={startJobFileParse}
-          onFileClear={clearJobFile}
-          onPasteChange={setJobPaste}
-          onAnalyze={startJobAnalysis}
-          onOpenSheet={() => setNcsSheetVisible(true)}
-          onCloseSheet={() => setNcsSheetVisible(false)}
-          onSelectNcs={setSelectedNcsCode}
-          onNext={() => {
-            setAnalysisPhase('loading');
-            setPhase('analysis');
-          }}
-        />
-      ) : null}
-      {phase === 'analysis' ? (
-        <AnalysisStepView
-          phase={analysisPhase}
-          onDone={() => setAnalysisPhase('result')}
-          onNext={() => enterRecord(false)}
+      {phase === 'setup' ? (
+        <InterviewSetupView
+          selectedPosting={selectedPosting}
+          selectedResume={selectedResume}
+          micDenied={micDenied}
+          canAskMicAgain={canAskMicAgain}
+          starting={starting}
+          onSelectPosting={setSelectedPosting}
+          onSelectResume={setSelectedResume}
+          onStart={handleStart}
+          onRequestMicAgain={requestMicAgain}
         />
       ) : null}
       {phase === 'record' ? (
-        <RecordStepView
-          question={currentQuestion}
-          questionIndex={questionIndex}
-          total={questions.length}
-          mode={recordMode}
-          elapsed={elapsed}
-          onStart={startRecording}
-          onStop={stopRecording}
-          onRetake={retakeAnswer}
-          onNext={nextQuestion}
-        />
+        currentQuestion ? (
+          <RecordStepView
+            question={currentQuestion}
+            questionIndex={questionIndex}
+            total={questions.length}
+            mode={recordMode}
+            elapsed={elapsed}
+            onStart={startRecording}
+            onStop={stopRecording}
+            onRetake={retakeAnswer}
+            onNext={nextQuestion}
+          />
+        ) : (
+          <Box flex={1} justifyContent="center" px="spacingX.globalGutter">
+            <Card>
+              <VStack align="center" gap="x3">
+                <Text align="center" color="fg.neutralMuted" textStyle="t4Regular">
+                  준비된 질문을 찾지 못했어요.
+                </Text>
+                <Button label="처음으로" variant="weak" onPress={() => setPhase('setup')} />
+              </VStack>
+            </Card>
+          </Box>
+        )
       ) : null}
       {phase === 'finish' ? (
         <FinishView
-          retry={isRetryRun}
           questionCount={questions.length}
           totalSeconds={totalSeconds}
-          saving={saveInterviewSession.isPending || completeMockExamInterviewItem.isPending}
+          saving={saving}
           feedbackLabel={isMockExamMode ? '모의고사로 돌아가기' : undefined}
           onFeedback={openFeedback}
         />
-      ) : null}
-      {phase === 'retry' ? (
-        <RetryStepView onStartRetry={() => enterRecord(true)} />
       ) : null}
     </Screen>
   );
