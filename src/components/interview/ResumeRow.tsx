@@ -4,11 +4,12 @@ import { IconButton } from '../ui/IconButton';
 import { List } from '../ui/List';
 import { AnalysisStatusChip } from './AnalysisStatusChip';
 
-const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
-
 function toShortDateLabel(isoDatetime: string) {
-  const kstDate = new Date(new Date(isoDatetime).getTime() + KST_OFFSET_MS);
-  return `${kstDate.getUTCMonth() + 1}월 ${kstDate.getUTCDate()}일`;
+  return new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    month: 'numeric',
+    day: 'numeric',
+  }).format(new Date(isoDatetime));
 }
 
 export function ResumeRow({ resume, onDelete }: { resume: ResumeRowData; onDelete: () => void }) {

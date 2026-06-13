@@ -2,10 +2,18 @@ import type { JobFamily } from '../../domain/report';
 
 // Categories must match QUESTION_CATEGORY_TONE keys from src/data/interviewFlow.ts:
 // '오프닝' | '지원 동기' | '경험' | '관계' | '직무' | '인성' | '가치'
+export type InterviewQuestionCategory =
+  | '오프닝'
+  | '지원 동기'
+  | '경험'
+  | '관계'
+  | '직무'
+  | '인성'
+  | '가치';
 
 export type InterviewPromptQuestion = {
   id: string;
-  category: string;
+  category: InterviewQuestionCategory;
   text: string;
   limitSeconds: number;
   hint?: string;

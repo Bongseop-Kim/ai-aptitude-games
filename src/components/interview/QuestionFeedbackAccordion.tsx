@@ -26,6 +26,9 @@ const AXIS_SHORT_LABELS = {
 export function QuestionFeedbackAccordion({ question, index }: QuestionFeedbackAccordionProps) {
   const [expanded, setExpanded] = useState(false);
   const [transcriptVisible, setTranscriptVisible] = useState(false);
+  const summaryHidden = expanded;
+  const detailHidden = !expanded;
+  const transcriptHidden = !transcriptVisible;
 
   return (
     <Card py="x3">
@@ -50,72 +53,87 @@ export function QuestionFeedbackAccordion({ question, index }: QuestionFeedbackA
           </Box>
           <Icon name={expanded ? 'ChevronUp' : 'ChevronDown'} color="fg.neutralSubtle" size="small" />
         </HStack>
-        {!expanded ? (
-          <HStack gap="x2" pt="x1_5">
-            {question.scores?.content != null ? (
-              <Text color="fg.neutralMuted" textStyle="t2Regular">
-                내용 {question.scores.content}
-              </Text>
-            ) : null}
-            {question.scores?.star != null ? (
-              <Text color="fg.neutralMuted" textStyle="t2Regular">
-                구조 {question.scores.star}
-              </Text>
-            ) : null}
-          </HStack>
-        ) : null}
+        <HStack
+          gap="x2"
+          pt="x1_5"
+          pointerEvents={summaryHidden ? 'none' : 'auto'}
+          accessibilityElementsHidden={summaryHidden}
+          importantForAccessibility={summaryHidden ? 'no-hide-descendants' : 'auto'}
+          style={{ opacity: summaryHidden ? 0 : 1 }}
+        >
+          {question.scores?.content != null ? (
+            <Text color="fg.neutralMuted" textStyle="t2Regular">
+              내용 {question.scores.content}
+            </Text>
+          ) : null}
+          {question.scores?.star != null ? (
+            <Text color="fg.neutralMuted" textStyle="t2Regular">
+              구조 {question.scores.star}
+            </Text>
+          ) : null}
+        </HStack>
       </Pressable>
 
-      {expanded ? (
-        <VStack gap="x3" pt="x3">
-          {question.scores ? (
-            <HStack gap="x3">
-              {(Object.keys(AXIS_SHORT_LABELS) as (keyof typeof AXIS_SHORT_LABELS)[]).map((key) => {
-                const score = question.scores?.[key];
-                if (score == null) return null;
-                return (
-                  <VStack key={key} align="center" gap="x0_5">
-                    <Text color="fg.neutralSubtle" textStyle="t1Regular">
-                      {AXIS_SHORT_LABELS[key]}
-                    </Text>
-                    <Text textStyle="t3Bold">{score}</Text>
-                  </VStack>
-                );
-              })}
-            </HStack>
-          ) : null}
-
-          {question.transcript != null ? (
-            <VStack gap="x1_5">
-              <Pressable
-                accessibilityRole="button"
-                accessibilityState={{ expanded: transcriptVisible }}
-                onPress={() => setTranscriptVisible((value) => !value)}
-              >
-                <HStack align="center" gap="x1">
-                  <Text color="fg.brand" textStyle="t2Medium">
-                    {transcriptVisible ? '전사 접기' : '전사 보기'}
+      <VStack
+        gap="x3"
+        pt="x3"
+        pointerEvents={detailHidden ? 'none' : 'auto'}
+        accessibilityElementsHidden={detailHidden}
+        importantForAccessibility={detailHidden ? 'no-hide-descendants' : 'auto'}
+        style={{ opacity: detailHidden ? 0 : 1 }}
+      >
+        {question.scores ? (
+          <HStack gap="x3">
+            {(Object.keys(AXIS_SHORT_LABELS) as (keyof typeof AXIS_SHORT_LABELS)[]).map((key) => {
+              const score = question.scores?.[key];
+              if (score == null) return null;
+              return (
+                <VStack key={key} align="center" gap="x0_5">
+                  <Text color="fg.neutralSubtle" textStyle="t1Regular">
+                    {AXIS_SHORT_LABELS[key]}
                   </Text>
-                  <Icon
-                    name={transcriptVisible ? 'ChevronUp' : 'ChevronDown'}
-                    color="fg.brand"
-                    size="small"
-                  />
-                </HStack>
-              </Pressable>
-              {transcriptVisible ? (
-                <Text color="fg.neutralMuted" textStyle="t2Regular">
-                  {question.transcript}
-                </Text>
-              ) : null}
-            </VStack>
-          ) : null}
+                  <Text textStyle="t3Bold">{score}</Text>
+                </VStack>
+              );
+            })}
+          </HStack>
+        ) : null}
 
-          {question.good != null ? <FeedbackLine label="잘한 점" body={question.good} /> : null}
-          {question.fix != null ? <FeedbackLine label="보완할 점" body={question.fix} /> : null}
-          {question.why != null ? <FeedbackLine label="질문 의도" body={question.why} /> : null}
-        </VStack>
-      ) : null}
+        {question.transcript != null ? (
+          <VStack gap="x1_5">
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ expanded: transcriptVisible }}
+              onPress={() => setTranscriptVisible((value) => !value)}
+            >
+              <HStack align="center" gap="x1">
+                <Text color="fg.brand" textStyle="t2Medium">
+                  {transcriptVisible ? '전사 접기' : '전사 보기'}
+                </Text>
+                <Icon
+                  name={transcriptVisible ? 'ChevronUp' : 'ChevronDown'}
+                  color="fg.brand"
+                  size="small"
+                />
+              </HStack>
+            </Pressable>
+            <Text
+              color="fg.neutralMuted"
+              textStyle="t2Regular"
+              pointerEvents={transcriptHidden ? 'none' : 'auto'}
+              accessibilityElementsHidden={transcriptHidden}
+              importantForAccessibility={transcriptHidden ? 'no-hide-descendants' : 'auto'}
+              style={{ opacity: transcriptHidden ? 0 : 1 }}
+            >
+              {question.transcript}
+            </Text>
+          </VStack>
+        ) : null}
+
+        {question.good != null ? <FeedbackLine label="잘한 점" body={question.good} /> : null}
+        {question.fix != null ? <FeedbackLine label="보완할 점" body={question.fix} /> : null}
+        {question.why != null ? <FeedbackLine label="질문 의도" body={question.why} /> : null}
+      </VStack>
     </Card>
   );
 }

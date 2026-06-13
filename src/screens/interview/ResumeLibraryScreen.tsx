@@ -66,7 +66,7 @@ export function ResumeLibraryScreen() {
 
 function EmptyResumes() {
   return (
-    <Card minHeight={132}>
+    <Card minHeight="x34">
       <VStack align="center" flex={1} gap="x2" justify="center">
         <Icon name="FileText" color="fg.neutralSubtle" />
         <VStack align="center" gap="x1">

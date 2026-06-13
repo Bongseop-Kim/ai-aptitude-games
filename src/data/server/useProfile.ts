@@ -53,6 +53,7 @@ export function useUpdateProfile() {
       const payload: Record<string, unknown> = {};
       if (updates.field !== undefined) payload.field = updates.field;
       if (updates.onboardedAt !== undefined) payload.onboarded_at = updates.onboardedAt;
+      if (Object.keys(payload).length === 0) return;
 
       const { error } = await supabase
         .from('profiles')

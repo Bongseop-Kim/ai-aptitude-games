@@ -14,14 +14,9 @@ export const JOB_FAMILY_OPTIONS: readonly JobFamilyOption[] = [
   { value: 'etc', label: '기타' },
 ] as const;
 
-const JOB_FAMILY_LABELS: Record<JobFamily, string> = {
-  it: '개발·IT',
-  biz: '경영·사무',
-  mkt: '마케팅·미디어',
-  design: '디자인',
-  fin: '금융·재무',
-  etc: '기타',
-};
+const JOB_FAMILY_LABELS = Object.fromEntries(
+  JOB_FAMILY_OPTIONS.map((option) => [option.value, option.label]),
+) as Record<JobFamily, string>;
 
 export function jobFamilyLabel(field: JobFamily | null | undefined): string | null {
   if (field == null) return null;

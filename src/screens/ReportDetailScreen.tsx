@@ -553,10 +553,10 @@ type CompetenciesSectionProps = {
 
 function CompetenciesSection({ competencies, state, onRetry }: CompetenciesSectionProps) {
   if (state === 'failed') {
-    return <AnalysisStatusCard variant="failed" minHeight={260} onRetry={onRetry} />;
+    return <AnalysisStatusCard variant="failed" minHeight="x60" onRetry={onRetry} />;
   }
   if (competencies == null || state !== 'ready') {
-    return <AnalysisStatusCard variant="pending" minHeight={260} />;
+    return <AnalysisStatusCard variant="pending" minHeight="x60" />;
   }
   return <CompetencySection competencies={competencies} />;
 }
@@ -744,7 +744,11 @@ function InterviewFeedbackSection({ mockExamId, report }: InterviewFeedbackSecti
   const db = useSQLiteContext();
   const { userId } = useAuth();
   const { data: session, isLoading } = useInterviewSessionForMockExam(mockExamId);
-  const { data: answers = [] } = useInterviewAnswers(session?.id ?? null);
+  const {
+    data: answers = [],
+    isLoading: answersLoading,
+    isFetching: answersFetching,
+  } = useInterviewAnswers(session?.id ?? null);
 
   if (isLoading) {
     return (
@@ -759,6 +763,7 @@ function InterviewFeedbackSection({ mockExamId, report }: InterviewFeedbackSecti
     <FeedbackReportBody
       session={session ?? null}
       answers={answers}
+      answersLoading={answersLoading || answersFetching}
       interview={report?.interview ?? null}
       uploads={{
         retry: (answerId: string) => {
@@ -831,10 +836,10 @@ function CoachSection({ coach, state, onRetry }: CoachSectionProps) {
   const router = useRouter();
 
   if (state === 'failed') {
-    return <AnalysisStatusCard variant="failed" minHeight={220} onRetry={onRetry} />;
+    return <AnalysisStatusCard variant="failed" minHeight="x60" onRetry={onRetry} />;
   }
   if (coach == null || state !== 'ready') {
-    return <AnalysisStatusCard variant="pending" minHeight={220} />;
+    return <AnalysisStatusCard variant="pending" minHeight="x60" />;
   }
 
   return (

@@ -19,7 +19,13 @@ export function normalizeJobPostingUrl(url: string): string | null {
   if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
   parsed.hash = '';
   TRACKING_PARAMS.forEach((param) => parsed.searchParams.delete(param));
-  parsed.hostname = parsed.hostname.toLowerCase();
+  parsed.hostname = parsed.hostname.toLowerCase().replace(/^www\./, '');
+  if (
+    (parsed.protocol === 'http:' && parsed.port === '80') ||
+    (parsed.protocol === 'https:' && parsed.port === '443')
+  ) {
+    parsed.port = '';
+  }
   let result = parsed.toString();
   if (result.endsWith('/')) result = result.slice(0, -1);
   return result;

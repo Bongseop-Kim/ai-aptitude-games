@@ -35,6 +35,12 @@ const RESPONSE_PATTERN_POINTS = [
   { id: 'baseline-5', x: 0.55, y: 0.5 },
   { id: 'baseline-6', x: 0.5, y: 0.57 },
 ] as const;
+const BULLET_BAR_TOKENS = {
+  trackHeight: 'x1_5',
+  markerHeight: 'x3',
+  markerWidth: 'x0_5',
+  radius: 'r1_5',
+} as const;
 
 function clamp(value: number, min = 0, max = 100) {
   'worklet';
@@ -107,16 +113,17 @@ export function BulletBar({ value, peerMedian = null }: BulletBarProps) {
     () => (size.width * clamped) / 100 * progress.value,
     [size.width, clamped],
   );
-  const trackHeight = 6;
-  const markerHeight = 12;
-  const markerWidth = 2;
+  const trackHeight = theme.dimension.x[BULLET_BAR_TOKENS.trackHeight];
+  const markerHeight = theme.dimension.x[BULLET_BAR_TOKENS.markerHeight];
+  const markerWidth = theme.dimension.x[BULLET_BAR_TOKENS.markerWidth];
+  const trackRadius = theme.radius[BULLET_BAR_TOKENS.radius];
   const hasMarker = peerMedian != null;
   const markerX = hasMarker
     ? Math.max(0, Math.min(size.width - markerWidth, (size.width * clamp(peerMedian)) / 100))
     : 0;
   const clip =
     size.width > 0
-      ? Skia.RRectXY(Skia.XYWHRect(0, (markerHeight - trackHeight) / 2, size.width, trackHeight), trackHeight / 2, trackHeight / 2)
+      ? Skia.RRectXY(Skia.XYWHRect(0, (markerHeight - trackHeight) / 2, size.width, trackHeight), trackRadius, trackRadius)
       : null;
 
   return (
@@ -136,7 +143,7 @@ export function BulletBar({ value, peerMedian = null }: BulletBarProps) {
               y={(markerHeight - trackHeight) / 2}
               width={size.width}
               height={trackHeight}
-              r={trackHeight / 2}
+              r={trackRadius}
               color={trackColor}
             />
             <Group clip={clip}>

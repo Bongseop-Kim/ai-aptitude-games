@@ -12,6 +12,8 @@ type UnsyncedInterviewSessionRow = {
   duration_ms: number;
   created_at: string;
   mock_exam_id: string | null;
+  resume_id: string | null;
+  job_posting_id: string | null;
 };
 
 let pushInFlight = false;
@@ -30,7 +32,7 @@ export async function pushUnsyncedInterviewSessions(db: SQLiteDatabase, userId: 
 
   try {
     const rows = await db.getAllAsync<UnsyncedInterviewSessionRow>(
-      'SELECT id, user_id, company, role, score, question_count, duration_ms, created_at, mock_exam_id FROM interview_sessions WHERE synced = 0 AND user_id = ?',
+      'SELECT id, user_id, company, role, score, question_count, duration_ms, created_at, mock_exam_id, resume_id, job_posting_id FROM interview_sessions WHERE synced = 0 AND user_id = ?',
       userId,
     );
     if (rows.length === 0) {
@@ -47,6 +49,8 @@ export async function pushUnsyncedInterviewSessions(db: SQLiteDatabase, userId: 
       duration_ms: row.duration_ms,
       created_at: toIsoUtc(row.created_at),
       mock_exam_id: row.mock_exam_id,
+      resume_id: row.resume_id,
+      job_posting_id: row.job_posting_id,
     }));
 
     const { error } = await supabase

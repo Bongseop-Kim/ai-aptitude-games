@@ -235,7 +235,7 @@ function InterviewSessionRowSkeleton() {
 
 function EmptyInterviewSessions() {
   return (
-    <Card minHeight={132}>
+    <Card minHeight="x34">
       <VStack align="center" flex={1} gap="x2" justify="center">
         <Icon name="Video" color="fg.neutralSubtle" />
         <Text align="center" color="fg.neutralMuted" textStyle="t4Regular">

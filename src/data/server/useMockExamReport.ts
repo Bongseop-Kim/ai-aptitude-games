@@ -6,6 +6,9 @@ import type { MockExamReport, MockExamReportRow } from '../../domain/report';
 
 // Re-implemented locally — SQLite stores datetimes as 'YYYY-MM-DD HH:MM:SS' UTC.
 function toIsoUtc(sqliteDatetime: string): string {
+  if (/T.*(?:Z|[+-]\d{2}:\d{2})$/.test(sqliteDatetime)) {
+    return sqliteDatetime;
+  }
   return `${sqliteDatetime.replace(' ', 'T')}Z`;
 }
 
@@ -70,8 +73,12 @@ function computeRefetchInterval(
   examCreatedAt: string | null,
 ): number | false {
   if (row?.status === 'failed') return false;
-  if (row?.status === 'done' && row.report?.interview?.status !== 'pending') {
-    return false;
+  if (row?.status === 'done' && row.report != null) {
+    const states = getReportSectionStates(row);
+    const allSectionsReady = Object.values(states).every((state) => state !== 'pending');
+    if (allSectionsReady && row.report.interview?.status !== 'pending') {
+      return false;
+    }
   }
   if (!examCreatedAt) return 30_000;
   const createdMs = new Date(toIsoUtc(examCreatedAt)).getTime();
@@ -97,6 +104,7 @@ export function useMockExamReport(
         .from('mock_exam_reports')
         .select('*')
         .eq('mock_exam_id', mockExamId)
+        .eq('user_id', userId)
         .maybeSingle();
       if (error) throw error;
       if (!data) return null;

@@ -66,6 +66,10 @@ const CATALOG_SELECT =
 const FULL_SELECT =
   'id, url, source, company, role, job_family, status, analysis, created_by, created_at, error';
 
+function escapePostgrestFilterValue(value: string) {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
 export function useJobPostingCatalog(search: string) {
   const { userId } = useAuth();
 
@@ -83,7 +87,7 @@ export function useJobPostingCatalog(search: string) {
         .order('created_at', { ascending: false });
 
       if (search.trim().length > 0) {
-        const term = `%${search.trim()}%`;
+        const term = `"%${escapePostgrestFilterValue(search.trim())}%"`;
         query = query.or(`company.ilike.${term},role.ilike.${term}`);
       }
 

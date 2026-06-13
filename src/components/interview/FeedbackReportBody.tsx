@@ -1,6 +1,7 @@
 import { SectionHead } from '../app/SectionHead';
 import { AnalysisStatusCard } from '../reports/AnalysisStatusCard';
 import type { InterviewAnswerRow } from '../../data/local/interviewAnswers';
+import { Box } from '../../design-system/components/Box';
 import { VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
 import type { ReportInterview } from '../../domain/report';
@@ -12,6 +13,7 @@ import { InterviewAnswersMeasuredList } from './InterviewAnswersMeasuredList';
 export type FeedbackReportBodyProps = {
   session: InterviewSessionRecord | null;
   answers?: InterviewAnswerRow[];
+  answersLoading?: boolean;
   interview?: ReportInterview | null;
   uploads?: { retry: (answerId: string) => void };
 };
@@ -23,6 +25,7 @@ function formatAnswerMinutes(durationMs: number) {
 export function FeedbackReportBody({
   session,
   answers = [],
+  answersLoading = false,
   interview = null,
   uploads,
 }: FeedbackReportBodyProps) {
@@ -50,12 +53,14 @@ export function FeedbackReportBody({
         <InterviewAnalysisBody interview={interview} />
       ) : (
         <>
-          {answers.length > 0 ? (
-            <VStack gap="x2">
-              <SectionHead title="답변 기록" />
+          <VStack gap="x2">
+            <SectionHead title="답변 기록" />
+            {answers.length > 0 ? (
               <InterviewAnswersMeasuredList answers={answers} onRetryUpload={uploads?.retry} />
-            </VStack>
-          ) : null}
+            ) : (
+              <Box minHeight={answersLoading ? 'x34' : 'x16'} />
+            )}
+          </VStack>
           <VStack gap="x2">
             <SectionHead title="AI 분석" />
             {interview?.status === 'failed' ? (

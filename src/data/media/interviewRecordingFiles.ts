@@ -17,10 +17,6 @@ export async function persistRecording(
   directory.create({ intermediates: true, idempotent: true });
 
   const target = new File(directory, `${questionId}.m4a`);
-  if (target.exists) {
-    target.delete();
-  }
-
   const source = new File(cacheUri);
   await source.move(target, { overwrite: true });
 

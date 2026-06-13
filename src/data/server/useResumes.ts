@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import * as Crypto from 'expo-crypto';
 import * as FileSystem from 'expo-file-system';
 
 import { useAuth } from '../../providers/AuthProvider';
@@ -85,7 +86,7 @@ export function useUploadResume() {
         throw new Error('Cannot upload a resume without an authenticated user.');
       }
 
-      const id = crypto.randomUUID();
+      const id = Crypto.randomUUID();
 
       let filePath: string;
       let mimeType: string;

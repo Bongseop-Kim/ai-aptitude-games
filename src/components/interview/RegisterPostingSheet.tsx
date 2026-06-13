@@ -23,7 +23,12 @@ export type RegisterPostingSheetProps = {
   initialMode?: RegisterPostingMode;
 };
 
-export function RegisterPostingSheet({ visible, onClose, initialMode = 'url' }: RegisterPostingSheetProps) {
+export function RegisterPostingSheet(props: RegisterPostingSheetProps) {
+  const initialMode = props.initialMode ?? 'url';
+  return <RegisterPostingSheetContent key={props.visible ? `open-${initialMode}` : 'closed'} {...props} />;
+}
+
+function RegisterPostingSheetContent({ visible, onClose, initialMode = 'url' }: RegisterPostingSheetProps) {
   const registerPosting = useRegisterJobPosting();
   const [mode, setMode] = useState<RegisterPostingMode>(initialMode);
   const [url, setUrl] = useState('');
@@ -31,14 +36,6 @@ export function RegisterPostingSheet({ visible, onClose, initialMode = 'url' }: 
   const [company, setCompany] = useState('');
   const [role, setRole] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // Re-sync the starting tab when the sheet is reopened in a different mode
-  // (e.g. the "본문 붙여넣기" fallback on a failed posting).
-  const [prevVisible, setPrevVisible] = useState(visible);
-  if (visible !== prevVisible) {
-    setPrevVisible(visible);
-    if (visible) setMode(initialMode);
-  }
 
   function reset() {
     setUrl('');
@@ -65,7 +62,7 @@ export function RegisterPostingSheet({ visible, onClose, initialMode = 'url' }: 
       mode === 'url'
         ? { url: url.trim() }
         : {
-            pastedText: pasteValue,
+            pastedText: pasteValue.trim(),
             company: company.trim() || undefined,
             role: role.trim() || undefined,
           };

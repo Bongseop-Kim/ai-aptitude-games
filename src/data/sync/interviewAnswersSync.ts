@@ -21,6 +21,8 @@ type UnsyncedInterviewAnswerRow = {
 let pushInFlight = false;
 let pushQueuedUserId: string | null = null;
 
+// Converts SQLite UTC datetimes ("YYYY-MM-DD HH:MM:SS") to ISO 8601 by
+// replacing the space with "T" and appending "Z"; assumes input is already UTC.
 function toIsoUtc(sqliteDatetime: string) {
   return `${sqliteDatetime.replace(' ', 'T')}Z`;
 }

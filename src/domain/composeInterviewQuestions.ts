@@ -1,6 +1,7 @@
 import type { JobFamily, QuestionMaterial } from './report';
 import {
   GENERIC_QUESTION_BANK,
+  type InterviewQuestionCategory,
   type InterviewPromptQuestion,
 } from '../data/interview/genericQuestionBank';
 
@@ -16,7 +17,7 @@ function materialToQuestion(
 ): InterviewPromptQuestion {
   return {
     id: material.question_id,
-    category: material.category,
+    category: material.category as InterviewQuestionCategory,
     text: material.text,
     limitSeconds: 90,
     hint: material.why,
@@ -39,12 +40,16 @@ export function composeInterviewQuestions({
   const opening = bank[0];
   const result: InterviewPromptQuestion[] = [opening];
   const usedCategories = new Set<string>([opening.category]);
+  const usedIds = new Set<string>([opening.id]);
 
   // Slots 1–3: posting-derived (up to 3)
   const postingSlice = (postingMaterials ?? []).slice(0, MAX_POSTING_QUESTIONS);
   for (const material of postingSlice) {
-    result.push(materialToQuestion(material, 'job_posting'));
-    usedCategories.add(material.category);
+    const question = materialToQuestion(material, 'job_posting');
+    if (usedIds.has(question.id)) continue;
+    result.push(question);
+    usedIds.add(question.id);
+    usedCategories.add(question.category);
   }
 
   // Fill remaining slots with resume-derived (up to 3), respecting the 8-question total
@@ -52,8 +57,11 @@ export function composeInterviewQuestions({
   const resumeSlice = (resumeMaterials ?? []).slice(0, MAX_RESUME_QUESTIONS);
   for (const material of resumeSlice) {
     if (result.length >= TOTAL_QUESTIONS - 1) break;
-    result.push(materialToQuestion(material, 'resume'));
-    usedCategories.add(material.category);
+    const question = materialToQuestion(material, 'resume');
+    if (usedIds.has(question.id)) continue;
+    result.push(question);
+    usedIds.add(question.id);
+    usedCategories.add(question.category);
   }
 
   // Find the closing (가치) generic question — always the last slot
@@ -68,7 +76,6 @@ export function composeInterviewQuestions({
   const duplicates = genericCandidates.filter((q) => usedCategories.has(q.category));
   const fillCandidates = [...nonDuplicates, ...duplicates];
 
-  const usedIds = new Set(result.map((q) => q.id));
   for (const candidate of fillCandidates) {
     if (result.length >= TOTAL_QUESTIONS - 1) break;
     if (usedIds.has(candidate.id)) continue;
