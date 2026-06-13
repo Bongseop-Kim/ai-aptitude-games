@@ -8,6 +8,11 @@ import {
   setAudioModeAsync,
   useAudioRecorder,
 } from 'expo-audio';
+import {
+  type CameraView,
+  useCameraPermissions,
+  useMicrophonePermissions,
+} from 'expo-camera';
 import { useSQLiteContext } from 'expo-sqlite';
 
 import { Header } from '../components/app/Header';
@@ -27,7 +32,8 @@ import {
   deleteSessionRecordings,
   persistRecording,
 } from '../data/media/interviewRecordingFiles';
-import { useProfile } from '../data/server/useProfile';
+import { useIsPro, useProfile } from '../data/server/useProfile';
+import { AUDIO_SPEC, VIDEO_SPEC } from '../domain/interviewMedia';
 import type { JobPostingRow } from '../data/server/useJobPostings';
 import type { ResumeRow } from '../data/server/useResumes';
 import { useAuth } from '../providers/AuthProvider';
@@ -69,9 +75,13 @@ export function InterviewFlowScreen() {
   const isMockExamMode = mockExamId != null;
 
   const profile = useProfile();
+  const isPro = useIsPro();
+  const mediaSpec = isPro ? VIDEO_SPEC : AUDIO_SPEC;
   const saveInterviewOutcome = useSaveInterviewOutcome();
   const completeMockExamInterviewItem = useCompleteMockExamInterviewItem();
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const [, requestCameraPermission] = useCameraPermissions();
+  const [, requestMicrophonePermission] = useMicrophonePermissions();
 
   const [phase, setPhase] = useState<FlowPhase>('setup');
   const [selectedPosting, setSelectedPosting] = useState<JobPostingRow | null>(null);
@@ -85,6 +95,7 @@ export function InterviewFlowScreen() {
   const [recordMode, setRecordMode] = useState<RecordMode>('ready');
   const [elapsed, setElapsed] = useState(0);
   const [totalSeconds, setTotalSeconds] = useState(0);
+  const [reviewUri, setReviewUri] = useState<string | null>(null);
 
   const [sessionDraftId] = useState(() => Crypto.randomUUID());
   const flowStartedAtRef = useRef<number>(0);
@@ -92,6 +103,8 @@ export function InterviewFlowScreen() {
   const recordStartRef = useRef<number>(0);
   const answersRef = useRef<AnswerDraft[]>([]);
   const audioModeReadyRef = useRef(false);
+  const cameraRef = useRef<CameraView | null>(null);
+  const recordingPromiseRef = useRef<Promise<{ uri: string } | undefined> | null>(null);
 
   const currentQuestion = questions[questionIndex] ?? null;
 
@@ -109,7 +122,13 @@ export function InterviewFlowScreen() {
           style: 'destructive',
           onPress: () => {
             void (async () => {
-              if (recorder.isRecording) {
+              if (mediaSpec.kind === 'video') {
+                try {
+                  cameraRef.current?.stopRecording();
+                } catch {
+                  // ignore — best effort
+                }
+              } else if (recorder.isRecording) {
                 try {
                   await recorder.stop();
                 } catch {
@@ -123,7 +142,7 @@ export function InterviewFlowScreen() {
         },
       ]);
     });
-  }, [navigation, phase, recorder, sessionDraftId]);
+  }, [navigation, phase, recorder, sessionDraftId, mediaSpec.kind]);
 
   useEffect(() => {
     if (phase !== 'record' || recordMode !== 'rec') {
@@ -157,13 +176,24 @@ export function InterviewFlowScreen() {
 
     setStarting(true);
     try {
-      const permission = await AudioModule.requestRecordingPermissionsAsync();
-      if (!permission.granted) {
-        setMicDenied(true);
-        setCanAskMicAgain(permission.canAskAgain ?? false);
-        return;
+      if (mediaSpec.kind === 'video') {
+        const camera = await requestCameraPermission();
+        const microphone = await requestMicrophonePermission();
+        if (!camera.granted || !microphone.granted) {
+          setMicDenied(true);
+          setCanAskMicAgain((camera.canAskAgain ?? false) && (microphone.canAskAgain ?? false));
+          return;
+        }
+        setMicDenied(false);
+      } else {
+        const permission = await AudioModule.requestRecordingPermissionsAsync();
+        if (!permission.granted) {
+          setMicDenied(true);
+          setCanAskMicAgain(permission.canAskAgain ?? false);
+          return;
+        }
+        setMicDenied(false);
       }
-      setMicDenied(false);
 
       const jobFamily: JobFamily =
         selectedPosting.jobFamily ?? profile.data?.field ?? 'etc';
@@ -188,6 +218,17 @@ export function InterviewFlowScreen() {
   }
 
   async function requestMicAgain() {
+    if (mediaSpec.kind === 'video') {
+      const camera = await requestCameraPermission();
+      const microphone = await requestMicrophonePermission();
+      if (camera.granted && microphone.granted) {
+        setMicDenied(false);
+      } else {
+        setCanAskMicAgain((camera.canAskAgain ?? false) && (microphone.canAskAgain ?? false));
+      }
+      return;
+    }
+
     const permission = await AudioModule.requestRecordingPermissionsAsync();
     if (permission.granted) {
       setMicDenied(false);
@@ -196,8 +237,39 @@ export function InterviewFlowScreen() {
     }
   }
 
+  // Shared by startRecording and retakeAnswer — the video start is identical for
+  // both (re-record overwrites the same {questionId}.mp4). No maxDuration: matches
+  // the audio path's advisory limit (the on-screen 권장 시간 is guidance, not a hard
+  // cap). A native auto-stop would resolve the promise with nothing consuming it,
+  // leaving the UI stuck in 'rec'.
+  function beginVideoRecording() {
+    const camera = cameraRef.current;
+    if (!camera || typeof camera.recordAsync !== 'function') {
+      Alert.alert('녹음을 시작하지 못했어요', '잠시 후 다시 시도해주세요.');
+      return;
+    }
+
+    try {
+      // recordAsync resolves only when recording stops — stash the promise.
+      recordingPromiseRef.current = camera.recordAsync();
+    } catch {
+      Alert.alert('녹음을 시작하지 못했어요', '잠시 후 다시 시도해주세요.');
+      return;
+    }
+
+    recordStartRef.current = Date.now();
+    setElapsed(0);
+    setReviewUri(null);
+    setRecordMode('rec');
+  }
+
   async function startRecording() {
     if (!currentQuestion) {
+      return;
+    }
+
+    if (mediaSpec.kind === 'video') {
+      beginVideoRecording();
       return;
     }
 
@@ -225,10 +297,30 @@ export function InterviewFlowScreen() {
 
     let mediaLocalUri: string | null = null;
     try {
-      await recorder.stop();
-      const cacheUri = recorder.uri;
-      if (cacheUri) {
-        mediaLocalUri = await persistRecording(sessionDraftId, currentQuestion.id, cacheUri);
+      if (mediaSpec.kind === 'video') {
+        cameraRef.current?.stopRecording();
+        const result = await recordingPromiseRef.current!;
+        recordingPromiseRef.current = null;
+        const cacheUri = result?.uri;
+        if (cacheUri) {
+          mediaLocalUri = await persistRecording(
+            sessionDraftId,
+            currentQuestion.id,
+            cacheUri,
+            VIDEO_SPEC,
+          );
+        }
+      } else {
+        await recorder.stop();
+        const cacheUri = recorder.uri;
+        if (cacheUri) {
+          mediaLocalUri = await persistRecording(
+            sessionDraftId,
+            currentQuestion.id,
+            cacheUri,
+            AUDIO_SPEC,
+          );
+        }
       }
     } catch {
       mediaLocalUri = null;
@@ -254,11 +346,17 @@ export function InterviewFlowScreen() {
     }
 
     setTotalSeconds((current) => current + Math.round(answerMs / 1000));
+    setReviewUri(mediaLocalUri);
     setRecordMode('review');
   }
 
   async function retakeAnswer() {
     if (!currentQuestion) {
+      return;
+    }
+
+    if (mediaSpec.kind === 'video') {
+      beginVideoRecording();
       return;
     }
 
@@ -287,6 +385,7 @@ export function InterviewFlowScreen() {
     setQuestionIndex((current) => current + 1);
     setRecordMode('ready');
     setElapsed(0);
+    setReviewUri(null);
   }
 
   async function openFeedback() {
@@ -377,6 +476,7 @@ export function InterviewFlowScreen() {
         <InterviewSetupView
           selectedPosting={selectedPosting}
           selectedResume={selectedResume}
+          mediaKind={mediaSpec.kind}
           micDenied={micDenied}
           canAskMicAgain={canAskMicAgain}
           starting={starting}
@@ -394,6 +494,9 @@ export function InterviewFlowScreen() {
             total={questions.length}
             mode={recordMode}
             elapsed={elapsed}
+            kind={mediaSpec.kind}
+            cameraRef={cameraRef}
+            reviewUri={reviewUri}
             onStart={startRecording}
             onStop={stopRecording}
             onRetake={retakeAnswer}

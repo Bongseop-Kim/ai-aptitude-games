@@ -1,3 +1,6 @@
+import { type RefObject } from 'react';
+import type { CameraView } from 'expo-camera';
+
 import { Body } from '../../components/app/Body';
 import { BottomActionBar } from '../../components/app/BottomActionBar';
 import {
@@ -17,6 +20,7 @@ import { Grid } from '../../design-system/components/Grid';
 import { HStack, VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
 import type { InterviewPromptQuestion } from '../../domain/composeInterviewQuestions';
+import type { MediaKind } from '../../domain/interviewMedia';
 
 export function RecordStepView({
   question,
@@ -24,6 +28,9 @@ export function RecordStepView({
   total,
   mode,
   elapsed,
+  kind,
+  cameraRef,
+  reviewUri,
   onStart,
   onStop,
   onRetake,
@@ -34,6 +41,9 @@ export function RecordStepView({
   total: number;
   mode: RecordMode;
   elapsed: number;
+  kind: MediaKind;
+  cameraRef: RefObject<CameraView | null>;
+  reviewUri: string | null;
   onStart: () => void;
   onStop: () => void;
   onRetake: () => void;
@@ -50,7 +60,15 @@ export function RecordStepView({
         </HStack>
         <Card p="x3">
           <HStack gap="x3">
-            <InterviewCameraView active recording={mode === 'rec'} elapsed={elapsed} />
+            <InterviewCameraView
+              active
+              recording={mode === 'rec'}
+              reviewing={mode === 'review'}
+              elapsed={elapsed}
+              kind={kind}
+              cameraRef={cameraRef}
+              reviewUri={reviewUri}
+            />
             <VStack flex={1} gap="x2">
               <Badge label={question.category} tone="brand" size="small" />
               <Text textStyle="t4Bold">{question.text}</Text>

@@ -1,6 +1,7 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, type RefObject } from 'react';
 import { Linking, Pressable } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useVideoPlayer, VideoView } from 'expo-video';
 
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
@@ -11,8 +12,10 @@ import { Box } from '../../design-system/components/Box';
 import { Grid } from '../../design-system/components/Grid';
 import { HStack, VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
+import { useDesignSystemTheme } from '../../design-system/provider';
 import { INTERVIEW_STEPS, STAR_GUIDE } from '../../data/interviewFlow';
 import type { InterviewStepKey } from '../../data/interviewFlow';
+import type { MediaKind } from '../../domain/interviewMedia';
 import type { IconName } from '../../shared/types';
 
 
@@ -162,26 +165,43 @@ export function formatRecordTime(seconds: number) {
 export function InterviewCameraView({
   active,
   recording,
+  reviewing,
   elapsed,
+  kind,
+  cameraRef,
+  reviewUri,
 }: {
   active: boolean;
   recording: boolean;
+  reviewing: boolean;
   elapsed: number;
+  kind: MediaKind;
+  cameraRef: RefObject<CameraView | null>;
+  reviewUri: string | null;
 }) {
   const [permission, requestPermission] = useCameraPermissions();
   const canShowCamera = active && permission?.granted;
+  const showVideoReview = kind === 'video' && reviewing && reviewUri != null;
 
   return (
     <Box bg="bg.neutralSolid" borderRadius="r3" height={cameraPreviewHeight} overflow="hidden" width={cameraPreviewWidth}>
-      {canShowCamera ? (
+      {showVideoReview ? (
+        <VideoReviewView uri={reviewUri} />
+      ) : canShowCamera ? (
         <Box flex={1}>
-          <CameraView facing="front" active={active} />
+          <CameraView
+            ref={cameraRef}
+            facing="front"
+            mode={kind === 'video' ? 'video' : 'picture'}
+            videoQuality={kind === 'video' ? '720p' : undefined}
+            active={active}
+          />
         </Box>
       ) : (
         <VStack align="center" flex={1} gap="x2" justify="center" p="x2">
           <Icon name="Video" color="fg.neutralInverted" />
           <Text align="center" color="fg.neutralInverted" textStyle="t1Regular">
-            카메라 권한이 필요해요
+            {kind === 'video' ? '카메라·마이크 권한이 필요해요' : '카메라 권한이 필요해요'}
           </Text>
           {permission?.canAskAgain ? (
             <Button label="허용" size="small" variant="weak" onPress={requestPermission} />
@@ -200,6 +220,17 @@ export function InterviewCameraView({
       ) : null}
     </Box>
   );
+}
+
+function VideoReviewView({ uri }: { uri: string }) {
+  const { theme } = useDesignSystemTheme();
+  const player = useVideoPlayer(uri, (instance) => {
+    instance.loop = false;
+  });
+  const width = theme.dimension.x[cameraPreviewWidth];
+  const height = theme.dimension.x[cameraPreviewHeight];
+
+  return <VideoView player={player} style={{ width, height }} />;
 }
 
 export type RecordMode = 'ready' | 'rec' | 'review';

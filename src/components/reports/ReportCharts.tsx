@@ -7,6 +7,7 @@ import { HStack, VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
 import { resolveColor } from '../../design-system/components/style-props';
 import { useDesignSystemTheme } from '../../design-system/provider';
+import type { ReportResponsePatternScale } from '../../domain/report';
 import {
   Canvas,
   Circle,
@@ -27,14 +28,6 @@ type ChartSize = { width: number; height: number };
 type Point = { x: number; y: number };
 
 const EMPTY_SIZE = { width: 0, height: 0 };
-const RESPONSE_PATTERN_POINTS = [
-  { id: 'baseline-1', x: 0.45, y: 0.6 },
-  { id: 'baseline-2', x: 0.52, y: 0.55 },
-  { id: 'baseline-3', x: 0.58, y: 0.48 },
-  { id: 'baseline-4', x: 0.48, y: 0.52 },
-  { id: 'baseline-5', x: 0.55, y: 0.5 },
-  { id: 'baseline-6', x: 0.5, y: 0.57 },
-] as const;
 const BULLET_BAR_TOKENS = {
   trackHeight: 'x1_5',
   markerHeight: 'x3',
@@ -161,9 +154,10 @@ export function BulletBar({ value, peerMedian = null }: BulletBarProps) {
 
 export type StressResilienceChartProps = {
   values: number[];
+  warningBand?: { start: number; end: number } | null;
 };
 
-export function StressResilienceChart({ values }: StressResilienceChartProps) {
+export function StressResilienceChart({ values, warningBand }: StressResilienceChartProps) {
   const { theme } = useDesignSystemTheme();
   const { size, onLayout } = useMeasuredChart();
   const progress = useFocusProgress();
@@ -175,8 +169,8 @@ export function StressResilienceChart({ values }: StressResilienceChartProps) {
     return { x, y };
   });
   const path = buildPolylinePath(points);
-  const bandX = size.width * 0.46;
-  const bandWidth = size.width * 0.18;
+  const bandX = warningBand ? size.width * warningBand.start : 0;
+  const bandWidth = warningBand ? size.width * (warningBand.end - warningBand.start) : 0;
 
   return (
     <Box accessibilityRole="image" height={120} onLayout={onLayout} width="full">
@@ -184,7 +178,9 @@ export function StressResilienceChart({ values }: StressResilienceChartProps) {
         {size.width > 0 ? (
           <>
             <RoundedRect x={0} y={0} width={size.width} height={size.height} r={12} color={resolveColor(theme, 'bg.neutralWeak')} />
-            <Rect x={bandX} y={8} width={bandWidth} height={size.height - 16} color={warningBg} />
+            {warningBand ? (
+              <Rect x={bandX} y={8} width={bandWidth} height={size.height - 16} color={warningBg} />
+            ) : null}
             <Path
               path={path}
               color={brandColor}
@@ -202,41 +198,81 @@ export function StressResilienceChart({ values }: StressResilienceChartProps) {
   );
 }
 
-export function ResponsePatternChart() {
+// One bipolar scale: neutral full-width track, a center tick at 50%, and ONE
+// neutral marker positioned at `value`% (성향, not 우열 — never brand/positive/critical).
+// Mirrors BulletBar's clamp/measure/useDerivedValue pattern; only the marker x is
+// animated (transform-safe).
+function PatternTrack({ value }: { value: number }) {
   const { theme } = useDesignSystemTheme();
   const { size, onLayout } = useMeasuredChart();
-  const progress = useFocusProgress(450);
-  const brandColor = resolveColor(theme, 'bg.brandSolid');
-  const gridColor = resolveColor(theme, 'stroke.neutralWeak');
-  const pointColor = resolveColor(theme, 'fg.neutralSubtle');
-  const activeRadius = useDerivedValue(() => 4 + progress.value * 6, []);
+  const progress = useFocusProgress(400);
+  const clamped = clamp(value);
+  const trackColor = resolveColor(theme, 'bg.neutralWeak');
+  const tickColor = resolveColor(theme, 'stroke.neutralWeak');
+  const markerColor = resolveColor(theme, 'fg.neutral');
+  const trackHeight = theme.dimension.x[BULLET_BAR_TOKENS.trackHeight];
+  const markerHeight = theme.dimension.x[BULLET_BAR_TOKENS.markerHeight];
+  const markerWidth = theme.dimension.x[BULLET_BAR_TOKENS.markerWidth];
+  const trackRadius = theme.radius[BULLET_BAR_TOKENS.radius];
+  const trackY = (markerHeight - trackHeight) / 2;
+  const markerMax = Math.max(0, size.width - markerWidth);
+  const tickX = Math.max(0, Math.min(markerMax, size.width / 2 - markerWidth / 2));
+  const markerX = useDerivedValue(
+    () => clamp((size.width * clamped) / 100 * progress.value, 0, markerMax),
+    [size.width, clamped, markerMax],
+  );
 
   return (
-    <VStack gap="x2">
-      <Box accessibilityRole="image" height={210} onLayout={onLayout} width="full">
-        <Canvas style={{ width: '100%', height: '100%' }}>
-          {size.width > 0 ? (
-            <>
-              <RoundedRect x={0} y={0} width={size.width} height={size.height} r={12} color={resolveColor(theme, 'bg.neutralWeak')} />
-              <Path path={buildPolylinePath([{ x: size.width / 2, y: 12 }, { x: size.width / 2, y: size.height - 12 }])} color={gridColor} style="stroke" strokeWidth={1} />
-              <Path path={buildPolylinePath([{ x: 12, y: size.height / 2 }, { x: size.width - 12, y: size.height / 2 }])} color={gridColor} style="stroke" strokeWidth={1} />
-              {RESPONSE_PATTERN_POINTS.map((point) => (
-                <Circle
-                  key={point.id}
-                  cx={point.x * size.width}
-                  cy={point.y * size.height}
-                  r={4}
-                  color={pointColor}
-                />
-              ))}
-              <Circle cx={0.68 * size.width} cy={0.28 * size.height} r={activeRadius} color={brandColor} />
-            </>
-          ) : null}
-        </Canvas>
-      </Box>
-      <Text align="center" color="fg.brand" textStyle="t4Bold">
-        통찰형 직관 결정가
-      </Text>
+    <Box
+      accessibilityRole="progressbar"
+      accessibilityValue={{ min: 0, max: 100, now: clamped }}
+      flex={1}
+      height={markerHeight}
+      onLayout={onLayout}
+      width="full"
+    >
+      <Canvas style={{ width: '100%', height: '100%' }}>
+        {size.width > 0 ? (
+          <>
+            <RoundedRect
+              x={0}
+              y={trackY}
+              width={size.width}
+              height={trackHeight}
+              r={trackRadius}
+              color={trackColor}
+            />
+            <Rect x={tickX} y={0} width={markerWidth} height={markerHeight} color={tickColor} />
+            <Rect x={markerX} y={0} width={markerWidth} height={markerHeight} color={markerColor} />
+          </>
+        ) : null}
+      </Canvas>
+    </Box>
+  );
+}
+
+export function ResponsePatternRows({ scales }: { scales: ReportResponsePatternScale[] }) {
+  return (
+    <VStack gap="x4">
+      {scales.map((scale) => (
+        <VStack key={scale.key} gap="x1">
+          <HStack align="center" gap="x2">
+            <Box width="x14">
+              <Text color="fg.neutralSubtle" textStyle="t1Regular" maxLines={1}>
+                {scale.left}
+              </Text>
+            </Box>
+            <PatternTrack value={scale.value} />
+            <Box width="x14">
+              <Text align="right" color="fg.neutralSubtle" textStyle="t1Regular" maxLines={1}>
+                {scale.right}
+              </Text>
+            </Box>
+          </HStack>
+          {/* Interpretation slot: reserved for a future one-line reading. The
+              payload type carries no such field today, so nothing renders. */}
+        </VStack>
+      ))}
     </VStack>
   );
 }

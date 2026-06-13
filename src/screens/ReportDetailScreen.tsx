@@ -11,7 +11,7 @@ import { FeedbackReportBody } from '../components/interview/FeedbackReportBody';
 import { AnalysisStatusCard } from '../components/reports/AnalysisStatusCard';
 import { CompetencySection } from '../components/reports/CompetencySection';
 import { GamesSection } from '../components/reports/GamesSection';
-import { GrowthTrendChart, PercentileBar } from '../components/reports/ReportCharts';
+import { GrowthTrendChart, PercentileBar, ResponsePatternRows, StressResilienceChart } from '../components/reports/ReportCharts';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Icon } from '../components/ui/Icon';
@@ -40,6 +40,8 @@ import type {
   ReportCompetencyScore,
   ReportHighlights,
   ReportOverall,
+  ReportResilience,
+  ReportResponsePattern,
 } from '../domain/report';
 import type { MockExamRecord, ReportSectionKey } from '../domain/types';
 import type { ReportSectionStates } from '../data/server/useMockExamReport';
@@ -341,9 +343,9 @@ function ReportSectionBody({
     case 'interview':
       return <InterviewFeedbackSection mockExamId={record.id} report={report} state={states.interview} />;
     case 'resilience':
-      return <AnalysisStatusCard variant="pending" />;
+      return <ResilienceSection resilience={report?.resilience ?? null} state={states.resilience} onRetry={onRetryReport} />;
     case 'pattern':
-      return <AnalysisStatusCard variant="pending" />;
+      return <ResponsePatternSection pattern={report?.response_pattern ?? null} state={states.pattern} onRetry={onRetryReport} />;
     case 'peer':
       return <GrowthSection record={record} records={records} overall={report?.overall ?? null} />;
     case 'coach':
@@ -559,6 +561,76 @@ function CompetenciesSection({ competencies, state, onRetry }: CompetenciesSecti
     return <AnalysisStatusCard variant="pending" minHeight="x60" />;
   }
   return <CompetencySection competencies={competencies} />;
+}
+
+type ResilienceSectionProps = {
+  resilience: ReportResilience;
+  state: ReportSectionStates['resilience'];
+  onRetry: () => void;
+};
+
+function ResilienceSection({ resilience, state, onRetry }: ResilienceSectionProps) {
+  if (state === 'failed') {
+    return <AnalysisStatusCard variant="failed" minHeight="x60" onRetry={onRetry} />;
+  }
+  if (resilience == null || state !== 'ready') {
+    return <AnalysisStatusCard variant="pending" minHeight="x60" />;
+  }
+
+  const insights = resilience.insights.slice(0, 2);
+
+  return (
+    <VStack gap="x3">
+      <Card>
+        <VStack gap="x2">
+          <StressResilienceChart values={resilience.curve.map((point) => point.value)} />
+          <HStack justify="spaceBetween">
+            {resilience.curve.map((point, index) => (
+              <Text
+                key={`${point.game_id}-${index}`}
+                color="fg.neutralSubtle"
+                textStyle="t1Regular"
+                maxLines={1}
+              >
+                {gameNameFor(point.game_id)}
+              </Text>
+            ))}
+          </HStack>
+        </VStack>
+      </Card>
+      <Grid columns={2} gap="x2">
+        {insights.map((insight, index) => (
+          <InsightTile
+            key={`${insight.label}-${index}`}
+            label={insight.label}
+            title={insight.title}
+            description={insight.body}
+            tone={insight.tone === 'positive' ? 'positive' : 'warning'}
+          />
+        ))}
+      </Grid>
+    </VStack>
+  );
+}
+
+type ResponsePatternSectionProps = {
+  pattern: ReportResponsePattern;
+  state: ReportSectionStates['pattern'];
+  onRetry: () => void;
+};
+
+function ResponsePatternSection({ pattern, state, onRetry }: ResponsePatternSectionProps) {
+  if (state === 'failed') {
+    return <AnalysisStatusCard variant="failed" minHeight="x60" onRetry={onRetry} />;
+  }
+  if (pattern == null || pattern.scales.length === 0 || state !== 'ready') {
+    return <AnalysisStatusCard variant="pending" minHeight="x60" />;
+  }
+  return (
+    <Card>
+      <ResponsePatternRows scales={pattern.scales} />
+    </Card>
+  );
 }
 
 type HighlightsSectionProps = {
