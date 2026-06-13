@@ -5,11 +5,16 @@ import { List } from '../ui/List';
 import { AnalysisStatusChip } from './AnalysisStatusChip';
 
 function toShortDateLabel(isoDatetime: string) {
-  return new Intl.DateTimeFormat('ko-KR', {
+  const parts = new Intl.DateTimeFormat('ko-KR', {
     timeZone: 'Asia/Seoul',
     month: 'numeric',
     day: 'numeric',
-  }).format(new Date(isoDatetime));
+  }).formatToParts(new Date(isoDatetime));
+
+  const month = parts.find((part) => part.type === 'month')?.value;
+  const day = parts.find((part) => part.type === 'day')?.value;
+
+  return `${month}월 ${day}일`;
 }
 
 export function ResumeRow({ resume, onDelete }: { resume: ResumeRowData; onDelete: () => void }) {
