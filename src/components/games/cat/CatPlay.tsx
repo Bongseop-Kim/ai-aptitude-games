@@ -133,9 +133,9 @@ function ConfidenceFooter({ disabled, picked, onChoose }: ConfidenceFooterProps)
         </Text>
       </HStack>
       <Grid columns={8} gap="x1">
-        {catConfidenceLabels.map((label, index) => (
+        {catConfidenceLabels.map((_label, index) => (
           <ConfidenceButton
-            key={`confidence-${label}`}
+            key={`confidence-${index}`}
             disabled={disabled}
             index={index}
             selected={picked === index}

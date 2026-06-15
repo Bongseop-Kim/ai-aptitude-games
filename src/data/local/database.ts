@@ -1,7 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 export const LOCAL_DB_NAME = 'ai-aptitude-games.db';
-export const LOCAL_DB_SCHEMA_VERSION = 10;
+export const LOCAL_DB_SCHEMA_VERSION = 11;
 
 type SchemaVersionRow = {
   version: number;
@@ -183,6 +183,16 @@ const migrations: readonly { version: number; sql: string }[] = [
 
       ALTER TABLE interview_sessions ADD COLUMN resume_id TEXT;
       ALTER TABLE interview_sessions ADD COLUMN job_posting_id TEXT;
+    `,
+  },
+  {
+    version: 11,
+    sql: `
+      CREATE TABLE IF NOT EXISTS dev_mock_exam_reports (
+        mock_exam_id TEXT PRIMARY KEY NOT NULL,
+        report TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
     `,
   },
 ];

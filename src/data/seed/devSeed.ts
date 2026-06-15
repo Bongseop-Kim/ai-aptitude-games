@@ -11,9 +11,13 @@ import {
 import type { GameId } from '../../domain/types';
 import { gameContent } from '../gameContent';
 import { games } from '../games';
+import { GENERIC_QUESTION_BANK } from '../interview/genericQuestionBank';
 import { insertGameResult } from '../local/gameResults';
+import { insertInterviewAnswers, type InterviewAnswerInput } from '../local/interviewAnswers';
 import { insertInterviewSession } from '../local/interviewSessions';
 import { getMockExamResultCount, insertMockExamResult } from '../local/mockExamResults';
+import { insertDevReport } from '../local/devReports';
+import { buildDummyReport } from './buildDummyReport';
 
 const SEED_INTERVIEW_COMPANY = '리플로우';
 const SEED_INTERVIEW_ROLE = '프론트엔드 엔지니어';
@@ -22,6 +26,7 @@ export type DevSeedSummary = {
   gameResults: number;
   mockExams: number;
   interviews: number;
+  reports: number;
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -47,6 +52,19 @@ function formatSqliteUtc(date: Date) {
 
 function randomDateWithinPastDays(days: number) {
   return new Date(Date.now() - Math.random() * days * DAY_MS);
+}
+
+function buildSeedInterviewAnswerInputs(count: number): InterviewAnswerInput[] {
+  return GENERIC_QUESTION_BANK.it.slice(0, count).map((question) => ({
+    questionId: question.id,
+    questionText: question.text,
+    category: question.category,
+    questionSource: 'generic',
+    prepMs: 20 * 1000,
+    answerMs: randomInt(60, 90) * 1000,
+    retakeCount: 0,
+    mediaLocalUri: null,
+  }));
 }
 
 function weeklyMockExamDate(roundIndex: number) {
@@ -181,6 +199,7 @@ async function seedMockExamRound(
       },
       { id: interviewId, createdAt: interviewCompletedAt, mockExamId },
     );
+    await insertInterviewAnswers(db, userId, interviewId, buildSeedInterviewAnswerInputs(8));
     items.push({
       itemKey: 'interview',
       interviewSessionId: interviewId,
@@ -191,24 +210,34 @@ async function seedMockExamRound(
 
     const totalScore = items.reduce((sum, item) => sum + item.score, 0);
     const totalDurationMs = items.reduce((sum, item) => sum + item.durationMs, 0);
+    const examScore = Math.round(totalScore / items.length);
 
     await insertMockExamResult(
       db,
       userId,
       {
-        score: Math.round(totalScore / items.length),
+        score: examScore,
         durationMs: totalDurationMs,
         pro: options.pro,
       },
       { id: mockExamId, createdAt: interviewCompletedAt },
     );
     await insertSeedExamItems(db, userId, mockExamId, items);
+
+    const perGameScores: Record<string, number> = {};
+    for (const item of items) {
+      if (item.itemKey !== 'interview') {
+        perGameScores[item.itemKey] = item.score;
+      }
+    }
+    const report = buildDummyReport({ score: examScore, perGameScores, interviewScore });
+    await insertDevReport(db, mockExamId, report);
   });
 }
 
 export async function seedDevData(db: SQLiteDatabase, userId: string): Promise<DevSeedSummary> {
   if (!__DEV__) {
-    return { gameResults: 0, mockExams: 0, interviews: 0 };
+    return { gameResults: 0, mockExams: 0, interviews: 0, reports: 0 };
   }
 
   let gameResults = 0;
@@ -247,22 +276,28 @@ export async function seedDevData(db: SQLiteDatabase, userId: string): Promise<D
   ];
 
   for (const [index, session] of interviewSessions.entries()) {
-    await insertInterviewSession(db, userId, session, {
+    const sessionId = await insertInterviewSession(db, userId, session, {
       createdAt: formatSqliteUtc(recentInterviewDate(index)),
     });
+    await insertInterviewAnswers(
+      db,
+      userId,
+      sessionId,
+      buildSeedInterviewAnswerInputs(session.questionCount),
+    );
   }
   const interviews = interviewSessions.length;
 
   const existingMockExamCount = await getMockExamResultCount(db, userId);
   if (existingMockExamCount > 0) {
     await seedMockExamRound(db, userId, { startedAt: new Date(), pro: true });
-    return { gameResults: gameResults + games.length, mockExams: 1, interviews: interviews + 1 };
+    return { gameResults: gameResults + games.length, mockExams: 1, interviews: interviews + 1, reports: 1 };
   }
 
   for (let round = 0; round < 6; round += 1) {
     await seedMockExamRound(db, userId, {
       startedAt: weeklyMockExamDate(round),
-      pro: round >= 4,
+      pro: true,
     });
   }
 
@@ -270,6 +305,7 @@ export async function seedDevData(db: SQLiteDatabase, userId: string): Promise<D
     gameResults: gameResults + games.length * 6,
     mockExams: 6,
     interviews: interviews + 6,
+    reports: 6,
   };
 }
 
@@ -283,8 +319,10 @@ export async function clearAllLocalData(db: SQLiteDatabase) {
   await db.withTransactionAsync(async () => {
     await db.runAsync('DELETE FROM game_result_rounds');
     await db.runAsync('DELETE FROM game_results');
+    await db.runAsync('DELETE FROM interview_answers');
     await db.runAsync('DELETE FROM interview_sessions');
     await db.runAsync('DELETE FROM mock_exam_result_items');
     await db.runAsync('DELETE FROM mock_exam_results');
+    await db.runAsync('DELETE FROM dev_mock_exam_reports');
   });
 }
