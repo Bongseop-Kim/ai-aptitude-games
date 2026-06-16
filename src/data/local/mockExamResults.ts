@@ -6,7 +6,6 @@ import type { MockExamRecord } from '../../domain/types';
 export type MockExamResultInput = {
   score: number;
   durationMs: number;
-  pro: boolean;
 };
 
 type MockExamResultOptions = {
@@ -18,7 +17,6 @@ type MockExamResultRow = {
   id: string;
   score: number;
   duration_ms: number;
-  pro: number;
   created_at: string;
 };
 
@@ -41,8 +39,8 @@ export async function insertMockExamResult(
   options: MockExamResultOptions = {},
 ) {
   const id = options.id ?? Crypto.randomUUID();
-  const columns = ['id', 'user_id', 'score', 'duration_ms', 'pro'];
-  const values = [id, userId, input.score, input.durationMs, input.pro ? 1 : 0];
+  const columns = ['id', 'user_id', 'score', 'duration_ms'];
+  const values = [id, userId, input.score, input.durationMs];
 
   if (options.createdAt != null) {
     columns.push('created_at');
@@ -57,7 +55,7 @@ export async function insertMockExamResult(
 
 export async function getMockExamRecords(db: SQLiteDatabase, userId: string) {
   const rows = await db.getAllAsync<MockExamResultRow>(
-    'SELECT id, score, duration_ms, pro, created_at FROM mock_exam_results WHERE user_id = ? ORDER BY created_at ASC',
+    'SELECT id, score, duration_ms, created_at FROM mock_exam_results WHERE user_id = ? ORDER BY created_at ASC',
     userId,
   );
 
@@ -72,7 +70,6 @@ export async function getMockExamRecords(db: SQLiteDatabase, userId: string) {
       delta: previousScore == null ? null : row.score - previousScore,
       duration: formatDuration(row.duration_ms),
       durationMs: row.duration_ms,
-      pro: row.pro === 1,
     };
   });
 

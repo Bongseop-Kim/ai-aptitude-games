@@ -15,7 +15,7 @@ import { List } from '../components/ui/List';
 import { Switch } from '../components/ui/Switch';
 import { games } from '../data/games';
 import { useGamesWithProgress } from '../data/local/useGameResults';
-import { useProfile } from '../data/server/useProfile';
+import { useIsPro, useProfile, useSetPro } from '../data/server/useProfile';
 import { useClearDevData, useSeedDevData } from '../data/seed/useSeedDevData';
 import { user } from '../data/user';
 import { HStack, VStack } from '../design-system/components/Stack';
@@ -278,6 +278,8 @@ function SwitchListItem({ leadingIcon, title, value, setValue }: SwitchListItemP
 function DevSeedSection() {
   const seedDevData = useSeedDevData();
   const clearDevData = useClearDevData();
+  const isPro = useIsPro();
+  const setPro = useSetPro();
   const [feedback, setFeedback] = useState<
     | { type: 'seed'; gameResults: number; mockExams: number; interviews: number; reports: number }
     | { type: 'clear' }
@@ -305,6 +307,18 @@ function DevSeedSection() {
     <>
       <SectionHead title="개발" />
       <Card gap="x3">
+        <HStack align="center" justify="spaceBetween">
+          <HStack gap="x1" align="center">
+            <Icon name="Zap" color="fg.brand" />
+            <Text textStyle="t4Medium">PRO 모드</Text>
+          </HStack>
+          <Switch
+            label="PRO 모드"
+            value={isPro}
+            disabled={setPro.isPending}
+            onPress={() => setPro.mutate(!isPro)}
+          />
+        </HStack>
         <Button
           label={seedDevData.isPending ? '넣는 중...' : '더미데이터 넣기'}
           variant="outline"

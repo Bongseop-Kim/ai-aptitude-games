@@ -7,7 +7,6 @@ type UnsyncedMockExamResultRow = {
   user_id: string;
   score: number;
   duration_ms: number;
-  pro: number;
   created_at: string;
 };
 
@@ -33,7 +32,7 @@ export async function pushUnsyncedMockExamResults(db: SQLiteDatabase, userId: st
 
   try {
     const rows = await db.getAllAsync<UnsyncedMockExamResultRow>(
-      'SELECT id, user_id, score, duration_ms, pro, created_at FROM mock_exam_results WHERE synced = 0 AND user_id = ?',
+      'SELECT id, user_id, score, duration_ms, created_at FROM mock_exam_results WHERE synced = 0 AND user_id = ?',
       userId,
     );
     if (rows.length === 0) {
@@ -45,7 +44,6 @@ export async function pushUnsyncedMockExamResults(db: SQLiteDatabase, userId: st
       user_id: row.user_id,
       score: row.score,
       duration_ms: row.duration_ms,
-      pro: row.pro === 1,
       created_at: toIsoUtc(row.created_at),
     }));
 

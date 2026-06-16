@@ -63,7 +63,6 @@ export type MockExamRecord = {
   delta: number | null;
   duration: string;
   durationMs: number;
-  pro: boolean;
 };
 
 export type InterviewSessionRecord = {

@@ -160,7 +160,7 @@ async function insertSeedExamItems(
 async function seedMockExamRound(
   db: SQLiteDatabase,
   userId: string,
-  options: { startedAt: Date; pro: boolean },
+  options: { startedAt: Date },
 ) {
   await db.withTransactionAsync(async () => {
     const mockExamId = Crypto.randomUUID();
@@ -218,7 +218,6 @@ async function seedMockExamRound(
       {
         score: examScore,
         durationMs: totalDurationMs,
-        pro: options.pro,
       },
       { id: mockExamId, createdAt: interviewCompletedAt },
     );
@@ -290,14 +289,13 @@ export async function seedDevData(db: SQLiteDatabase, userId: string): Promise<D
 
   const existingMockExamCount = await getMockExamResultCount(db, userId);
   if (existingMockExamCount > 0) {
-    await seedMockExamRound(db, userId, { startedAt: new Date(), pro: true });
+    await seedMockExamRound(db, userId, { startedAt: new Date() });
     return { gameResults: gameResults + games.length, mockExams: 1, interviews: interviews + 1, reports: 1 };
   }
 
   for (let round = 0; round < 6; round += 1) {
     await seedMockExamRound(db, userId, {
       startedAt: weeklyMockExamDate(round),
-      pro: true,
     });
   }
 

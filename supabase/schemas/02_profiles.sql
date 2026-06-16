@@ -16,6 +16,7 @@ create table public.profiles (
   field          text        check (field in ('it', 'biz', 'mkt', 'design', 'fin', 'etc')),
   daily_minutes  integer     check (daily_minutes > 0),
   notify_enabled boolean     not null default true,
+  pro            boolean     not null default false,
   onboarded_at   timestamptz,
   created_at     timestamptz not null default now(),
   updated_at     timestamptz not null default now()

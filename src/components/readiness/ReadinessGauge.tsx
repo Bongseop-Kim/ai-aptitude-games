@@ -14,6 +14,7 @@ export type ReadinessGaugeProps = {
   score: number;
   size?: TokenLength;
   strokeWidth?: number;
+  unit?: 'degree' | 'point' | 'none';
 };
 
 function clampScore(score: number) {
@@ -22,8 +23,9 @@ function clampScore(score: number) {
 
 const defaultGaugeSize: TokenLength = 'x29';
 
-export function ReadinessGauge({ score, size = defaultGaugeSize, strokeWidth = 12 }: ReadinessGaugeProps) {
+export function ReadinessGauge({ score, size = defaultGaugeSize, strokeWidth, unit = 'degree' }: ReadinessGaugeProps) {
   const { theme } = useDesignSystemTheme();
+  const resolvedStrokeWidth = strokeWidth ?? theme.dimension.x.x3;
   const resolvedSize = resolveLength(theme, size);
   const numericSize = typeof resolvedSize === 'number' ? resolvedSize : theme.dimension.x.x29;
   const isFocused = useIsFocused();
@@ -33,14 +35,18 @@ export function ReadinessGauge({ score, size = defaultGaugeSize, strokeWidth = 1
   const trackColor = resolveColor(theme, colors.bg);
   const progressColor = resolveColor(theme, colors.text);
   const progress = useSharedValue(0);
-  const inset = strokeWidth / 2;
+  const inset = resolvedStrokeWidth / 2;
   const path = Skia.PathBuilder.Make()
     .addArc(
-      { x: inset, y: inset, width: numericSize - strokeWidth, height: numericSize - strokeWidth },
+      { x: inset, y: inset, width: numericSize - resolvedStrokeWidth, height: numericSize - resolvedStrokeWidth },
       -90,
       359.99,
     )
     .detach();
+  const showLabel = unit !== 'none';
+  const displayScore = unit === 'degree' && !isCompact ? `${score}°` : score;
+  const label = unit === 'degree' && !isCompact ? '준비도' : '점';
+  const accessibilityUnit = unit === 'degree' ? '도' : '점';
 
   useEffect(() => {
     if (!isFocused) return;
@@ -53,7 +59,7 @@ export function ReadinessGauge({ score, size = defaultGaugeSize, strokeWidth = 1
 
   return (
     <Box
-      accessibilityLabel={`준비도 ${score}도`}
+      accessibilityLabel={`준비도 ${score}${accessibilityUnit}`}
       accessibilityRole="progressbar"
       accessibilityValue={{ min: 0, max: 100, now: clamped }}
       height={numericSize}
@@ -61,11 +67,11 @@ export function ReadinessGauge({ score, size = defaultGaugeSize, strokeWidth = 1
       width={numericSize}
     >
       <Canvas style={{ width: numericSize, height: numericSize }}>
-        <Path path={path} style="stroke" strokeWidth={strokeWidth} color={trackColor} />
+        <Path path={path} style="stroke" strokeWidth={resolvedStrokeWidth} color={trackColor} />
         <Path
           path={path}
           style="stroke"
-          strokeWidth={strokeWidth}
+          strokeWidth={resolvedStrokeWidth}
           strokeCap="round"
           color={progressColor}
           start={0}
@@ -75,11 +81,13 @@ export function ReadinessGauge({ score, size = defaultGaugeSize, strokeWidth = 1
       <Float placement="middle-center">
         <VStack align="center" gap="x0_5">
           <Text color={colors.text} textStyle={isCompact ? 't5Bold' : 't10Bold'} maxLines={1}>
-            {isCompact ? score : `${score}°`}
+            {displayScore}
           </Text>
-          <Text color="fg.neutralMuted" textStyle="t2Medium" maxLines={1}>
-            {isCompact ? '점' : '준비도'}
-          </Text>
+          {showLabel ? (
+            <Text color="fg.neutralMuted" textStyle="t2Medium" maxLines={1}>
+              {label}
+            </Text>
+          ) : null}
         </VStack>
       </Float>
     </Box>

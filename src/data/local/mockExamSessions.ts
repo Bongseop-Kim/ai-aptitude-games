@@ -174,7 +174,6 @@ export async function finalizeMockExamSessionIfComplete(
     await insertMockExamResult(db, userId, {
       score: Math.round(totalScore / MOCK_EXAM_ITEM_COUNT),
       durationMs: totalDurationMs,
-      pro: false,
     }, { id: sessionId });
     await db.runAsync(
       `INSERT INTO mock_exam_result_items (

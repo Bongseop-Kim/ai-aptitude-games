@@ -4,6 +4,8 @@ import { Box } from '../../design-system/components/Box';
 import type { ColorToken } from '../../design-system/components/style-props';
 import { Icon, type IconName } from './Icon';
 
+const ICON_BUTTON_HIT_SLOP = 6;
+
 export type IconButtonProps = Omit<PressableProps, 'children'> & {
   name: IconName;
   label: string;
@@ -17,6 +19,7 @@ export function IconButton({
   variant = 'ghost',
   color = 'fg.neutralMuted',
   disabled,
+  hitSlop,
   ...props
 }: IconButtonProps) {
   const isOutline = variant === 'outline';
@@ -28,6 +31,7 @@ export function IconButton({
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled }}
       disabled={disabled}
+      hitSlop={hitSlop ?? ICON_BUTTON_HIT_SLOP}
       {...props}
     >
       <Box
