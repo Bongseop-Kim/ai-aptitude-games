@@ -40,7 +40,6 @@ export function InterviewScreen() {
       }
     >
       <JobFamilyCard />
-      <StartInterviewCard />
       <Button
         label="면접 시작하기"
         variant="solid"
@@ -169,24 +168,6 @@ function InterviewPrepSection() {
         </List.Root>
       </Card>
     </VStack>
-  );
-}
-
-function StartInterviewCard() {
-  return (
-    <Card p="x3">
-      <HStack align="center" gap="x3">
-        <IconTile icon="Video" bg="bg.brandWeak" color="fg.brand" />
-        <VStack flex={1} gap="x0_5">
-          <Text textStyle="t5Bold" maxLines={1}>
-            이 직무로 면접 시작
-          </Text>
-          <Text color="fg.neutralMuted" textStyle="t2Regular" maxLines={1}>
-            능력단위 기반 맞춤 질문 8개 · 8만 건 분석
-          </Text>
-        </VStack>
-      </HStack>
-    </Card>
   );
 }
 
