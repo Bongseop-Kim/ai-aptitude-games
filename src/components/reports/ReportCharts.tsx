@@ -224,7 +224,7 @@ function PatternTrack({ value }: { value: number }) {
   const clamped = clamp(value);
   const trackColor = resolveColor(theme, 'bg.neutralWeak');
   const tickColor = resolveColor(theme, 'stroke.neutralWeak');
-  const markerColor = resolveColor(theme, 'fg.brand');
+  const markerColor = resolveColor(theme, 'fg.neutral');
   const trackHeight = theme.dimension.x[BULLET_BAR_TOKENS.trackHeight];
   const markerHeight = theme.dimension.x[BULLET_BAR_TOKENS.markerHeight];
   const markerWidth = theme.dimension.x[BULLET_BAR_TOKENS.markerWidth];
@@ -364,8 +364,10 @@ export function GrowthTrendChart({ scores }: GrowthTrendChartProps) {
     y: 12 + (size.height - 28) * (1 - clamp(score) / 100),
   }));
   const path = buildPolylinePath(points);
+  const firstScore = scores.length > 0 ? clamp(scores[0]) : null;
+  const lastScore = scores.length > 0 ? clamp(scores[scores.length - 1]) : null;
   const chartSummary = scores.length > 0
-    ? `성장 추이. 첫 회차 ${scores[0]}점, 최근 ${scores[scores.length - 1]}점.`
+    ? `성장 추이. 첫 회차 ${firstScore}점, 최근 ${lastScore}점.`
     : '성장 추이를 준비하고 있어요.';
 
   return (

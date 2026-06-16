@@ -34,5 +34,9 @@ export async function getDevReport(
   if (row == null) {
     return null;
   }
-  return JSON.parse(row.report) as MockExamReport;
+  try {
+    return JSON.parse(row.report) as MockExamReport;
+  } catch {
+    return null;
+  }
 }

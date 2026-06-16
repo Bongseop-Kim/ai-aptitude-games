@@ -248,8 +248,8 @@ function AllGamesSection() {
   return (
     <VStack gap="x2">
       <SectionHead title="모든 게임" actionLabel="진행도순" />
-      <Card overflow="hidden" p={0}>
-        <Grid columns={columns} gap={0}>
+      <Card overflow="hidden" p="x0">
+        <Grid columns={columns} gap="x0">
           {gamesWithProgress.map((game, index) => (
             <GameTile
               key={game.id}

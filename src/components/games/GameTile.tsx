@@ -70,9 +70,9 @@ export function GameTile({
     >
       {variant === 'sectionItem' ? (
         <Box
-          borderBottomWidth={showBottomDivider ? 'thin' : 0}
+          {...(showBottomDivider ? { borderBottomWidth: 'thin' as const } : {})}
           borderColor="stroke.neutralSubtle"
-          borderRightWidth={showRightDivider ? 'thin' : 0}
+          {...(showRightDivider ? { borderRightWidth: 'thin' as const } : {})}
           gap="x3"
           p="x3"
         >

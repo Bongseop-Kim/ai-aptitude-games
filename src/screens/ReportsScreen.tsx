@@ -58,15 +58,23 @@ function RecordListItemFrame({
   return (
     <Box
       bg="bg.layerDefault"
-      borderBottomLeftRadius={isLast ? 'r4' : 0}
-      borderBottomRightRadius={isLast ? 'r4' : 0}
-      borderBottomWidth={isLast ? 'thin' : 0}
       borderColor="stroke.neutralSubtle"
       borderLeftWidth="thin"
       borderRightWidth="thin"
-      borderTopLeftRadius={isFirst ? 'r4' : 0}
-      borderTopRightRadius={isFirst ? 'r4' : 0}
-      borderTopWidth={isFirst ? 'thin' : 0}
+      {...(isLast
+        ? {
+            borderBottomLeftRadius: 'r4' as const,
+            borderBottomRightRadius: 'r4' as const,
+            borderBottomWidth: 'thin' as const,
+          }
+        : {})}
+      {...(isFirst
+        ? {
+            borderTopLeftRadius: 'r4' as const,
+            borderTopRightRadius: 'r4' as const,
+            borderTopWidth: 'thin' as const,
+          }
+        : {})}
       overflow="hidden"
       px="spacingX.globalGutter"
       py="x1"

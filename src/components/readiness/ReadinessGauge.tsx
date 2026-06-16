@@ -46,7 +46,7 @@ export function ReadinessGauge({ score, size = defaultGaugeSize, strokeWidth, un
     )
     .detach();
   const showLabel = unit !== 'none';
-  const displayScore = unit === 'degree' && !isCompact ? `${score}°` : score;
+  const displayScore = unit === 'degree' && !isCompact ? `${clamped}°` : clamped;
   const label = unit === 'degree' && !isCompact ? '준비도' : '점';
   const accessibilityUnit = unit === 'degree' ? '도' : '점';
 
@@ -61,7 +61,7 @@ export function ReadinessGauge({ score, size = defaultGaugeSize, strokeWidth, un
 
   return (
     <Box
-      accessibilityLabel={`준비도 ${score}${accessibilityUnit}`}
+      accessibilityLabel={`준비도 ${clamped}${accessibilityUnit}`}
       accessibilityRole="progressbar"
       accessibilityValue={{ min: 0, max: 100, now: clamped }}
       height={numericSize}

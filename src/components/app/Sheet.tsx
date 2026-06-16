@@ -13,6 +13,8 @@ export type SheetProps = {
   children: ReactNode;
 };
 
+const SHEET_MAX_HEIGHT_RATIO = 0.8;
+
 export function Sheet({ visible, title, subtitle, onClose, children }: SheetProps) {
   const { height } = useWindowDimensions();
 
@@ -23,7 +25,7 @@ export function Sheet({ visible, title, subtitle, onClose, children }: SheetProp
           so the sheet fits short content and caps at maxHeight (scrolling) when
           content is taller — e.g. the job-posting catalog list. */}
       <RNHostView matchContents>
-        <ScrollView nestedScrollEnabled style={{ maxHeight: height * 0.8 }}>
+        <ScrollView nestedScrollEnabled style={{ maxHeight: height * SHEET_MAX_HEIGHT_RATIO }}>
           <VStack gap="x3" pb="x8">
             <VStack gap="x0_5">
               <Text textStyle="t7Bold">{title}</Text>
