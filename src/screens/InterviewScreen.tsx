@@ -8,7 +8,7 @@ import { JobFamilySheet } from '../components/profile/JobFamilySheet';
 import { ReadinessGauge } from '../components/readiness/ReadinessGauge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { Icon, type IconName } from '../components/ui/Icon';
+import { Icon } from '../components/ui/Icon';
 import { IconButton } from '../components/ui/IconButton';
 import { List } from '../components/ui/List';
 import { Skeleton } from '../components/ui/Skeleton';
@@ -92,7 +92,7 @@ function JobFamilyCard() {
   return (
     <Card gap="x3" p="x4">
       <HStack align="center" gap="x3">
-        <IconTile icon="Target" bg="bg.layerDefault" color="fg.brand" />
+        <Icon name="Target" color="fg.brand" size="large" />
         <VStack flex={1} gap="x0_5">
           <Text color="fg.neutralMuted" textStyle="t2Medium" maxLines={1}>
             목표 직무
@@ -230,13 +230,5 @@ function EmptyInterviewSessions() {
         </Text>
       </VStack>
     </Card>
-  );
-}
-
-function IconTile({ icon, bg, color }: { icon: IconName; bg: 'bg.brandWeak' | 'bg.layerDefault'; color: 'fg.brand' }) {
-  return (
-    <Box alignItems="center" bg={bg} borderRadius="r3" height="x12" justifyContent="center" width="x12">
-      <Icon name={icon} color={color} size="large" />
-    </Box>
   );
 }
