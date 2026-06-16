@@ -7,7 +7,8 @@ import { VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
 import { resolveColor, resolveLength, type TokenLength } from '../../design-system/components/style-props';
 import { useDesignSystemTheme } from '../../design-system/provider';
-import { readinessTempColors } from '../../domain/readiness';
+import { readinessTone } from '../../domain/readiness';
+import { toneColors } from '../../domain/tone';
 import { Canvas, Easing, Path, Skia, useSharedValue, withTiming } from '../../lib/native-motion';
 
 export type ReadinessGaugeProps = {
@@ -29,11 +30,12 @@ export function ReadinessGauge({ score, size = defaultGaugeSize, strokeWidth, un
   const resolvedSize = resolveLength(theme, size);
   const numericSize = typeof resolvedSize === 'number' ? resolvedSize : theme.dimension.x.x29;
   const isFocused = useIsFocused();
-  const colors = readinessTempColors(score);
+  const tone = readinessTone(score);
+  const toneColor = toneColors[tone].fg;
   const clamped = clampScore(score);
   const isCompact = numericSize < 80;
-  const trackColor = resolveColor(theme, colors.bg);
-  const progressColor = resolveColor(theme, colors.text);
+  const trackColor = resolveColor(theme, 'bg.neutralWeak');
+  const progressColor = resolveColor(theme, toneColor);
   const progress = useSharedValue(0);
   const inset = resolvedStrokeWidth / 2;
   const path = Skia.PathBuilder.Make()
@@ -80,7 +82,7 @@ export function ReadinessGauge({ score, size = defaultGaugeSize, strokeWidth, un
       </Canvas>
       <Float placement="middle-center">
         <VStack align="center" gap="x0_5">
-          <Text color={colors.text} textStyle={isCompact ? 't5Bold' : 't10Bold'} maxLines={1}>
+          <Text color={toneColor} textStyle={isCompact ? 't5Bold' : 't10Bold'} maxLines={1}>
             {displayScore}
           </Text>
           {showLabel ? (

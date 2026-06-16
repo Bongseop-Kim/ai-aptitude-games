@@ -39,7 +39,7 @@ export function FeedbackReportBody({
             <Text color="fg.neutralSubtle" textStyle="t2Regular">
               {session.company} · {session.role}
             </Text>
-            <Text textStyle="t6Bold">
+            <Text textStyle="t5Bold">
               질문 {session.questionCount}개 · 총 답변 {formatAnswerMinutes(session.durationMs)}
             </Text>
             <Text color="fg.neutralMuted" textStyle="t2Regular">

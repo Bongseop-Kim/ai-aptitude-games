@@ -82,12 +82,12 @@ export function GamesSection({ record, previousRecord }: GamesSectionProps) {
                         <Text textStyle="t3Bold" maxLines={2}>
                           {game.name}
                         </Text>
-                        <Text color="fg.neutralSubtle" textStyle="t1Regular" maxLines={2}>
+                        <Text color="fg.neutralSubtle" textStyle="t2Regular" lineHeight="t3" maxLines={2}>
                           {game.skill}
                         </Text>
                       </VStack>
-                      <ProgressBar value={result?.score ?? 0} tone={game.tone} layout="inline" />
-                      <Text align="right" textStyle="t4Bold">
+                      <ProgressBar value={result?.score ?? 0} layout="inline" />
+                      <Text align="right" textStyle="t5Bold">
                         {result?.score ?? '-'}
                       </Text>
                       <HStack align="center" justify="flexEnd" width="x10">

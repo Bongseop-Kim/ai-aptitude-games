@@ -35,9 +35,8 @@ export function ReportPaywall({ onUpgrade }: ReportPaywallProps) {
               <VStack align="center" gap="x3">
                 <Box
                   alignItems="center"
-                  bg="bg.layerFloating"
+                  bg="bg.brandWeak"
                   borderRadius="full"
-                  boxShadow="surface"
                   height="x14"
                   justifyContent="center"
                   width="x14"

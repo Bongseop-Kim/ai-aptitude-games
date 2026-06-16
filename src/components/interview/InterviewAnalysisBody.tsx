@@ -45,7 +45,7 @@ export function InterviewAnalysisBody({ interview }: InterviewAnalysisBodyProps)
                 >
                   <Text
                     color={active ? 'fg.brand' : 'fg.neutralSubtle'}
-                    textStyle={active ? 't2Medium' : 't2Regular'}
+                    textStyle={active ? 't2Bold' : 't2Regular'}
                   >
                     {step}
                   </Text>
@@ -65,10 +65,10 @@ export function InterviewAnalysisBody({ interview }: InterviewAnalysisBodyProps)
               return (
                 <Fragment key={axis.key}>
                   {index > 0 ? <List.Divider /> : null}
-                  <HStack align="center" gap="x3" py="x2">
+                  <HStack align="center" gap="x3" py="x3">
                     <VStack flex={0.55} gap="x0_5" minWidth="x16">
                       <Text textStyle="t4Bold">{axis.name}</Text>
-                      <Text color="fg.neutralSubtle" textStyle="t1Regular" maxLines={2}>
+                      <Text color="fg.neutralSubtle" textStyle="t2Regular" lineHeight="t3" maxLines={2}>
                         {axis.sub}
                       </Text>
                     </VStack>
@@ -107,7 +107,7 @@ export function InterviewAnalysisBody({ interview }: InterviewAnalysisBodyProps)
               {interview.delivery_details.map((detail, index) => (
                 <Fragment key={index}>
                   {index > 0 ? <List.Divider /> : null}
-                  <HStack align="center" gap="x3" py="x2">
+                  <HStack align="center" gap="x3" py="x3">
                     <Box flex={0.45} minWidth="x16">
                       <Text textStyle="t3Medium" maxLines={2}>
                         {detail.label}
@@ -133,7 +133,7 @@ export function InterviewAnalysisBody({ interview }: InterviewAnalysisBodyProps)
               {interview.ncs_units.map((unit, index) => (
                 <Fragment key={index}>
                   {index > 0 ? <List.Divider /> : null}
-                  <HStack align="center" gap="x3" py="x2">
+                  <HStack align="center" gap="x3" py="x3">
                     <Box flex={0.45} minWidth="x16">
                       <Text textStyle="t3Medium" maxLines={2}>
                         {unit.label}

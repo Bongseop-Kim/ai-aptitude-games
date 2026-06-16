@@ -49,10 +49,10 @@ export function CompetencySection({ competencies }: CompetencySectionProps) {
 
 function CompetencyBulletRow({ competency }: { competency: ReportCompetencyScore }) {
   return (
-    <HStack align="center" gap="x3" py="x2">
+    <HStack align="center" gap="x3" py="x3">
       <VStack flex={0.55} gap="x0_5" minWidth="x16">
         <Text textStyle="t4Bold">{COMPETENCY_LABELS[competency.key]}</Text>
-        <Text color="fg.neutralSubtle" textStyle="t1Regular" maxLines={2}>
+        <Text color="fg.neutralSubtle" textStyle="t2Regular" lineHeight="t3" maxLines={2}>
           {competency.note}
         </Text>
       </VStack>

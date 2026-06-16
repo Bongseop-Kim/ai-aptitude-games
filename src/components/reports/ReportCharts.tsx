@@ -13,14 +13,12 @@ import {
   Circle,
   Easing,
   Group,
-  LinearGradient,
   Path,
   Rect,
   RoundedRect,
   Skia,
   useDerivedValue,
   useSharedValue,
-  vec,
   withTiming,
 } from '../../lib/native-motion';
 
@@ -31,7 +29,7 @@ const EMPTY_SIZE = { width: 0, height: 0 };
 const BULLET_BAR_TOKENS = {
   trackHeight: 'x1_5',
   markerHeight: 'x3',
-  markerWidth: 'x0_5',
+  markerWidth: 'x1',
   radius: 'r1_5',
 } as const;
 const CHART_TOKENS = {
@@ -40,7 +38,6 @@ const CHART_TOKENS = {
   percentileHeight: 'x12',
   cardRadius: 'r3',
   trackRadius: 'r1_5',
-  markerWidth: 'x0_5',
   lineStrokeWidth: 'x0_5',
   pointStrokeWidth: 'x0_5',
 } as const;
@@ -227,7 +224,7 @@ function PatternTrack({ value }: { value: number }) {
   const clamped = clamp(value);
   const trackColor = resolveColor(theme, 'bg.neutralWeak');
   const tickColor = resolveColor(theme, 'stroke.neutralWeak');
-  const markerColor = resolveColor(theme, 'fg.neutral');
+  const markerColor = resolveColor(theme, 'fg.brand');
   const trackHeight = theme.dimension.x[BULLET_BAR_TOKENS.trackHeight];
   const markerHeight = theme.dimension.x[BULLET_BAR_TOKENS.markerHeight];
   const markerWidth = theme.dimension.x[BULLET_BAR_TOKENS.markerWidth];
@@ -304,9 +301,13 @@ export function PercentileBar({ percentile }: PercentileBarProps) {
   const { size, onLayout } = useMeasuredChart();
   const progress = useFocusProgress(450);
   const clampedPercentile = clamp(percentile);
-  const markerWidth = theme.dimension.x[CHART_TOKENS.markerWidth];
+  const markerWidth = theme.dimension.x.x1;
   const trackRadius = theme.radius[CHART_TOKENS.trackRadius];
   const percentileHeight = theme.dimension.x[CHART_TOKENS.percentileHeight];
+  const trackThickness = theme.dimension.x.x6;
+  const trackY = (percentileHeight - trackThickness) / 2;
+  const markerThickness = theme.dimension.x.x10;
+  const markerY = (percentileHeight - markerThickness) / 2;
   const markerX = useDerivedValue(() => {
     const targetX = size.width * ((100 - clampedPercentile) / 100) * progress.value;
     return clamp(targetX, 0, Math.max(0, size.width - markerWidth));
@@ -318,19 +319,16 @@ export function PercentileBar({ percentile }: PercentileBarProps) {
         <Canvas style={{ width: '100%', height: '100%' }}>
           {size.width > 0 ? (
             <>
-              <RoundedRect x={0} y={18} width={size.width} height={24} r={trackRadius} color={resolveColor(theme, 'bg.brandWeak')}>
-                <LinearGradient
-                  start={vec(0, 18)}
-                  end={vec(size.width, 18)}
-                  colors={[
-                    resolveColor(theme, 'bg.brandWeak') ?? 'transparent',
-                    resolveColor(theme, 'palette.yellow100') ?? 'transparent',
-                    resolveColor(theme, 'mannerTemp.l4Bg') ?? 'transparent',
-                  ]}
-                />
-              </RoundedRect>
+              <RoundedRect
+                x={0}
+                y={trackY}
+                width={size.width}
+                height={trackThickness}
+                r={trackRadius}
+                color={resolveColor(theme, 'bg.neutralWeak')}
+              />
               <Group>
-                <Rect x={markerX} y={10} width={markerWidth} height={40} color={resolveColor(theme, 'fg.neutral')} />
+                <Rect x={markerX} y={markerY} width={markerWidth} height={markerThickness} color={resolveColor(theme, 'fg.brand')} />
               </Group>
             </>
           ) : null}
@@ -358,14 +356,12 @@ export function GrowthTrendChart({ scores }: GrowthTrendChartProps) {
   const chartHeight = theme.dimension.x[CHART_TOKENS.growthHeight];
   const lineStrokeWidth = theme.dimension.x[CHART_TOKENS.lineStrokeWidth];
   const pointStrokeWidth = theme.dimension.x[CHART_TOKENS.pointStrokeWidth];
-  const min = Math.min(...scores, 55);
-  const max = Math.max(...scores, 85);
-  const range = max - min || 1;
   const points = scores.map((score, index) => ({
     // Skia path geometry keeps small internal insets so points and strokes do
-    // not clip at chart edges.
+    // not clip at chart edges. A fixed 0–100 scale matches StressResilienceChart
+    // and keeps growth comparable across reports instead of exaggerating small deltas.
     x: scores.length === 1 ? size.width / 2 : 14 + ((size.width - 28) * index) / (scores.length - 1),
-    y: 12 + (size.height - 28) * (1 - (score - min) / range),
+    y: 12 + (size.height - 28) * (1 - clamp(score) / 100),
   }));
   const path = buildPolylinePath(points);
   const chartSummary = scores.length > 0

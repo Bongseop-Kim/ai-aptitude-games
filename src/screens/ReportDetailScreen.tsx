@@ -241,7 +241,7 @@ function resolveBottomCta(report: MockExamReport | null, results: MockExamGameRe
 
 function ReportDetailSkeleton() {
   return (
-    <VStack gap="x4">
+    <VStack gap="x8">
       <VStack gap="x1">
         <Skeleton height="x3" width="x23" />
         <Skeleton height="x8" width="x60" maxWidth="full" />
@@ -390,7 +390,7 @@ function CoverSection({ record, records, overall, competencies, state }: CoverSe
       <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" p="spacingX.globalGutter">
         <HStack align="center" gap="x4">
           <ReadinessGauge score={score} size="x27_5" unit="none" />
-          <VStack flex={1} gap="x1">
+          <VStack flex={1} gap="x2">
             <Text color="fg.neutralMuted" textStyle="t2Regular">
               종합 준비도
             </Text>
@@ -480,11 +480,17 @@ type InsightTileProps = {
 };
 
 function InsightTile({ label, title, description, tone }: InsightTileProps) {
-  const iconName = tone === 'positive' ? 'TrendingUp' : 'CircleDot';
-  const toneColor = tone === 'positive' ? 'fg.positive' : 'mannerTemp.l4Text';
+  const isPositive = tone === 'positive';
+  const iconName = isPositive ? 'TrendingUp' : 'CircleDot';
+  const toneColor = isPositive ? 'fg.positive' : 'mannerTemp.l4Text';
 
   return (
-    <Card bg={tone === 'positive' ? 'palette.green100' : 'mannerTemp.l4Bg'} borderColor="stroke.neutralWeak" p="x3">
+    <Card
+      bg={isPositive ? 'bg.brandWeak' : 'mannerTemp.l4Bg'}
+      borderColor={isPositive ? 'stroke.brandWeak' : 'stroke.neutralWeak'}
+      borderRadius="r3"
+      p="x3"
+    >
       <VStack gap="x0_5">
         <HStack align="center" gap="x1">
           <Icon name={iconName} color={toneColor} size="small" />
@@ -495,7 +501,7 @@ function InsightTile({ label, title, description, tone }: InsightTileProps) {
         <Text color={toneColor} textStyle="t5Bold" maxLines={2}>
           {title}
         </Text>
-        <Text color="fg.neutralSubtle" textStyle="t1Regular" maxLines={2}>
+        <Text color="fg.neutralSubtle" textStyle="t2Regular" lineHeight="t3" maxLines={2}>
           {description}
         </Text>
       </VStack>
@@ -540,16 +546,13 @@ function ResilienceSection({ resilience, state, onRetry }: ResilienceSectionProp
       <Card p="spacingX.globalGutter">
         <VStack gap="x2">
           <StressResilienceChart values={resilience.curve.map((point) => point.value)} />
-          <HStack justify="spaceBetween">
+          <HStack>
             {resilience.curve.map((point, index) => (
-              <Text
-                key={`${point.game_id}-${index}`}
-                color="fg.neutralSubtle"
-                textStyle="t1Regular"
-                maxLines={1}
-              >
-                {gameNameFor(point.game_id)}
-              </Text>
+              <Box key={`${point.game_id}-${index}`} flex={1}>
+                <Text align="center" color="fg.neutralSubtle" textStyle="t1Regular" maxLines={1}>
+                  {gameNameFor(point.game_id)}
+                </Text>
+              </Box>
             ))}
           </HStack>
         </VStack>
@@ -606,7 +609,7 @@ function ServerHighlights({ highlights }: { highlights: ReportHighlights }) {
   const router = useRouter();
 
   return (
-    <VStack gap="x3">
+    <VStack gap="x4">
       <VStack gap="x2">
         <HStack align="center" gap="x1_5">
           <Icon name="TrendingUp" color="fg.positive" size="small" />
@@ -678,7 +681,7 @@ function LocalHighlights({ record }: { record: MockExamRecord }) {
   }
 
   return (
-    <VStack gap="x3">
+    <VStack gap="x4">
       <VStack gap="x2">
         <HStack align="center" gap="x1_5">
           <Icon name="TrendingUp" color="fg.positive" size="small" />
@@ -820,7 +823,7 @@ function GrowthSection({ record, records, overall }: GrowthSectionProps) {
     <VStack gap="x3">
       <Card p="spacingX.globalGutter">
         {scores.length >= 2 ? (
-          <>
+          <VStack gap="x2">
             <GrowthTrendChart scores={scores} />
             <HStack bg="bg.brandWeak" borderRadius="r3" gap="x2" px="x3" py="x2">
               <Icon name="TrendingUp" color="fg.brand" size="small" />
@@ -828,7 +831,7 @@ function GrowthSection({ record, records, overall }: GrowthSectionProps) {
                 첫 회차 대비 {formatScoreDelta(delta)}점 성장했어요
               </Text>
             </HStack>
-          </>
+          </VStack>
         ) : (
           <VStack align="center" justify="center" minHeight="x16">
             <Text align="center" color="fg.neutralMuted" textStyle="t3Regular">
@@ -873,7 +876,7 @@ function CoachSection({ coach, state, onRetry }: CoachSectionProps) {
   return (
     <VStack gap="x3">
       <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" p="spacingX.globalGutter">
-        <VStack gap="x1">
+        <VStack gap="x2">
           <Text textStyle="t5Bold">{coach.insight.title}</Text>
           <Text color="fg.neutralMuted" textStyle="t3Regular">
             {coach.insight.body}
