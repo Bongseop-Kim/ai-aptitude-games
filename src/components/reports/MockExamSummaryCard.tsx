@@ -17,7 +17,7 @@ export function MockExamSummaryCard({ records }: MockExamSummaryCardProps) {
   const scores = records.map((record) => record.score).reverse();
 
   return (
-    <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" gap="x1_5">
+    <Card gap="x1_5">
       <HStack align="center" gap="x1_5">
         <Text color="fg.brand" textStyle="t7Bold" maxLines={1}>
           {records.length}회차
@@ -38,7 +38,7 @@ export function MockExamSummaryCard({ records }: MockExamSummaryCardProps) {
 
 export function MockExamSummaryCardSkeleton() {
   return (
-    <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" gap="x1_5">
+    <Card gap="x1_5">
       <HStack align="center" gap="x1_5">
         <Skeleton height="x9" width="x16" />
         <Box flex={1}>

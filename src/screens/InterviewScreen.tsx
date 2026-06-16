@@ -90,7 +90,7 @@ function JobFamilyCard() {
   const label = jobFamilyLabel(profile?.field);
 
   return (
-    <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" gap="x3" p="x4">
+    <Card gap="x3" p="x4">
       <HStack align="center" gap="x3">
         <IconTile icon="Target" bg="bg.layerDefault" color="fg.brand" />
         <VStack flex={1} gap="x0_5">
