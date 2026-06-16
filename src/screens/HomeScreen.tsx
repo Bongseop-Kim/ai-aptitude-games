@@ -242,15 +242,26 @@ function AllGamesSection() {
   const router = useRouter();
   const gamesWithProgress = useGamesWithProgress();
   const openGame = (id: GameId) => router.push({ pathname: '/games/[id]', params: { id } } as never);
+  const columns = 3;
+  const lastRowStart = gamesWithProgress.length - (gamesWithProgress.length % columns || columns);
 
   return (
     <VStack gap="x2">
       <SectionHead title="모든 게임" actionLabel="진행도순" />
-      <Grid columns={3} gap="x3">
-        {gamesWithProgress.map((game) => (
-          <GameTile key={game.id} game={game} onPress={() => openGame(game.id)} />
-        ))}
-      </Grid>
+      <Card overflow="hidden" p={0}>
+        <Grid columns={columns} gap={0}>
+          {gamesWithProgress.map((game, index) => (
+            <GameTile
+              key={game.id}
+              game={game}
+              onPress={() => openGame(game.id)}
+              showBottomDivider={index < lastRowStart}
+              showRightDivider={(index + 1) % columns !== 0 && index < gamesWithProgress.length - 1}
+              variant="sectionItem"
+            />
+          ))}
+        </Grid>
+      </Card>
     </VStack>
   );
 }
