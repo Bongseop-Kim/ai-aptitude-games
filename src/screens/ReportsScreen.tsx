@@ -18,6 +18,7 @@ import { List } from '../components/ui/List';
 import { Tag } from '../components/ui/Tag';
 import { useMockExamRecords } from '../data/local/useMockExamResults';
 import { useActiveMockExamSession } from '../data/local/useMockExamSession';
+import { Box } from '../design-system/components/Box';
 import { HStack, VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
 import type { MockExamRecord } from '../domain/types';
@@ -37,6 +38,50 @@ const recordFilters: { value: RecordFilter; label: string }[] = [
 ];
 
 const mockExamRecordSkeletonKeys = ['first', 'second', 'third'] as const;
+
+function RecordListSeparator() {
+  return (
+    <Box
+      bg="bg.layerDefault"
+      borderColor="stroke.neutralSubtle"
+      borderLeftWidth="thin"
+      borderRightWidth="thin"
+      px="spacingX.globalGutter"
+    >
+      <List.Divider />
+    </Box>
+  );
+}
+
+function RecordListItemFrame({
+  children,
+  isFirst,
+  isLast,
+}: {
+  children: ReactNode;
+  isFirst: boolean;
+  isLast: boolean;
+}) {
+  return (
+    <Box
+      bg="bg.layerDefault"
+      borderBottomLeftRadius={isLast ? 'r4' : 0}
+      borderBottomRightRadius={isLast ? 'r4' : 0}
+      borderBottomWidth={isLast ? 'thin' : 0}
+      borderColor="stroke.neutralSubtle"
+      borderLeftWidth="thin"
+      borderRightWidth="thin"
+      borderTopLeftRadius={isFirst ? 'r4' : 0}
+      borderTopRightRadius={isFirst ? 'r4' : 0}
+      borderTopWidth={isFirst ? 'thin' : 0}
+      overflow="hidden"
+      px="spacingX.globalGutter"
+      py="x1"
+    >
+      {children}
+    </Box>
+  );
+}
 
 export function ReportsScreen() {
   const router = useRouter();
@@ -81,16 +126,22 @@ export function ReportsScreen() {
   );
   const startMockExam = () => router.push({ pathname: '/mock-exam' } as never);
   const mockExamActionLabel = activeSession ? '모의고사 이어하기' : '새 모의고사 시작';
-  const renderRecordItem = ({ item }: ListRenderItemInfo<RecordListItem>) => {
-    if (item.kind === 'skeleton') {
-      return <MockExamRecordRowSkeleton />;
-    }
-
-    return (
+  const renderRecordItem = ({ index, item }: ListRenderItemInfo<RecordListItem>) => {
+    const isFirst = index === 0;
+    const isLast = index === listData.length - 1;
+    const row = item.kind === 'skeleton' ? (
+      <MockExamRecordRowSkeleton />
+    ) : (
       <RecordListRecordRow
         record={item.record}
         isLatest={item.record.round === latestRound}
       />
+    );
+
+    return (
+      <RecordListItemFrame isFirst={isFirst} isLast={isLast}>
+        {row}
+      </RecordListItemFrame>
     );
   };
 
@@ -108,7 +159,7 @@ export function ReportsScreen() {
         />
       )}
       data={listData}
-      ItemSeparatorComponent={List.Divider}
+      ItemSeparatorComponent={RecordListSeparator}
       keyExtractor={(item) => (item.kind === 'record' ? item.record.id : item.id)}
       ListEmptyComponent={emptyState ? <EmptyMockExamRecords {...emptyState} /> : null}
       renderItem={renderRecordItem}

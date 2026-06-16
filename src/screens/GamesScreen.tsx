@@ -50,17 +50,19 @@ export function GamesScreen() {
           </Pressable>
         ))}
       </HStack>
-      <List.Root>
-        {filtered.map((game, index) => (
-          <Fragment key={game.id}>
-            {index > 0 ? <List.Divider /> : null}
-            <GameListRow
-              game={game}
-              onPress={() => router.push({ pathname: '/games/[id]', params: { id: game.id } } as never)}
-            />
-          </Fragment>
-        ))}
-      </List.Root>
+      <Card bg="bg.layerDefault" overflow="hidden" py="x1">
+        <List.Root>
+          {filtered.map((game, index) => (
+            <Fragment key={game.id}>
+              {index > 0 ? <List.Divider /> : null}
+              <GameListRow
+                game={game}
+                onPress={() => router.push({ pathname: '/games/[id]', params: { id: game.id } } as never)}
+              />
+            </Fragment>
+          ))}
+        </List.Root>
+      </Card>
     </TabScreen>
   );
 }

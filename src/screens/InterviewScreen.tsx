@@ -58,20 +58,26 @@ export function InterviewScreen() {
           onActionPress={() => router.push('/reports' as never)}
         />
         <Box minHeight="x39">
-          {isLoading ? <InterviewSessionSkeletonList /> : null}
+          {isLoading ? (
+            <Card bg="bg.layerDefault" overflow="hidden" py="x1">
+              <InterviewSessionSkeletonList />
+            </Card>
+          ) : null}
           {!isLoading && sessions.length === 0 ? <EmptyInterviewSessions /> : null}
           {!isLoading && sessions.length > 0 ? (
-            <List.Root>
-              {sessions.map((session, index) => (
-                <Box key={session.id}>
-                  {index > 0 ? <List.Divider /> : null}
-                  <InterviewSessionCard
-                    session={session}
-                    onPress={() => router.push({ pathname: '/interview/[id]', params: { id: session.id } } as never)}
-                  />
-                </Box>
-              ))}
-            </List.Root>
+            <Card bg="bg.layerDefault" overflow="hidden" py="x1">
+              <List.Root>
+                {sessions.map((session, index) => (
+                  <Box key={session.id}>
+                    {index > 0 ? <List.Divider /> : null}
+                    <InterviewSessionCard
+                      session={session}
+                      onPress={() => router.push({ pathname: '/interview/[id]', params: { id: session.id } } as never)}
+                    />
+                  </Box>
+                ))}
+              </List.Root>
+            </Card>
           ) : null}
         </Box>
       </VStack>
