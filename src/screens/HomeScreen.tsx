@@ -32,12 +32,12 @@ export function HomeScreen() {
     <TabScreen header={<HomeHeader />}>
       <Greeting />
       <ReadinessSummary />
+      <MockExamCard />
       <Grid columns={2} gap="x3">
         <DailyChallenge />
         <InterviewHero />
       </Grid>
       <AllGamesSection />
-      <MockExamCard />
       <RankingTeaser />
     </TabScreen>
   );
