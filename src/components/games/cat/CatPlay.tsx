@@ -32,6 +32,16 @@ type CatPhase = 'memorize' | 'judge' | 'feedback';
 type AnswerTone = 'critical' | 'positive';
 
 const catCells = Array.from({ length: CAT_CELL_COUNT }, (_, cell) => cell);
+const confidenceButtonOptions = [
+  { id: 'missed-very-sure', index: 0 },
+  { id: 'missed-sure', index: 1 },
+  { id: 'missed-somewhat', index: 2 },
+  { id: 'missed-unsure', index: 3 },
+  { id: 'found-unsure', index: 4 },
+  { id: 'found-somewhat', index: 5 },
+  { id: 'found-sure', index: 6 },
+  { id: 'found-very-sure', index: 7 },
+] as const;
 
 function answerTone(index: number): AnswerTone {
   return catAnswerFromConfidence(index) ? 'positive' : 'critical';
@@ -133,9 +143,9 @@ function ConfidenceFooter({ disabled, picked, onChoose }: ConfidenceFooterProps)
         </Text>
       </HStack>
       <Grid columns={8} gap="x1">
-        {catConfidenceLabels.map((_label, index) => (
+        {confidenceButtonOptions.map(({ id, index }) => (
           <ConfidenceButton
-            key={`confidence-${index}`}
+            key={id}
             disabled={disabled}
             index={index}
             selected={picked === index}
