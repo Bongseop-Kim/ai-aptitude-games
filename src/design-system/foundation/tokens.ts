@@ -37,6 +37,7 @@ const lineHeight = {
 
 const dimension = {
   x: {
+    x0: 0,
     x0_5: 2,
     x1: 4,
     x1_5: 6,

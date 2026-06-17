@@ -1,7 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
+import { useSQLiteContext } from 'expo-sqlite';
 
 import { useAuth } from '../../providers/AuthProvider';
 import { supabase } from '../../lib/supabase';
+import { getDevReport } from '../local/devReports';
 import type { MockExamReport, MockExamReportRow } from '../../domain/report';
 
 // Re-implemented locally — SQLite stores datetimes as 'YYYY-MM-DD HH:MM:SS' UTC.
@@ -102,6 +104,7 @@ export function useMockExamReport(
   examCreatedAt: string | null,
 ) {
   const { userId } = useAuth();
+  const db = useSQLiteContext();
 
   return useQuery({
     queryKey: mockExamReportKeys.detail(userId, mockExamId),
@@ -116,7 +119,27 @@ export function useMockExamReport(
         .eq('user_id', userId)
         .maybeSingle();
       if (error) throw error;
-      if (!data) return null;
+      if (!data) {
+        if (__DEV__) {
+          // Dev-only: the server `mock_exam_reports` table is service_role write
+          // only, so the dev seed stores a dummy report locally. Surface it as a
+          // 'done' row so every report section renders.
+          const dummy = await getDevReport(db, mockExamId);
+          if (dummy) {
+            return {
+              mockExamId,
+              userId,
+              status: 'done',
+              reportVersion: 1,
+              report: dummy,
+              error: null,
+              analyzedAt: examCreatedAt,
+              createdAt: examCreatedAt ?? '',
+            };
+          }
+        }
+        return null;
+      }
       return {
         mockExamId: data.mock_exam_id as string,
         userId: data.user_id as string,

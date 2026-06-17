@@ -16,6 +16,7 @@ export type ProfileRow = {
   onboardedAt: string | null;
   birthYearBand: BirthYearBand | null;
   birthYearBandConsentAt: string | null;
+  pro: boolean;
 };
 
 export function useProfile() {
@@ -29,7 +30,7 @@ export function useProfile() {
       }
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, field, onboarded_at, birth_year_band, birth_year_band_consent_at')
+        .select('id, field, onboarded_at, birth_year_band, birth_year_band_consent_at, pro')
         .eq('id', userId)
         .maybeSingle();
       if (error) throw error;
@@ -40,16 +41,15 @@ export function useProfile() {
         onboardedAt: (data.onboarded_at as string | null) ?? null,
         birthYearBand: (data.birth_year_band as BirthYearBand) ?? null,
         birthYearBandConsentAt: (data.birth_year_band_consent_at as string | null) ?? null,
+        pro: (data.pro as boolean) ?? false,
       };
     },
     enabled: userId != null,
   });
 }
 
-// Single future plug-in point for Pro entitlement. Returns a constant for now.
 export function useIsPro(): boolean {
-  // TODO: wire to real entitlement (no pro/premium field exists yet)
-  return false;
+  return useProfile().data?.pro ?? false;
 }
 
 export function useUpdateProfile() {
@@ -79,6 +79,28 @@ export function useUpdateProfile() {
       const { error } = await supabase
         .from('profiles')
         .update(payload)
+        .eq('id', userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: profileKeys.all });
+    },
+  });
+}
+
+export function useSetPro() {
+  const { userId } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (pro: boolean) => {
+      if (!userId) {
+        throw new Error('Not authenticated');
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ pro })
         .eq('id', userId);
       if (error) throw error;
     },

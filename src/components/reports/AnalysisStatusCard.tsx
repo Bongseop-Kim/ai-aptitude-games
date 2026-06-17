@@ -36,7 +36,7 @@ export function AnalysisStatusCard({ variant, title, body, minHeight = 'x16', on
         <HStack align="center" gap="x3">
           <Box
             alignItems="center"
-            bg={isFailed ? 'palette.red100' : 'bg.brandWeak'}
+            bg={isFailed ? 'bg.layerDefaultPressed' : 'bg.brandWeak'}
             borderRadius="full"
             height="x10"
             justifyContent="center"

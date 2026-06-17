@@ -1,4 +1,4 @@
-import { SectionHead } from '../app/SectionHead';
+import { SubSectionHead } from '../app/SubSectionHead';
 import { AnalysisStatusCard } from '../reports/AnalysisStatusCard';
 import type { InterviewAnswerRow } from '../../data/local/interviewAnswers';
 import { Box } from '../../design-system/components/Box';
@@ -34,12 +34,12 @@ export function FeedbackReportBody({
   return (
     <VStack gap="x4">
       {session ? (
-        <Card minHeight="x16">
+        <Card minHeight="x16" p="spacingX.globalGutter">
           <VStack gap="x1">
             <Text color="fg.neutralSubtle" textStyle="t2Regular">
               {session.company} · {session.role}
             </Text>
-            <Text textStyle="t6Bold">
+            <Text textStyle="t5Bold">
               질문 {session.questionCount}개 · 총 답변 {formatAnswerMinutes(session.durationMs)}
             </Text>
             <Text color="fg.neutralMuted" textStyle="t2Regular">
@@ -54,7 +54,7 @@ export function FeedbackReportBody({
       ) : (
         <>
           <VStack gap="x2">
-            <SectionHead title="답변 기록" />
+            <SubSectionHead title="답변 기록" />
             {answers.length > 0 ? (
               <InterviewAnswersMeasuredList answers={answers} onRetryUpload={uploads?.retry} />
             ) : (
@@ -62,7 +62,7 @@ export function FeedbackReportBody({
             )}
           </VStack>
           <VStack gap="x2">
-            <SectionHead title="AI 분석" />
+            <SubSectionHead title="AI 분석" />
             {interview?.status === 'failed' ? (
               <AnalysisStatusCard
                 variant="failed"
@@ -72,7 +72,7 @@ export function FeedbackReportBody({
             ) : (
               <AnalysisStatusCard
                 variant="pending"
-                title="답변 분석을 준비하고 있어요"
+                title="답변 결과를 분석하고 있어요"
                 body="내용·구조·음성 분석이 준비되면 여기에서 확인할 수 있어요."
               />
             )}

@@ -8,7 +8,7 @@ import { JobFamilySheet } from '../components/profile/JobFamilySheet';
 import { ReadinessGauge } from '../components/readiness/ReadinessGauge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { Icon, type IconName } from '../components/ui/Icon';
+import { Icon } from '../components/ui/Icon';
 import { IconButton } from '../components/ui/IconButton';
 import { List } from '../components/ui/List';
 import { Skeleton } from '../components/ui/Skeleton';
@@ -40,7 +40,6 @@ export function InterviewScreen() {
       }
     >
       <JobFamilyCard />
-      <StartInterviewCard />
       <Button
         label="면접 시작하기"
         variant="solid"
@@ -58,20 +57,26 @@ export function InterviewScreen() {
           onActionPress={() => router.push('/reports' as never)}
         />
         <Box minHeight="x39">
-          {isLoading ? <InterviewSessionSkeletonList /> : null}
+          {isLoading ? (
+            <Card bg="bg.layerDefault" overflow="hidden" py="x1">
+              <InterviewSessionSkeletonList />
+            </Card>
+          ) : null}
           {!isLoading && sessions.length === 0 ? <EmptyInterviewSessions /> : null}
           {!isLoading && sessions.length > 0 ? (
-            <List.Root>
-              {sessions.map((session, index) => (
-                <Box key={session.id}>
-                  {index > 0 ? <List.Divider /> : null}
-                  <InterviewSessionCard
-                    session={session}
-                    onPress={() => router.push({ pathname: '/interview/[id]', params: { id: session.id } } as never)}
-                  />
-                </Box>
-              ))}
-            </List.Root>
+            <Card bg="bg.layerDefault" overflow="hidden" py="x1">
+              <List.Root>
+                {sessions.map((session, index) => (
+                  <Box key={session.id}>
+                    {index > 0 ? <List.Divider /> : null}
+                    <InterviewSessionCard
+                      session={session}
+                      onPress={() => router.push({ pathname: '/interview/[id]', params: { id: session.id } } as never)}
+                    />
+                  </Box>
+                ))}
+              </List.Root>
+            </Card>
           ) : null}
         </Box>
       </VStack>
@@ -85,9 +90,9 @@ function JobFamilyCard() {
   const label = jobFamilyLabel(profile?.field);
 
   return (
-    <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" gap="x3" p="x4">
+    <Card gap="x3" p="x4">
       <HStack align="center" gap="x3">
-        <IconTile icon="Target" bg="bg.layerDefault" color="fg.brand" />
+        <Icon name="Target" color="fg.brand" size="large" />
         <VStack flex={1} gap="x0_5">
           <Text color="fg.neutralMuted" textStyle="t2Medium" maxLines={1}>
             목표 직무
@@ -166,24 +171,6 @@ function InterviewPrepSection() {
   );
 }
 
-function StartInterviewCard() {
-  return (
-    <Card p="x3">
-      <HStack align="center" gap="x3">
-        <IconTile icon="Video" bg="bg.brandWeak" color="fg.brand" />
-        <VStack flex={1} gap="x0_5">
-          <Text textStyle="t5Bold" maxLines={1}>
-            이 직무로 면접 시작
-          </Text>
-          <Text color="fg.neutralMuted" textStyle="t2Regular" maxLines={1}>
-            능력단위 기반 맞춤 질문 8개 · 8만 건 분석
-          </Text>
-        </VStack>
-      </HStack>
-    </Card>
-  );
-}
-
 function InterviewSessionCard({ session, onPress }: { session: InterviewSessionRecord; onPress: () => void }) {
   return (
     <List.Item accessibilityLabel={`${session.company} ${session.role} 면접 기록`} onPress={onPress}>
@@ -243,13 +230,5 @@ function EmptyInterviewSessions() {
         </Text>
       </VStack>
     </Card>
-  );
-}
-
-function IconTile({ icon, bg, color }: { icon: IconName; bg: 'bg.brandWeak' | 'bg.layerDefault'; color: 'fg.brand' }) {
-  return (
-    <Box alignItems="center" bg={bg} borderRadius="r3" height="x12" justifyContent="center" width="x12">
-      <Icon name={icon} color={color} size="large" />
-    </Box>
   );
 }

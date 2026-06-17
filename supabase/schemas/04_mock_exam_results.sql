@@ -9,7 +9,6 @@ create table public.mock_exam_results (
   user_id     uuid        not null references auth.users (id) on delete cascade,
   score       integer     not null,
   duration_ms integer     not null,
-  pro         boolean     not null default false,
   created_at  timestamptz not null,             -- mock exam time on device
   synced_at   timestamptz not null default now()
 );

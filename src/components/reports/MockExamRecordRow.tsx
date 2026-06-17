@@ -35,7 +35,6 @@ export function MockExamRecordRow({ record, isLatest = false, ...props }: MockEx
       <List.Content>
         <HStack align="center" gap="x1_5">
           <List.Title>{record.dateLabel}</List.Title>
-          {record.pro ? <Badge label="Pro" tone="brand" size="small" /> : null}
           {isLatest ? <Badge label="최신" tone="critical" size="small" /> : null}
         </HStack>
         <HStack align="center" gap="x2">

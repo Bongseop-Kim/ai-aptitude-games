@@ -1,7 +1,4 @@
-import type { ColorToken } from '../design-system/components/style-props';
 import type { ReadinessLevel, Tone } from './types';
-
-type ReadinessTempLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 
 export function readinessLevel(score: number): ReadinessLevel {
   if (score >= 85) return 'strong';
@@ -26,26 +23,4 @@ export function readinessTone(score: number): Tone {
   if (level === 'steady') return 'brand';
   if (level === 'sprout') return 'warning';
   return 'neutral';
-}
-
-export function readinessTempLevel(score: number): ReadinessTempLevel {
-  if (score < 30) return 1;
-  if (score < 40) return 2;
-  if (score < 50) return 3;
-  if (score < 58) return 4;
-  if (score < 66) return 5;
-  if (score < 74) return 6;
-  if (score < 82) return 7;
-  if (score < 88) return 8;
-  if (score < 94) return 9;
-  return 10;
-}
-
-export function readinessTempColors(score: number): { text: ColorToken; bg: ColorToken } {
-  const level = readinessTempLevel(score);
-
-  return {
-    text: `mannerTemp.l${level}Text` as ColorToken,
-    bg: `mannerTemp.l${level}Bg` as ColorToken,
-  };
 }

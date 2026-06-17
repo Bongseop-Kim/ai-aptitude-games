@@ -1,16 +1,20 @@
-import { Fragment, type ReactNode } from 'react';
-import { Alert, ScrollView } from 'react-native';
+import { Fragment, useState } from 'react';
+import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { Header } from '../components/app/Header';
 import { SectionHead } from '../components/app/SectionHead';
+import { SubSectionHead } from '../components/app/SubSectionHead';
 import { Screen } from '../components/app/Screen';
 import { BottomActionBar } from '../components/app/BottomActionBar';
+import { ReservedSlot } from '../components/app/ReservedSlot';
 import { FeedbackReportBody } from '../components/interview/FeedbackReportBody';
 import { AnalysisStatusCard } from '../components/reports/AnalysisStatusCard';
 import { CompetencySection } from '../components/reports/CompetencySection';
 import { GamesSection } from '../components/reports/GamesSection';
+import { ProIntroSheet } from '../components/reports/ProIntroSheet';
+import { ReportPaywall } from '../components/reports/ReportPaywall';
 import { GrowthTrendChart, PercentileBar, ResponsePatternRows, StressResilienceChart } from '../components/reports/ReportCharts';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -25,7 +29,9 @@ import { reportDetailSections } from '../data/reports';
 import { useInterviewSessionForMockExam } from '../data/local/useInterviewSessions';
 import { useInterviewAnswers } from '../data/local/useInterviewAnswers';
 import { useGameResultsForMockExam } from '../data/local/useGameResults';
+import type { GameResultRecord } from '../data/local/gameResults';
 import { useMockExamRecord, useMockExamRecords } from '../data/local/useMockExamResults';
+import { useIsPro, useProfile } from '../data/server/useProfile';
 import { useMockExamReport, getReportSectionStates } from '../data/server/useMockExamReport';
 import { retryInterviewMediaUpload } from '../data/media/interviewMediaUpload';
 import { useAuth } from '../providers/AuthProvider';
@@ -43,11 +49,10 @@ import type {
   ReportResilience,
   ReportResponsePattern,
 } from '../domain/report';
-import type { MockExamRecord, ReportSectionKey } from '../domain/types';
+import type { GameId, MockExamRecord, ReportSectionKey } from '../domain/types';
 import type { ReportSectionStates } from '../data/server/useMockExamReport';
 import { useSQLiteContext } from 'expo-sqlite';
 
-const coverFeatureSections = reportDetailSections.slice(1);
 const COMPETENCY_LABELS: Record<ReportCompetencyScore['key'], string> = {
   trust: '신뢰',
   strategy: '전략',
@@ -55,14 +60,6 @@ const COMPETENCY_LABELS: Record<ReportCompetencyScore['key'], string> = {
   value: '가치',
   fit: '조직적합',
 };
-
-function showShareNotice() {
-  Alert.alert('공유 준비 중', '공유 카드는 다음 업데이트에서 저장할 수 있어요.');
-}
-
-function showProNotice() {
-  Alert.alert('Pro 준비 중', '구독 화면은 다음 업데이트에서 연결할 예정이에요.');
-}
 
 function formatFullDate(sqliteUtcDatetime: string) {
   const date = new Date(`${sqliteUtcDatetime.replace(' ', 'T')}Z`);
@@ -90,12 +87,29 @@ function gameNameFor(gameId: string) {
   return games.find((game) => game.id === gameId)?.name ?? gameId;
 }
 
+type MockExamGameResults = Partial<Record<GameId, GameResultRecord>> | undefined;
+
+function rankedGamesForResults(results: MockExamGameResults) {
+  return games
+    .map((game) => ({ game, result: results?.[game.id] }))
+    .filter((item) => item.result != null)
+    .sort((a, b) => (b.result?.score ?? 0) - (a.result?.score ?? 0));
+}
+
+function weakestGameForResults(results: MockExamGameResults) {
+  const rankedGames = rankedGamesForResults(results);
+  return rankedGames[rankedGames.length - 1] ?? null;
+}
+
 export function ReportDetailScreen() {
   const router = useRouter();
+  const [proIntroVisible, setProIntroVisible] = useState(false);
   const { id } = useLocalSearchParams<{ id: string }>();
   const recordId = typeof id === 'string' ? id : null;
   const { data: record, isLoading } = useMockExamRecord(recordId);
-  const canUseReportActions = !isLoading && Boolean(record);
+  const isPro = useIsPro();
+  const { isLoading: profileLoading } = useProfile();
+  const gateLoading = isLoading || profileLoading;
 
   return (
     <Screen safeEdges={['top', 'left', 'right']}>
@@ -104,15 +118,14 @@ export function ReportDetailScreen() {
         subtitle={`모의고사 · ${record?.round ?? '-'}회차 리포트`}
         showBack
         onBack={() => router.back()}
-        rightAction={canUseReportActions ? {
-          icon: 'Share',
-          label: '공유',
-          onPress: showShareNotice,
-        } : undefined}
       />
-      {isLoading ? <LoadingBody /> : null}
-      {!isLoading && !record ? <MissingReportBody onBack={() => router.back()} /> : null}
-      {!isLoading && record ? <ReportContent record={record} /> : null}
+      {gateLoading ? <LoadingBody /> : null}
+      {!gateLoading && !record ? <MissingReportBody onBack={() => router.back()} /> : null}
+      {!gateLoading && record && !isPro ? (
+        <ReportPaywall record={record} onUpgrade={() => setProIntroVisible(true)} />
+      ) : null}
+      {!gateLoading && record && isPro ? <ReportContent record={record} /> : null}
+      <ProIntroSheet visible={proIntroVisible} onClose={() => setProIntroVisible(false)} />
     </Screen>
   );
 }
@@ -122,16 +135,21 @@ function LoadingBody() {
   const { theme } = useDesignSystemTheme();
 
   return (
-    <Box flex={1} bleedBottom="spacingY.componentDefault" bleedX="spacingX.globalGutter">
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + theme.dimension.spacingX.globalGutter }}
-        showsVerticalScrollIndicator={false}
-      >
-        <Box px="spacingX.globalGutter" py="x3">
-          <ReportDetailSkeleton />
-        </Box>
-      </ScrollView>
-    </Box>
+    <>
+      <Box flex={1} bleedBottom="spacingY.componentDefault" bleedX="spacingX.globalGutter">
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + theme.dimension.spacingX.globalGutter }}
+          showsVerticalScrollIndicator={false}
+        >
+          <Box px="spacingX.globalGutter" py="x3">
+            <ReportDetailSkeleton />
+          </Box>
+        </ScrollView>
+      </Box>
+      <Box px="spacingX.globalGutter" style={{ paddingBottom: insets.bottom }}>
+        <BottomActionBar primary={{ label: '리포트 준비 중', disabled: true }} />
+      </Box>
+    </>
   );
 }
 
@@ -163,9 +181,10 @@ function ReportContent({ record }: { record: MockExamRecord }) {
   const states = getReportSectionStates(row);
   const report = row?.status === 'done' ? row.report : null;
   const previousRecord = previousRecordFor(record, records);
+  const localResults = useGameResultsForMockExam(record.id);
   const onRetryReport = () => void reportQuery.refetch();
 
-  const cta = resolveBottomCta(report, record);
+  const cta = resolveBottomCta(report, localResults.data);
 
   return (
     <>
@@ -179,17 +198,15 @@ function ReportContent({ record }: { record: MockExamRecord }) {
               {reportDetailSections.map((section) => (
                 <VStack key={section.key} gap="x3">
                   {section.key !== 'cover' ? <SectionHead title={section.title} /> : null}
-                  <LockedReportSection locked={Boolean(section.locked && !record.pro)}>
-                    <ReportSectionBody
-                      sectionKey={section.key}
-                      record={record}
-                      records={records}
-                      previousRecord={previousRecord}
-                      report={report}
-                      states={states}
-                      onRetryReport={onRetryReport}
-                    />
-                  </LockedReportSection>
+                  <ReportSectionBody
+                    sectionKey={section.key}
+                    record={record}
+                    records={records}
+                    previousRecord={previousRecord}
+                    report={report}
+                    states={states}
+                    onRetryReport={onRetryReport}
+                  />
                 </VStack>
               ))}
             </VStack>
@@ -209,30 +226,64 @@ function ReportContent({ record }: { record: MockExamRecord }) {
   );
 }
 
-function resolveBottomCta(report: MockExamReport | null, record: MockExamRecord): { label: string; gameId: string } {
+function resolveBottomCta(report: MockExamReport | null, results: MockExamGameResults): { label: string; gameId: string } {
   const growth = report?.highlights?.growth_areas?.[0];
   if (growth) {
     return {
-      label: `보완 게임 ${growth.action.minutes}분 훈련하기`,
+      label: `${gameNameFor(growth.action.game_id)} ${growth.action.minutes}분 훈련하기`,
       gameId: growth.action.game_id,
     };
   }
-  return { label: '보완 게임 5분 훈련하기', gameId: weakestLocalGameId(record) };
-}
-
-function weakestLocalGameId(_record: MockExamRecord): string {
-  // Local fallback resolves the actual weakest game inside CoverSection via game
-  // results; without that data the first game route is a safe default.
-  return games[0].id;
+  const weakest = weakestGameForResults(results);
+  const fallback = weakest?.game ?? games[0];
+  return { label: `${fallback.name} ${fallback.minutes}분 훈련하기`, gameId: fallback.id };
 }
 
 function ReportDetailSkeleton() {
   return (
-    <VStack gap="x3">
-      <Skeleton height="x4" width="x16" />
-      <Skeleton height="x8" width="full" />
-      <Skeleton borderRadius="r4" height={140} width="full" />
-      <Skeleton borderRadius="r4" height={90} width="full" />
+    <VStack gap="x8">
+      <VStack gap="x1">
+        <Skeleton height="x3" width="x23" />
+        <Skeleton height="x8" width="x60" maxWidth="full" />
+        <Skeleton height="x4" width="x34" maxWidth="full" />
+      </VStack>
+      <Card p="spacingX.globalGutter">
+        <HStack align="center" gap="x4">
+          <Skeleton borderRadius="full" height="x27_5" width="x27_5" />
+          <VStack flex={1} gap="x2">
+            <Skeleton height="x3" width="x16" />
+            <Skeleton height="x8" width="x23" maxWidth="full" />
+            <Skeleton height="x4" width="x29" maxWidth="full" />
+            <Skeleton height="x6" width="x23" maxWidth="full" />
+          </VStack>
+        </HStack>
+      </Card>
+      <Card p="spacingX.globalGutter">
+        <VStack gap="x3">
+          {games.map((game) => (
+            <VStack key={game.id} gap="x1_5" minHeight="x10">
+              <HStack align="center" gap="x3">
+                <Skeleton height="x4" width="x16" />
+                <Skeleton flex={1} height="x2" />
+                <Skeleton height="x4" width="x8" />
+              </HStack>
+              <Skeleton height="x3" width="x23" />
+            </VStack>
+          ))}
+        </VStack>
+      </Card>
+      {reportDetailSections.slice(2).map((section) => (
+        <VStack key={section.key} gap="x3">
+          <Skeleton height="x5" width="x34" maxWidth="full" />
+          <Card p="spacingX.globalGutter">
+            <VStack gap="x3">
+              <Skeleton height="x4" width="full" />
+              <Skeleton height="x4" width="x60" maxWidth="full" />
+              <Skeleton height="x4" width="x42_5" maxWidth="full" />
+            </VStack>
+          </Card>
+        </VStack>
+      ))}
     </VStack>
   );
 }
@@ -243,7 +294,7 @@ type MissingReportProps = {
 
 function MissingReport({ onBack }: MissingReportProps) {
   return (
-    <Card>
+    <Card p="spacingX.globalGutter">
       <VStack align="center" gap="x2">
         <Text align="center" textStyle="t5Bold">
           리포트를 찾지 못했어요
@@ -254,61 +305,6 @@ function MissingReport({ onBack }: MissingReportProps) {
         <Button label="기록으로 돌아가기" variant="weak" onPress={onBack} />
       </VStack>
     </Card>
-  );
-}
-
-type LockedReportSectionProps = {
-  locked: boolean;
-  children: ReactNode;
-};
-
-function LockedReportSection({ locked, children }: LockedReportSectionProps) {
-  if (!locked) {
-    return <>{children}</>;
-  }
-
-  return (
-    <Box minHeight="x60" position="relative">
-      <Box style={{ opacity: 0.18 }}>
-        {children}
-      </Box>
-      <Box
-        alignItems="center"
-        bottom={0}
-        justifyContent="center"
-        left={0}
-        position="absolute"
-        right={0}
-        top={0}
-      >
-        <VStack align="center" gap="x3">
-          <Box
-            alignItems="center"
-            bg="bg.layerFloating"
-            borderRadius="full"
-            boxShadow="surface"
-            height="x14"
-            justifyContent="center"
-            width="x14"
-          >
-            <Icon name="Lock" color="fg.brand" size="large" />
-          </Box>
-          <VStack align="center" gap="x1">
-            <Text align="center" textStyle="t5Bold">
-              프리미엄 전용 섹션
-            </Text>
-            <Text align="center" color="fg.neutralMuted" textStyle="t3Regular">
-              복원력·응답 패턴·AI 코치는 Pro에서 열려요.
-            </Text>
-          </VStack>
-          <Button
-            label="Pro로 잠금 해제"
-            iconLeft="Zap"
-            onPress={showProNotice}
-          />
-        </VStack>
-      </Box>
-    </Box>
   );
 }
 
@@ -365,16 +361,17 @@ function CoverSection({ record, records, overall, competencies, state }: CoverSe
   const results = useGameResultsForMockExam(record.id);
   const firstRecord = records.find((item) => item.round === 1);
   const firstDelta = firstRecord ? record.score - firstRecord.score : 0;
-  const rankedGames = games
-    .map((game) => ({ game, result: results.data?.[game.id] }))
-    .filter((item) => item.result != null)
-    .sort((a, b) => (b.result?.score ?? 0) - (a.result?.score ?? 0));
+  const rankedGames = rankedGamesForResults(results.data);
   const strongest = rankedGames[0];
-  const weakest = rankedGames[rankedGames.length - 1];
+  const weakest = weakestGameForResults(results.data);
 
   const score = overall?.score ?? record.score;
   const range = overall?.score_range ?? null;
   const showRange = range != null && range[0] !== range[1];
+  const showStatusBadge = overall == null || record.round !== 1;
+  const statusBadgeLabel = overall ? `첫 회차 대비 ${formatScoreDelta(firstDelta)}` : '분석 중';
+  const statusBadgeTone = overall ? (firstDelta >= 0 ? 'positive' : 'critical') : 'neutral';
+  const summaryVisible = Boolean(overall?.summary);
 
   const competencyTiles = resolveCompetencyTiles(competencies);
 
@@ -390,10 +387,10 @@ function CoverSection({ record, records, overall, competencies, state }: CoverSe
         </Text>
       </VStack>
 
-      <Card bg="bg.brandWeak" borderColor="stroke.brandWeak">
+      <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" p="spacingX.globalGutter">
         <HStack align="center" gap="x4">
-          <ReadinessGauge score={score} size={108} />
-          <VStack flex={1} gap="x1">
+          <ReadinessGauge score={score} size="x27_5" unit="none" />
+          <VStack flex={1} gap="x2">
             <Text color="fg.neutralMuted" textStyle="t2Regular">
               종합 준비도
             </Text>
@@ -401,33 +398,25 @@ function CoverSection({ record, records, overall, competencies, state }: CoverSe
               <Text textStyle="t10Bold">{score}</Text>
               <Text color="fg.neutralSubtle" textStyle="t3Regular">/ 100</Text>
             </HStack>
-            {/* Range slot: reserved so server arrival doesn't shift layout. */}
-            <Box style={{ opacity: showRange ? 1 : 0 }}>
+            <ReservedSlot visible={showRange}>
               <Text color="fg.neutralSubtle" textStyle="t3Regular">
                 {range ? `${range[0]}~${range[1]} 범위` : '0~0 범위'}
               </Text>
-            </Box>
-            {overall ? (
-              <Box style={{ opacity: record.round === 1 ? 0 : 1 }}>
-                <Badge
-                  label={`첫 회차 대비 ${formatScoreDelta(firstDelta)}`}
-                  tone={firstDelta >= 0 ? 'positive' : 'critical'}
-                />
-              </Box>
-            ) : (
-              <Badge label="분석 중" tone="neutral" size="small" />
-            )}
+            </ReservedSlot>
+            <ReservedSlot height="x6" visible={showStatusBadge}>
+              <Badge label={statusBadgeLabel} tone={statusBadgeTone} size="small" />
+            </ReservedSlot>
           </VStack>
         </HStack>
       </Card>
 
-      {overall?.summary ? (
-        <Card>
+      <Card p="spacingX.globalGutter">
+        <ReservedSlot minHeight="x8" visible={summaryVisible}>
           <Text color="fg.neutralMuted" textStyle="t3Regular">
-            {overall.summary}
+            {overall?.summary ?? '결과를 분석하고 있어요. 곧 요약을 확인할 수 있어요.'}
           </Text>
-        </Card>
-      ) : null}
+        </ReservedSlot>
+      </Card>
 
       <Grid columns={2} gap="x2">
         {competencyTiles ? (
@@ -463,18 +452,9 @@ function CoverSection({ record, records, overall, competencies, state }: CoverSe
         )}
       </Grid>
 
-      {state === 'pending' ? (
+      <ReservedSlot height="x6" visible={state === 'pending'}>
         <Badge label="분석 중" tone="neutral" size="small" />
-      ) : null}
-
-      <SectionHead title="이 리포트에는" />
-      <Card py="x1">
-        <List.Root>
-          {coverFeatureSections.map((section, index) => (
-            <ReportFeatureRow key={section.key} index={index + 1} title={section.title} locked={section.locked} />
-          ))}
-        </List.Root>
-      </Card>
+      </ReservedSlot>
     </VStack>
   );
 }
@@ -500,50 +480,32 @@ type InsightTileProps = {
 };
 
 function InsightTile({ label, title, description, tone }: InsightTileProps) {
+  const isPositive = tone === 'positive';
+  const iconName = isPositive ? 'TrendingUp' : 'CircleDot';
+  const toneColor = isPositive ? 'fg.positive' : 'mannerTemp.l4Text';
+
   return (
-    <Card bg={tone === 'positive' ? 'palette.green100' : 'mannerTemp.l4Bg'} borderColor="stroke.neutralWeak" p="x3">
+    <Card
+      bg={isPositive ? 'bg.brandWeak' : 'mannerTemp.l4Bg'}
+      borderColor={isPositive ? 'stroke.brandWeak' : 'stroke.neutralWeak'}
+      borderRadius="r3"
+      p="x3"
+    >
       <VStack gap="x0_5">
-        <Text color="fg.neutralMuted" textStyle="t1Regular">
-          {label}
-        </Text>
-        <Text color={tone === 'positive' ? 'fg.positive' : 'mannerTemp.l4Text'} textStyle="t5Bold" maxLines={1}>
+        <HStack align="center" gap="x1">
+          <Icon name={iconName} color={toneColor} size="small" />
+          <Text color="fg.neutralMuted" textStyle="t1Regular">
+            {label}
+          </Text>
+        </HStack>
+        <Text color={toneColor} textStyle="t5Bold" maxLines={2}>
           {title}
         </Text>
-        <Text color="fg.neutralSubtle" textStyle="t1Regular" maxLines={2}>
+        <Text color="fg.neutralSubtle" textStyle="t2Regular" lineHeight="t3" maxLines={2}>
           {description}
         </Text>
       </VStack>
     </Card>
-  );
-}
-
-type ReportFeatureRowProps = {
-  index: number;
-  title: string;
-  locked: boolean;
-};
-
-function ReportFeatureRow({ index, title, locked }: ReportFeatureRowProps) {
-  return (
-    <List.Item>
-      <List.Prefix>
-        <Text color="fg.neutralSubtle" textStyle="t3Bold">
-          {index}
-        </Text>
-      </List.Prefix>
-      <List.Content>
-        <List.Title>
-          {title}
-        </List.Title>
-      </List.Content>
-      <List.Suffix>
-        {locked ? (
-          <Badge label="Pro" tone="brand" size="small" />
-        ) : (
-          <Text color="fg.neutralSubtle" textStyle="t2Regular">Free</Text>
-        )}
-      </List.Suffix>
-    </List.Item>
   );
 }
 
@@ -581,19 +543,16 @@ function ResilienceSection({ resilience, state, onRetry }: ResilienceSectionProp
 
   return (
     <VStack gap="x3">
-      <Card>
+      <Card p="spacingX.globalGutter">
         <VStack gap="x2">
           <StressResilienceChart values={resilience.curve.map((point) => point.value)} />
-          <HStack justify="spaceBetween">
+          <HStack>
             {resilience.curve.map((point, index) => (
-              <Text
-                key={`${point.game_id}-${index}`}
-                color="fg.neutralSubtle"
-                textStyle="t1Regular"
-                maxLines={1}
-              >
-                {gameNameFor(point.game_id)}
-              </Text>
+              <Box key={`${point.game_id}-${index}`} flex={1}>
+                <Text align="center" color="fg.neutralSubtle" textStyle="t1Regular" maxLines={1}>
+                  {gameNameFor(point.game_id)}
+                </Text>
+              </Box>
             ))}
           </HStack>
         </VStack>
@@ -627,7 +586,7 @@ function ResponsePatternSection({ pattern, state, onRetry }: ResponsePatternSect
     return <AnalysisStatusCard variant="pending" minHeight="x60" />;
   }
   return (
-    <Card>
+    <Card p="spacingX.globalGutter">
       <ResponsePatternRows scales={pattern.scales} />
     </Card>
   );
@@ -650,8 +609,7 @@ function ServerHighlights({ highlights }: { highlights: ReportHighlights }) {
   const router = useRouter();
 
   return (
-    <VStack gap="x3">
-      <Text textStyle="t8Bold">뭘 잘하고, 뭘 보완할까</Text>
+    <VStack gap="x4">
       <VStack gap="x2">
         <HStack align="center" gap="x1_5">
           <Icon name="TrendingUp" color="fg.positive" size="small" />
@@ -723,8 +681,7 @@ function LocalHighlights({ record }: { record: MockExamRecord }) {
   }
 
   return (
-    <VStack gap="x3">
-      <Text textStyle="t8Bold">뭘 잘하고, 뭘 보완할까</Text>
+    <VStack gap="x4">
       <VStack gap="x2">
         <HStack align="center" gap="x1_5">
           <Icon name="TrendingUp" color="fg.positive" size="small" />
@@ -864,10 +821,9 @@ function GrowthSection({ record, records, overall }: GrowthSectionProps) {
 
   return (
     <VStack gap="x3">
-      <Text textStyle="t8Bold">어디쯤 와 있을까</Text>
-      <Card>
+      <Card p="spacingX.globalGutter">
         {scores.length >= 2 ? (
-          <>
+          <VStack gap="x2">
             <GrowthTrendChart scores={scores} />
             <HStack bg="bg.brandWeak" borderRadius="r3" gap="x2" px="x3" py="x2">
               <Icon name="TrendingUp" color="fg.brand" size="small" />
@@ -875,7 +831,7 @@ function GrowthSection({ record, records, overall }: GrowthSectionProps) {
                 첫 회차 대비 {formatScoreDelta(delta)}점 성장했어요
               </Text>
             </HStack>
-          </>
+          </VStack>
         ) : (
           <VStack align="center" justify="center" minHeight="x16">
             <Text align="center" color="fg.neutralMuted" textStyle="t3Regular">
@@ -885,14 +841,17 @@ function GrowthSection({ record, records, overall }: GrowthSectionProps) {
         )}
       </Card>
       {showPeer && overall ? (
-        <Card>
-          <VStack gap="x2">
-            <Text color="fg.neutralMuted" textStyle="t2Regular">
-              {overall.cohort?.label} {overall.cohort?.n.toLocaleString()}명 기준 · 상위 {overall.percentile}%
-            </Text>
-            <PercentileBar percentile={overall.percentile ?? 50} />
-          </VStack>
-        </Card>
+        <VStack gap="x2">
+          <SubSectionHead title="또래 비교" caption="또래는 같은 조건으로 응시한 비교 집단이에요." />
+          <Card p="spacingX.globalGutter">
+            <VStack gap="x2">
+              <Text color="fg.neutralMuted" textStyle="t2Regular">
+                {overall.cohort?.label} {overall.cohort?.n.toLocaleString()}명 기준 · 상위 {overall.percentile}%
+              </Text>
+              <PercentileBar percentile={overall.percentile ?? 50} />
+            </VStack>
+          </Card>
+        </VStack>
       ) : null}
     </VStack>
   );
@@ -916,15 +875,15 @@ function CoachSection({ coach, state, onRetry }: CoachSectionProps) {
 
   return (
     <VStack gap="x3">
-      <Card bg="bg.brandWeak" borderColor="stroke.brandWeak">
-        <VStack gap="x1">
+      <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" p="spacingX.globalGutter">
+        <VStack gap="x2">
           <Text textStyle="t5Bold">{coach.insight.title}</Text>
           <Text color="fg.neutralMuted" textStyle="t3Regular">
             {coach.insight.body}
           </Text>
         </VStack>
       </Card>
-      <Card py="x1">
+      <Card p="spacingX.globalGutter">
         <List.Root>
           {coach.plan.map((item, index) => (
             <Fragment key={`${item.day_range}-${index}`}>

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
-import { Modal, Pressable } from 'react-native';
+import { ScrollView, useWindowDimensions } from 'react-native';
+import { BottomSheet, RNHostView } from '@expo/ui';
 
-import { Box } from '../../design-system/components/Box';
 import { VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
 
@@ -13,24 +13,20 @@ export type SheetProps = {
   children: ReactNode;
 };
 
+const SHEET_MAX_HEIGHT_RATIO = 0.8;
+
 export function Sheet({ visible, title, subtitle, onClose, children }: SheetProps) {
+  const { height } = useWindowDimensions();
+
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Box flex={1}>
-        <Pressable accessibilityRole="button" style={{ flex: 1 }} onPress={onClose}>
-          <Box bg="bg.overlay" flex={1} />
-        </Pressable>
-        <Box
-          bg="bg.layerFloating"
-          borderTopLeftRadius="r5"
-          borderTopRightRadius="r5"
-          boxShadow="floating"
-          px="spacingX.globalGutter"
-          pb="x8"
-          pt="x3"
-        >
-          <VStack gap="x3">
-            <Box alignSelf="center" bg="stroke.neutralWeak" borderRadius="full" height="x1" width="x10" />
+    <BottomSheet isPresented={visible} onDismiss={onClose}>
+      {/* RN content must be hosted via RNHostView to receive touches inside the
+          native sheet. matchContents reports the ScrollView's resolved height,
+          so the sheet fits short content and caps at maxHeight (scrolling) when
+          content is taller — e.g. the job-posting catalog list. */}
+      <RNHostView matchContents>
+        <ScrollView nestedScrollEnabled style={{ maxHeight: height * SHEET_MAX_HEIGHT_RATIO }}>
+          <VStack gap="x3" pb="x8">
             <VStack gap="x0_5">
               <Text textStyle="t7Bold">{title}</Text>
               {subtitle ? (
@@ -41,8 +37,8 @@ export function Sheet({ visible, title, subtitle, onClose, children }: SheetProp
             </VStack>
             {children}
           </VStack>
-        </Box>
-      </Box>
-    </Modal>
+        </ScrollView>
+      </RNHostView>
+    </BottomSheet>
   );
 }
