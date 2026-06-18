@@ -21,7 +21,6 @@ import { List } from '../components/ui/List';
 import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/ui/Skeleton';
 import { ReadinessGauge } from '../components/readiness/ReadinessGauge';
-import { gameContent } from '../data/gameContent';
 import { games } from '../data/games';
 import { reportDetailSections } from '../data/reports';
 import { useInterviewSessionForMockExam } from '../data/local/useInterviewSessions';
@@ -93,10 +92,6 @@ function formatDurationLabel(durationMs: number) {
 
 function formatScoreDelta(delta: number) {
   return delta >= 0 ? `+${delta}` : String(delta);
-}
-
-function totalGameRounds() {
-  return games.reduce((sum, game) => sum + gameContent[game.id].totalRounds, 0);
 }
 
 function previousRecordFor(record: MockExamRecord, records: MockExamRecord[]) {
@@ -212,7 +207,7 @@ function ReportContent({ record }: { record: MockExamRecord }) {
             <VStack gap="x8">
               {reportDetailSections.map((section) => (
                 <VStack key={section.key} gap="x3">
-                  <SectionHead title={section.title} />
+                  {section.key === 'summary' ? null : <SectionHead title={section.title} />}
                   <ReportSectionBody
                     sectionKey={section.key}
                     record={record}
@@ -366,14 +361,10 @@ type SummarySectionProps = {
 };
 
 function SummarySection({ record, records, report, states }: SummarySectionProps) {
-  const results = useGameResultsForMockExam(record.id);
   const overall = report?.overall ?? null;
   const competencies = report?.competencies ?? null;
   const firstRecord = records.find((item) => item.round === 1);
   const firstDelta = firstRecord ? record.score - firstRecord.score : 0;
-  const rankedGames = rankedGamesForResults(results.data);
-  const strongest = rankedGames[0];
-  const weakest = weakestGameForResults(results.data);
   const score = overall?.score ?? record.score;
   const range = overall?.score_range ?? null;
   const showRange = range != null && range[0] !== range[1];
@@ -382,17 +373,12 @@ function SummarySection({ record, records, report, states }: SummarySectionProps
   const statusBadgeTone = overall ? (firstDelta >= 0 ? 'positive' : 'critical') : 'neutral';
   const summaryVisible = Boolean(overall?.summary) || states.overall === 'pending';
 
-  const competencyTiles = resolveCompetencyTiles(competencies);
-
   return (
     <VStack gap="x3">
       <VStack gap="x0_5">
+        <Text textStyle="t9Bold">오늘의 역량 지도</Text>
         <Text color="fg.neutralSubtle" textStyle="t2Regular">
           {formatFullDate(record.createdAt)} · {formatDurationLabel(record.durationMs)}
-        </Text>
-        <Text textStyle="t9Bold">오늘의 역량 지도</Text>
-        <Text color="fg.neutralMuted" textStyle="t3Regular">
-          9개 게임 · {totalGameRounds()}문항 · 5대 역량 분석
         </Text>
       </VStack>
 
@@ -426,40 +412,6 @@ function SummarySection({ record, records, report, states }: SummarySectionProps
           </Text>
         </ReservedSlot>
       </Card>
-
-      <Grid columns={2} gap="x2">
-        {competencyTiles ? (
-          <>
-            <InsightTile
-              label="강한 영역"
-              title={`${COMPETENCY_LABELS[competencyTiles.max.key]} · ${competencyTiles.max.score}`}
-              description={competencyTiles.max.note}
-              tone="positive"
-            />
-            <InsightTile
-              label="보완 영역"
-              title={`${COMPETENCY_LABELS[competencyTiles.min.key]} · ${competencyTiles.min.score}`}
-              description={competencyTiles.min.note}
-              tone="warning"
-            />
-          </>
-        ) : (
-          <>
-            <InsightTile
-              label="강한 영역"
-              title={strongest ? `${strongest.game.name} · ${strongest.result?.score}` : '확인 중'}
-              description={strongest?.game.description ?? '게임 기록을 확인하고 있어요.'}
-              tone="positive"
-            />
-            <InsightTile
-              label="보완 영역"
-              title={weakest ? `${weakest.game.name} · ${weakest.result?.score}` : '확인 중'}
-              description={weakest?.game.description ?? '게임 기록을 확인하고 있어요.'}
-              tone="warning"
-            />
-          </>
-        )}
-      </Grid>
 
       <NcsConnectionSummary competencies={competencies} state={states.competencies} />
     </VStack>
@@ -561,19 +513,6 @@ function ReportSubsection({ title, caption, iconName, iconColor, children }: Rep
   );
 }
 
-function resolveCompetencyTiles(competencies: ReportCompetencyScore[] | null) {
-  if (competencies == null || competencies.length === 0) {
-    return null;
-  }
-  let max = competencies[0];
-  let min = competencies[0];
-  for (const item of competencies) {
-    if (item.score > max.score) max = item;
-    if (item.score < min.score) min = item;
-  }
-  return { max, min };
-}
-
 type NcsConnectionSummaryProps = {
   competencies: ReportCompetencyScore[] | null;
   state: ReportSectionStates['competencies'];
@@ -590,11 +529,8 @@ function NcsConnectionSummary({ competencies, state }: NcsConnectionSummaryProps
         <VStack gap="x1">
           <HStack align="center" gap="x1_5">
             <Icon name="BadgeCheck" color="fg.brand" size="small" />
-            <Text textStyle="t4Bold">NCS 연결 요약</Text>
+            <Text textStyle="t4Bold">NCS 기반 피드백 요약</Text>
           </HStack>
-          <Text color="fg.neutralMuted" textStyle="t2Regular">
-            앱 5대 역량을 NCS 직업공통능력 관점으로 정리하고 있어요.
-          </Text>
         </VStack>
       </Card>
     );
@@ -609,15 +545,10 @@ function NcsConnectionSummary({ competencies, state }: NcsConnectionSummaryProps
   return (
     <Card p="spacingX.globalGutter">
       <VStack gap="x3">
-        <VStack gap="x0_5">
-          <HStack align="center" gap="x1_5">
-            <Icon name="BadgeCheck" color="fg.brand" size="small" />
-            <Text textStyle="t4Bold">NCS 연결 요약</Text>
-          </HStack>
-          <Text color="fg.neutralMuted" textStyle="t2Regular" lineHeight="t3">
-            앱 5대 역량을 NCS 직업공통능력 관점으로 다시 묶어 본 참고 지표예요.
-          </Text>
-        </VStack>
+        <HStack align="center" gap="x1_5">
+          <Icon name="BadgeCheck" color="fg.brand" size="small" />
+          <Text textStyle="t4Bold">NCS 기반 피드백 요약</Text>
+        </HStack>
         <List.Root>
           {rows.map((row, index) => {
             const link = NCS_COMPETENCY_LINKS[row.competency.key];
@@ -642,9 +573,6 @@ function NcsConnectionSummary({ competencies, state }: NcsConnectionSummaryProps
             );
           })}
         </List.Root>
-        <Text color="fg.neutralSubtle" textStyle="t2Regular" lineHeight="t3">
-          출신지, 학력, 외모 같은 배경 정보가 아니라 게임과 답변 행동을 바탕으로 계산해요.
-        </Text>
       </VStack>
     </Card>
   );
