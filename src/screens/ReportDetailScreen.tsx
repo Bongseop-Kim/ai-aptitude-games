@@ -27,7 +27,7 @@ import { useInterviewSessionForMockExam } from '../data/local/useInterviewSessio
 import { useInterviewAnswers } from '../data/local/useInterviewAnswers';
 import { useGameResultsForMockExam } from '../data/local/useGameResults';
 import type { GameResultRecord } from '../data/local/gameResults';
-import { useMockExamRecord, useMockExamRecords } from '../data/local/useMockExamResults';
+import { useMockExamRecord } from '../data/local/useMockExamResults';
 import { useIsPro, useProfile } from '../data/server/useProfile';
 import { useMockExamReport, getReportSectionStates } from '../data/server/useMockExamReport';
 import { retryInterviewMediaUpload } from '../data/media/interviewMediaUpload';
@@ -87,10 +87,6 @@ function formatFullDate(sqliteUtcDatetime: string) {
 function formatDurationLabel(durationMs: number) {
   const totalMinutes = Math.max(1, Math.round(durationMs / 60000));
   return `${totalMinutes}분 소요`;
-}
-
-function previousRecordFor(record: MockExamRecord, records: MockExamRecord[]) {
-  return records.find((item) => item.round === record.round - 1) ?? null;
 }
 
 function gameNameFor(gameId: string) {
@@ -180,13 +176,11 @@ function MissingReportBody({ onBack }: { onBack: () => void }) {
 function ReportContent({ record }: { record: MockExamRecord }) {
   const router = useRouter();
   const { theme } = useDesignSystemTheme();
-  const { data: records = [] } = useMockExamRecords();
   const reportQuery = useMockExamReport(record.id, record.createdAt);
   const row = reportQuery.data ?? null;
   const states = getReportSectionStates(row);
   const report = row?.status === 'done' ? row.report : null;
   const readyReport = report?.overall != null && report.interview?.status === 'done' ? report : null;
-  const previousRecord = previousRecordFor(record, records);
   const localResults = useGameResultsForMockExam(record.id);
   const onRetryReport = () => void reportQuery.refetch();
 
@@ -216,7 +210,6 @@ function ReportContent({ record }: { record: MockExamRecord }) {
                   <ReportSectionBody
                     sectionKey={section.key}
                     record={record}
-                    previousRecord={previousRecord}
                     report={readyReport}
                     gameResults={localResults.data}
                     states={states}
@@ -347,7 +340,6 @@ function MissingReport({ onBack }: MissingReportProps) {
 type ReportSectionBodyProps = {
   sectionKey: ReportSectionKey;
   record: MockExamRecord;
-  previousRecord: MockExamRecord | null;
   report: MockExamReport;
   gameResults: MockExamGameResults;
   states: ReportSectionStates;
@@ -357,7 +349,6 @@ type ReportSectionBodyProps = {
 function ReportSectionBody({
   sectionKey,
   record,
-  previousRecord,
   report,
   gameResults,
   states,
@@ -370,7 +361,6 @@ function ReportSectionBody({
       return (
         <GameDiagnosisSection
           record={record}
-          previousRecord={previousRecord}
           report={report}
           states={states}
           onRetry={onRetryReport}
@@ -514,13 +504,12 @@ function ReflectedFactors({ scores }: { scores: FactorScores }) {
 
 type GameDiagnosisSectionProps = {
   record: MockExamRecord;
-  previousRecord: MockExamRecord | null;
   report: MockExamReport | null;
   states: ReportSectionStates;
   onRetry: () => void;
 };
 
-function GameDiagnosisSection({ record, previousRecord, report, states, onRetry }: GameDiagnosisSectionProps) {
+function GameDiagnosisSection({ record, report, states, onRetry }: GameDiagnosisSectionProps) {
   const hasFailedCore =
     states.resilience === 'failed' ||
     states.coach === 'failed';
@@ -536,7 +525,7 @@ function GameDiagnosisSection({ record, previousRecord, report, states, onRetry 
       />
 
       <ReportSubsection title="게임별 결과" iconName="Gamepad2" iconColor="fg.brand">
-        <GamesSection record={record} previousRecord={previousRecord} />
+        <GamesSection record={record} gameInsights={report?.games ?? null} />
       </ReportSubsection>
 
       <ReportSubsection

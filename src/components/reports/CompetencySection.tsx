@@ -1,10 +1,9 @@
 import { Fragment } from 'react';
 
-import { VStack } from '../../design-system/components/Stack';
 import type { ReportCompetencyScore } from '../../domain/report';
-import { Card } from '../ui/Card';
 import { List } from '../ui/List';
-import { ReportScoreMarkerLegend, ReportScoreRow } from './ReportScoreRow';
+import { ReportScoreListCard } from './ReportScoreListCard';
+import { ReportScoreRow } from './ReportScoreRow';
 
 const COMPETENCY_LABELS: Record<ReportCompetencyScore['key'], string> = {
   trust: '신뢰',
@@ -33,19 +32,14 @@ export function CompetencySection({ competencies }: CompetencySectionProps) {
   );
 
   return (
-    <Card>
-      <VStack gap="x2">
-        <ReportScoreMarkerLegend label="또래 중앙값" />
-        <List.Root>
-          {ordered.map((competency, index) => (
-            <Fragment key={competency.key}>
-              {index > 0 ? <List.Divider /> : null}
-              <CompetencyBulletRow competency={competency} />
-            </Fragment>
-          ))}
-        </List.Root>
-      </VStack>
-    </Card>
+    <ReportScoreListCard markerLegendLabel="또래 중앙값">
+      {ordered.map((competency, index) => (
+        <Fragment key={competency.key}>
+          {index > 0 ? <List.Divider /> : null}
+          <CompetencyBulletRow competency={competency} />
+        </Fragment>
+      ))}
+    </ReportScoreListCard>
   );
 }
 
@@ -53,10 +47,12 @@ function CompetencyBulletRow({ competency }: { competency: ReportCompetencyScore
   return (
     <ReportScoreRow
       title={COMPETENCY_LABELS[competency.key]}
-      description={competency.note}
       value={competency.score}
       markerValue={competency.peer_median}
-      supportingLabel={competency.percentile != null ? `상위 ${competency.percentile}%` : null}
+      tagItems={[
+        { label: competency.note },
+        ...(competency.percentile != null ? [{ label: `상위 ${competency.percentile}%` }] : []),
+      ]}
     />
   );
 }

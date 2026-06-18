@@ -35,6 +35,7 @@ export type ReportGameInsight = {
   game_id: string;
   insight: string | null;
   percentile: number | null;
+  peer_median?: number | null;
 };
 
 export type ReportHighlightAction = {

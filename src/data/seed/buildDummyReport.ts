@@ -146,6 +146,7 @@ function buildGameInsight(gameId: string, score: number): ReportGameInsight {
     game_id: gameId,
     insight: GAME_INSIGHTS[gameId] ?? '안정적인 수행을 보였어요.',
     percentile: percentileForScore(score),
+    peer_median: clampScore(score - 6),
   };
 }
 
