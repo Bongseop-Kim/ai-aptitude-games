@@ -5,7 +5,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Header } from '../components/app/Header';
 import { SectionHead } from '../components/app/SectionHead';
 import { Screen } from '../components/app/Screen';
-import { BottomActionBar } from '../components/app/BottomActionBar';
 import { ReservedSlot } from '../components/app/ReservedSlot';
 import { FeedbackReportBody } from '../components/interview/FeedbackReportBody';
 import { AnalysisStatusCard } from '../components/reports/AnalysisStatusCard';
@@ -42,7 +41,6 @@ import { useAuth } from '../providers/AuthProvider';
 import { Box } from '../design-system/components/Box';
 import { HStack, VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
-import { useDesignSystemTheme } from '../design-system/provider';
 import type {
   MockExamReport,
   ReportCoach,
@@ -102,18 +100,6 @@ function gameNameFor(gameId: string) {
 
 type MockExamGameResults = Partial<Record<GameId, GameResultRecord>> | undefined;
 
-function rankedGamesForResults(results: MockExamGameResults) {
-  return games
-    .map((game) => ({ game, result: results?.[game.id] }))
-    .filter((item) => item.result != null)
-    .sort((a, b) => (b.result?.score ?? 0) - (a.result?.score ?? 0));
-}
-
-function weakestGameForResults(results: MockExamGameResults) {
-  const rankedGames = rankedGamesForResults(results);
-  return rankedGames[rankedGames.length - 1] ?? null;
-}
-
 export function ReportDetailScreen() {
   const router = useRouter();
   const [proIntroVisible, setProIntroVisible] = useState(false);
@@ -125,7 +111,7 @@ export function ReportDetailScreen() {
   const gateLoading = isLoading || profileLoading;
 
   return (
-    <Screen>
+    <Screen contentPb="x0" safeEdges={['top', 'left', 'right']}>
       <Header
         title="종합 리포트"
         subtitle={`모의고사 · ${record?.round ?? '-'}회차 리포트`}
@@ -144,35 +130,22 @@ export function ReportDetailScreen() {
 }
 
 function LoadingBody() {
-  const { theme } = useDesignSystemTheme();
-
   return (
-    <>
-      <Box flex={1} bleedX="spacingX.globalGutter">
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1, paddingBottom: theme.dimension.spacingX.globalGutter }}
-          showsVerticalScrollIndicator={false}
-        >
-          <Box px="spacingX.globalGutter" py="x3">
-            <ReportDetailSkeleton />
-          </Box>
-        </ScrollView>
-      </Box>
-      <BottomActionBar primary={{ label: '리포트 준비 중', disabled: true }} />
-    </>
+    <Box flex={1} bleedX="spacingX.globalGutter">
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+        <Box px="spacingX.globalGutter" pt="x3" pb="x8">
+          <ReportDetailSkeleton />
+        </Box>
+      </ScrollView>
+    </Box>
   );
 }
 
 function MissingReportBody({ onBack }: { onBack: () => void }) {
-  const { theme } = useDesignSystemTheme();
-
   return (
     <Box flex={1} bleedX="spacingX.globalGutter">
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: theme.dimension.spacingX.globalGutter }}
-        showsVerticalScrollIndicator={false}
-      >
-        <Box px="spacingX.globalGutter" py="x3">
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+        <Box px="spacingX.globalGutter" pt="x3" pb="x8">
           <MissingReport onBack={onBack} />
         </Box>
       </ScrollView>
@@ -181,8 +154,6 @@ function MissingReportBody({ onBack }: { onBack: () => void }) {
 }
 
 function ReportContent({ record }: { record: MockExamRecord }) {
-  const router = useRouter();
-  const { theme } = useDesignSystemTheme();
   const reportQuery = useMockExamReport(record.id, record.createdAt);
   const row = reportQuery.data ?? null;
   const states = getReportSectionStates(row);
@@ -201,80 +172,50 @@ function ReportContent({ record }: { record: MockExamRecord }) {
     );
   }
 
-  const cta = resolveBottomCta(readyReport, localResults.data);
-
   return (
-    <>
-      <Box flex={1} bleedX="spacingX.globalGutter">
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1, paddingBottom: theme.dimension.spacingX.globalGutter }}
-          showsVerticalScrollIndicator={false}
-        >
-          <Box px="spacingX.globalGutter" py="x3">
-            <VStack gap="x8">
-              {reportDetailSections.map((section) => (
-                <VStack key={section.key} gap="x3">
-                  {section.key === 'summary' ? null : <SectionHead title={section.title} />}
-                  <ReportSectionBody
-                    sectionKey={section.key}
-                    record={record}
-                    report={readyReport}
-                    gameResults={localResults.data}
-                    gameRounds={localRounds.data}
-                    states={states}
-                    onRetryReport={onRetryReport}
-                  />
-                </VStack>
-              ))}
-            </VStack>
-          </Box>
-        </ScrollView>
-      </Box>
-      <BottomActionBar
-        primary={{
-          label: cta.label,
-          iconRight: 'ArrowRight',
-          onPress: () => router.push({ pathname: '/games/[id]', params: { id: cta.gameId } } as never),
-        }}
-      />
-    </>
+    <Box flex={1} bleedX="spacingX.globalGutter">
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+        <Box px="spacingX.globalGutter" pt="x3" pb="x8">
+          <VStack gap="x8">
+            {reportDetailSections.map((section) => (
+              <VStack key={section.key} gap="x3">
+                {section.key === 'summary' ? null : <SectionHead title={section.title} />}
+                <ReportSectionBody
+                  sectionKey={section.key}
+                  record={record}
+                  report={readyReport}
+                  gameResults={localResults.data}
+                  gameRounds={localRounds.data}
+                  states={states}
+                  onRetryReport={onRetryReport}
+                />
+              </VStack>
+            ))}
+          </VStack>
+        </Box>
+      </ScrollView>
+    </Box>
   );
 }
 
 function ReportAnalysisPending({ failed, onRetry }: { failed: boolean; onRetry: () => void }) {
   return (
-    <>
-      <Box flex={1} bleedX="spacingX.globalGutter">
-        <Box px="spacingX.globalGutter" py="x3">
-          <AnalysisStatusCard
-            variant={failed ? 'failed' : 'pending'}
-            title={failed ? '리포트를 분석하지 못했어요' : '면접 답변을 분석하고 있어요'}
-            body={
-              failed
-                ? '다시 시도하면 종합 리포트를 업데이트할 수 있어요.'
-                : '분석이 끝나면 종합 리포트를 열 수 있어요.'
-            }
-            minHeight="x60"
-            onRetry={onRetry}
-          />
-        </Box>
+    <Box flex={1} bleedX="spacingX.globalGutter">
+      <Box px="spacingX.globalGutter" pt="x3" pb="x8">
+        <AnalysisStatusCard
+          variant={failed ? 'failed' : 'pending'}
+          title={failed ? '리포트를 분석하지 못했어요' : '면접 답변을 분석하고 있어요'}
+          body={
+            failed
+              ? '다시 시도하면 종합 리포트를 업데이트할 수 있어요.'
+              : '분석이 끝나면 종합 리포트를 열 수 있어요.'
+          }
+          minHeight="x60"
+          onRetry={onRetry}
+        />
       </Box>
-      <BottomActionBar primary={{ label: failed ? '다시 시도해주세요' : '리포트 분석 중', disabled: true }} />
-    </>
+    </Box>
   );
-}
-
-function resolveBottomCta(report: MockExamReport | null, results: MockExamGameResults): { label: string; gameId: string } {
-  const growth = report?.highlights?.growth_areas?.[0];
-  if (growth) {
-    return {
-      label: `${gameNameFor(growth.action.game_id)} ${growth.action.minutes}분 훈련하기`,
-      gameId: growth.action.game_id,
-    };
-  }
-  const weakest = weakestGameForResults(results);
-  const fallback = weakest?.game ?? games[0];
-  return { label: `${fallback.name} ${fallback.minutes}분 훈련하기`, gameId: fallback.id };
 }
 
 function ReportDetailSkeleton() {
