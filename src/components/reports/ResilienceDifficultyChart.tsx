@@ -50,6 +50,7 @@ export function ResilienceDifficultyChart({ points }: { points: ResilienceChartP
   const pointFill = resolveColor(theme, 'bg.layerFloating');
 
   const linePoints = points.map((point, index) => ({
+    key: point.key,
     x: points.length === 1 ? size.width / 2 : (index + 0.5) * (size.width / points.length),
     y: size.height * (1 - clampScore(point.difficulty) / 100),
   }));
@@ -96,12 +97,12 @@ export function ResilienceDifficultyChart({ points }: { points: ResilienceChartP
                   strokeWidth={LINE_WIDTH}
                   style="stroke"
                 />
-                {linePoints.map((point, index) => (
-                  <Circle key={`fill-${index}`} color={pointFill} cx={point.x} cy={point.y} r={POINT_RADIUS} />
+                {linePoints.map((point) => (
+                  <Circle key={`${point.key}-fill`} color={pointFill} cx={point.x} cy={point.y} r={POINT_RADIUS} />
                 ))}
-                {linePoints.map((point, index) => (
+                {linePoints.map((point) => (
                   <Circle
-                    key={`stroke-${index}`}
+                    key={`${point.key}-stroke`}
                     color={lineColor}
                     cx={point.x}
                     cy={point.y}

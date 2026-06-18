@@ -334,10 +334,10 @@ function SummarySection({ record, gameResults, report, states }: SummarySectionP
   const score = totalFactorScore(factorScores);
 
   return (
-    <VStack gap="x3">
-      <VStack gap="x0_5">
-        <Text textStyle="t9Bold">오늘의 역량 지도</Text>
-        <Text color="fg.neutralSubtle" textStyle="t2Regular">
+    <VStack gap="x4">
+      <VStack gap="x1">
+        <Text textStyle="t8Bold">오늘의 역량 지도</Text>
+        <Text color="fg.neutralSubtle" textStyle="t3Regular">
           {formatFullDate(record.createdAt)} · {formatDurationLabel(record.durationMs)}
         </Text>
       </VStack>
@@ -468,12 +468,9 @@ function GameDiagnosisSection({
   states,
   onRetry,
 }: GameDiagnosisSectionProps) {
-  const hasFailedCore =
-    states.resilience === 'failed' ||
-    states.coach === 'failed';
-  const hasPendingCore =
-    states.resilience === 'pending' ||
-    states.coach === 'pending';
+  const coreStates = [states.resilience, states.coach];
+  const hasFailedCore = coreStates.includes('failed');
+  const hasPendingCore = coreStates.includes('pending');
 
   return (
     <VStack gap="x3">
@@ -524,10 +521,10 @@ type ReportSubsectionProps = {
 function ReportSubsection({ title, caption, children }: ReportSubsectionProps) {
   return (
     <VStack gap="x2">
-      <VStack gap="x0_5">
-        <Text textStyle="t4Bold">{title}</Text>
+      <VStack gap="x1">
+        <Text textStyle="t5Bold">{title}</Text>
         {caption ? (
-          <Text color="fg.neutralMuted" textStyle="t2Regular" lineHeight="t3" maxLines={2}>
+          <Text color="fg.neutralMuted" textStyle="t3Regular" lineHeight="t4" maxLines={2}>
             {caption}
           </Text>
         ) : null}
@@ -777,7 +774,7 @@ function ResilienceSummary({ gameResults, gameRounds, resilience, state }: Resil
   const curve = resolveDisplayResilienceCurve({ gameResults, gameRounds, resilience });
 
   return (
-    <VStack gap="x2">
+    <VStack gap="x3">
       {curve ? <ResilienceDifficultySection curve={curve} /> : null}
       <ResilienceFeedbackCard insights={insights} />
     </VStack>

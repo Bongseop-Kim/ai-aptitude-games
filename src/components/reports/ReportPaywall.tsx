@@ -7,7 +7,6 @@ import { List } from '../ui/List';
 import { Box } from '../../design-system/components/Box';
 import { VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
-import { useDesignSystemTheme } from '../../design-system/provider';
 import { reportDetailSections } from '../../data/reports';
 import type { MockExamRecord } from '../../domain/types';
 
@@ -19,16 +18,14 @@ export type ReportPaywallProps = {
 const includedSections = reportDetailSections.slice(1);
 
 export function ReportPaywall({ onUpgrade }: ReportPaywallProps) {
-  const { theme } = useDesignSystemTheme();
-
   return (
     <>
       <Box flex={1} bleedX="spacingX.globalGutter">
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1, paddingBottom: theme.dimension.spacingX.globalGutter }}
+          contentContainerStyle={{ flexGrow: 1 }}
           showsVerticalScrollIndicator={false}
         >
-          <Box px="spacingX.globalGutter" py="x3">
+          <Box px="spacingX.globalGutter" pt="x3" pb="x7">
             <VStack align="center" gap="x5">
               <VStack align="center" gap="x3">
                 <Box
