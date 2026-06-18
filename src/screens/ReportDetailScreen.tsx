@@ -43,7 +43,6 @@ import { HStack, VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
 import type {
   MockExamReport,
-  ReportCoach,
   ReportCompetencyScore,
   ReportResilience,
   ReportResponsePattern,
@@ -92,10 +91,6 @@ function formatFullDate(sqliteUtcDatetime: string) {
 function formatDurationLabel(durationMs: number) {
   const totalMinutes = Math.max(1, Math.round(durationMs / 60000));
   return `${totalMinutes}분 소요`;
-}
-
-function gameNameFor(gameId: string) {
-  return games.find((game) => game.id === gameId)?.name ?? gameId;
 }
 
 type MockExamGameResults = Partial<Record<GameId, GameResultRecord>> | undefined;
@@ -506,13 +501,11 @@ function GameDiagnosisSection({
         <ResponsePatternSection pattern={report?.response_pattern ?? null} state={states.pattern} onRetry={onRetry} />
       </ReportSubsection>
 
-      <ImprovementPlan coach={report?.coach ?? null} state={states.coach} />
-
       {hasFailedCore ? (
         <AnalysisStatusCard
           variant="failed"
           title="일부 진단을 불러오지 못했어요"
-          body="다시 시도하면 게임 진단과 개선 플랜을 업데이트할 수 있어요."
+          body="다시 시도하면 게임 진단을 업데이트할 수 있어요."
           onRetry={onRetry}
         />
       ) : null}
@@ -857,68 +850,5 @@ function InterviewFeedbackSection({ mockExamId, report }: InterviewFeedbackSecti
         },
       }}
     />
-  );
-}
-
-type ImprovementPlanProps = {
-  coach: ReportCoach | null;
-  state: ReportSectionStates['coach'];
-};
-
-function ImprovementPlan({ coach, state }: ImprovementPlanProps) {
-  const router = useRouter();
-
-  if (coach == null || state !== 'ready') {
-    return null;
-  }
-
-  return (
-    <VStack gap="x2">
-      <HStack align="center" gap="x1_5">
-        <Icon name="Target" color="fg.brand" size="small" />
-        <Text textStyle="t4Bold">다음 개선 플랜</Text>
-      </HStack>
-      <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" p="spacingX.globalGutter">
-        <VStack gap="x2">
-          <Text textStyle="t5Bold">{coach.insight.title}</Text>
-          <Text color="fg.neutralMuted" textStyle="t3Regular">
-            {coach.insight.body}
-          </Text>
-        </VStack>
-      </Card>
-      <Card p="spacingX.globalGutter">
-        <List.Root>
-          {coach.plan.map((item, index) => (
-            <Fragment key={`${item.day_range}-${index}`}>
-              {index > 0 ? <List.Divider /> : null}
-              <List.Item
-                onPress={() =>
-                  router.push(
-                    item.game_id === 'mock-exam'
-                      ? ({ pathname: '/mock-exam' } as never)
-                      : ({ pathname: '/games/[id]', params: { id: item.game_id } } as never),
-                  )
-                }
-              >
-                <List.Prefix>
-                  <Badge label={item.day_range} tone="brand" size="small" />
-                </List.Prefix>
-                <List.Content>
-                  <List.Title>
-                    {item.game_id === 'mock-exam' ? '모의고사 재도전' : gameNameFor(item.game_id)}
-                  </List.Title>
-                  <List.Detail>
-                    {item.level_label} · {item.minutes_per_day}분/일
-                  </List.Detail>
-                </List.Content>
-                <List.Suffix>
-                  <Icon name="ChevronRight" color="fg.neutralSubtle" size="small" />
-                </List.Suffix>
-              </List.Item>
-            </Fragment>
-          ))}
-        </List.Root>
-      </Card>
-    </VStack>
   );
 }
