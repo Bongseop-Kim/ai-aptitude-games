@@ -90,10 +90,6 @@ function formatDurationLabel(durationMs: number) {
   return `${totalMinutes}분 소요`;
 }
 
-function formatScoreDelta(delta: number) {
-  return delta >= 0 ? `+${delta}` : String(delta);
-}
-
 function previousRecordFor(record: MockExamRecord, records: MockExamRecord[]) {
   return records.find((item) => item.round === record.round - 1) ?? null;
 }
@@ -190,11 +186,21 @@ function ReportContent({ record }: { record: MockExamRecord }) {
   const row = reportQuery.data ?? null;
   const states = getReportSectionStates(row);
   const report = row?.status === 'done' ? row.report : null;
+  const readyReport = report?.overall != null && report.interview?.status === 'done' ? report : null;
   const previousRecord = previousRecordFor(record, records);
   const localResults = useGameResultsForMockExam(record.id);
   const onRetryReport = () => void reportQuery.refetch();
 
-  const cta = resolveBottomCta(report, localResults.data);
+  if (!readyReport) {
+    return (
+      <ReportAnalysisPending
+        failed={row?.status === 'failed'}
+        onRetry={onRetryReport}
+      />
+    );
+  }
+
+  const cta = resolveBottomCta(readyReport, localResults.data);
 
   return (
     <>
@@ -211,9 +217,9 @@ function ReportContent({ record }: { record: MockExamRecord }) {
                   <ReportSectionBody
                     sectionKey={section.key}
                     record={record}
-                    records={records}
                     previousRecord={previousRecord}
-                    report={report}
+                    report={readyReport}
+                    gameResults={localResults.data}
                     states={states}
                     onRetryReport={onRetryReport}
                   />
@@ -230,6 +236,29 @@ function ReportContent({ record }: { record: MockExamRecord }) {
           onPress: () => router.push({ pathname: '/games/[id]', params: { id: cta.gameId } } as never),
         }}
       />
+    </>
+  );
+}
+
+function ReportAnalysisPending({ failed, onRetry }: { failed: boolean; onRetry: () => void }) {
+  return (
+    <>
+      <Box flex={1} bleedX="spacingX.globalGutter">
+        <Box px="spacingX.globalGutter" py="x3">
+          <AnalysisStatusCard
+            variant={failed ? 'failed' : 'pending'}
+            title={failed ? '리포트를 분석하지 못했어요' : '면접 답변을 분석하고 있어요'}
+            body={
+              failed
+                ? '다시 시도하면 종합 리포트를 업데이트할 수 있어요.'
+                : '분석이 끝나면 종합 리포트를 열 수 있어요.'
+            }
+            minHeight="x60"
+            onRetry={onRetry}
+          />
+        </Box>
+      </Box>
+      <BottomActionBar primary={{ label: failed ? '다시 시도해주세요' : '리포트 분석 중', disabled: true }} />
     </>
   );
 }
@@ -319,9 +348,9 @@ function MissingReport({ onBack }: MissingReportProps) {
 type ReportSectionBodyProps = {
   sectionKey: ReportSectionKey;
   record: MockExamRecord;
-  records: MockExamRecord[];
   previousRecord: MockExamRecord | null;
-  report: MockExamReport | null;
+  report: MockExamReport;
+  gameResults: MockExamGameResults;
   states: ReportSectionStates;
   onRetryReport: () => void;
 };
@@ -329,15 +358,15 @@ type ReportSectionBodyProps = {
 function ReportSectionBody({
   sectionKey,
   record,
-  records,
   previousRecord,
   report,
+  gameResults,
   states,
   onRetryReport,
 }: ReportSectionBodyProps) {
   switch (sectionKey) {
     case 'summary':
-      return <SummarySection record={record} records={records} report={report} states={states} />;
+      return <SummarySection record={record} gameResults={gameResults} report={report} states={states} />;
     case 'game':
       return (
         <GameDiagnosisSection
@@ -355,23 +384,16 @@ function ReportSectionBody({
 
 type SummarySectionProps = {
   record: MockExamRecord;
-  records: MockExamRecord[];
-  report: MockExamReport | null;
+  gameResults: MockExamGameResults;
+  report: MockExamReport;
   states: ReportSectionStates;
 };
 
-function SummarySection({ record, records, report, states }: SummarySectionProps) {
-  const overall = report?.overall ?? null;
-  const competencies = report?.competencies ?? null;
-  const firstRecord = records.find((item) => item.round === 1);
-  const firstDelta = firstRecord ? record.score - firstRecord.score : 0;
-  const score = overall?.score ?? record.score;
-  const range = overall?.score_range ?? null;
-  const showRange = range != null && range[0] !== range[1];
-  const showStatusBadge = overall == null || record.round !== 1;
-  const statusBadgeLabel = overall ? `첫 회차 대비 ${formatScoreDelta(firstDelta)}` : '분석 중';
-  const statusBadgeTone = overall ? (firstDelta >= 0 ? 'positive' : 'critical') : 'neutral';
-  const summaryVisible = Boolean(overall?.summary) || states.overall === 'pending';
+function SummarySection({ record, gameResults, report, states }: SummarySectionProps) {
+  const { overall } = report;
+  const competencies = report.competencies;
+  const factorScores = resolveFactorScores(report, gameResults);
+  const score = totalFactorScore(factorScores);
 
   return (
     <VStack gap="x3">
@@ -383,37 +405,110 @@ function SummarySection({ record, records, report, states }: SummarySectionProps
       </VStack>
 
       <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" p="spacingX.globalGutter">
-        <HStack align="center" gap="x4">
-          <ReadinessGauge score={score} size="x27_5" unit="none" />
-          <VStack flex={1} gap="x2">
-            <Text color="fg.neutralMuted" textStyle="t2Regular">
-              종합 준비도
+        <VStack gap="x3">
+          <HStack align="center" gap="x4">
+            <ReadinessGauge score={score} size="x27_5" unit="none" />
+            <ReflectedFactors scores={factorScores} />
+          </HStack>
+          <List.Divider />
+          <VStack gap="x1">
+            <Text textStyle="t4Bold">AI 종합 피드백</Text>
+            <Text color="fg.neutralMuted" textStyle="t3Regular" lineHeight="t4">
+              {overall.summary}
             </Text>
-            <HStack align="center" gap="x1_5">
-              <Text textStyle="t10Bold">{score}</Text>
-              <Text color="fg.neutralSubtle" textStyle="t3Regular">/ 100</Text>
-            </HStack>
-            <ReservedSlot visible={showRange}>
-              <Text color="fg.neutralSubtle" textStyle="t3Regular">
-                {range ? `${range[0]}~${range[1]} 범위` : '0~0 범위'}
-              </Text>
-            </ReservedSlot>
-            <ReservedSlot height="x6" visible={showStatusBadge}>
-              <Badge label={statusBadgeLabel} tone={statusBadgeTone} size="small" />
-            </ReservedSlot>
           </VStack>
-        </HStack>
-      </Card>
-
-      <Card p="spacingX.globalGutter">
-        <ReservedSlot minHeight="x8" visible={summaryVisible}>
-          <Text color="fg.neutralMuted" textStyle="t3Regular">
-            {overall?.summary ?? '결과를 분석하고 있어요. 곧 요약을 확인할 수 있어요.'}
-          </Text>
-        </ReservedSlot>
+        </VStack>
       </Card>
 
       <NcsConnectionSummary competencies={competencies} state={states.competencies} />
+    </VStack>
+  );
+}
+
+type FactorScores = {
+  game: WeightedFactorScore | null;
+  pattern: WeightedFactorScore | null;
+  interview: WeightedFactorScore;
+};
+
+type WeightedFactorScore = {
+  score: number;
+  max: number;
+};
+
+const FACTOR_WEIGHTS = {
+  game: 40,
+  pattern: 20,
+  interview: 40,
+} as const;
+
+function average(values: number[]) {
+  if (values.length === 0) return null;
+  return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
+}
+
+function toWeightedFactorScore(rawScore: number | null, max: number): WeightedFactorScore | null {
+  if (rawScore == null) return null;
+  return {
+    score: Math.round((rawScore * max) / 100),
+    max,
+  };
+}
+
+function resolveFactorScores(report: MockExamReport, gameResults: MockExamGameResults): FactorScores {
+  const gamesWithScores = Object.values(gameResults ?? {}).filter((result): result is GameResultRecord => result != null);
+  const patternScores = report.response_pattern?.scales.map((scale) => scale.value) ?? [];
+
+  return {
+    game: toWeightedFactorScore(average(gamesWithScores.map((result) => result.score)), FACTOR_WEIGHTS.game),
+    pattern: toWeightedFactorScore(average(patternScores), FACTOR_WEIGHTS.pattern),
+    interview: toWeightedFactorScore(report.interview.overall_score, FACTOR_WEIGHTS.interview) ?? {
+      score: 0,
+      max: FACTOR_WEIGHTS.interview,
+    },
+  };
+}
+
+function formatFactorScore(score: WeightedFactorScore | null) {
+  return score == null ? '- / -' : `${score.score} / ${score.max}`;
+}
+
+function totalFactorScore(scores: FactorScores) {
+  return (scores.game?.score ?? 0) + (scores.pattern?.score ?? 0) + scores.interview.score;
+}
+
+function ReflectedFactors({ scores }: { scores: FactorScores }) {
+  const rows = [
+    {
+      title: '게임 수행',
+      score: scores.game,
+    },
+    {
+      title: '응답 패턴',
+      score: scores.pattern,
+    },
+    {
+      title: 'AI 면접',
+      score: scores.interview,
+    },
+  ];
+
+  return (
+    <VStack flex={1} gap="x2">
+      <HStack align="center" gap="x1_5">
+        <Icon name="CircleCheck" color="fg.brand" size="small" />
+        <Text textStyle="t4Bold">반영 요소</Text>
+      </HStack>
+      <VStack gap="x1_5">
+        {rows.map((row) => (
+          <HStack key={row.title} align="center" justify="spaceBetween" gap="x2">
+            <Text color="fg.neutralMuted" textStyle="t3Regular">
+              {row.title}
+            </Text>
+            <Text textStyle="t4Bold">{formatFactorScore(row.score)}</Text>
+          </HStack>
+        ))}
+      </VStack>
     </VStack>
   );
 }
