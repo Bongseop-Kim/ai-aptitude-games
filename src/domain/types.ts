@@ -44,14 +44,9 @@ export type GameWithProgress = Game & {
 export type ReadinessLevel = 'seed' | 'sprout' | 'steady' | 'strong';
 
 export type ReportSectionKey =
-  | 'cover'
-  | 'games'
-  | 'competencies'
-  | 'highlights'
-  | 'interview'
-  | 'resilience'
-  | 'pattern'
-  | 'coach';
+  | 'summary'
+  | 'game'
+  | 'interview';
 
 export type MockExamRecord = {
   id: string;
