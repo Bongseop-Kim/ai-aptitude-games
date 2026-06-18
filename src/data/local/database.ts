@@ -197,7 +197,7 @@ const migrations: readonly { version: number; sql: string }[] = [
   {
     version: 12,
     sql: `
-      ALTER TABLE game_result_rounds ADD COLUMN difficulty INTEGER NOT NULL DEFAULT 50;
+      ALTER TABLE game_result_rounds ADD COLUMN difficulty INTEGER NOT NULL DEFAULT 50 CHECK (difficulty BETWEEN 0 AND 100);
     `,
   },
   {

@@ -4,6 +4,7 @@ import type { InterviewAnswerRow } from '../../data/local/interviewAnswers';
 import { Box } from '../../design-system/components/Box';
 import { VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
+import { formatAnswerMinutes } from '../../domain/interviewFormatting';
 import type { ReportInterview } from '../../domain/report';
 import type { InterviewSessionRecord } from '../../domain/types';
 import { Card } from '../ui/Card';
@@ -18,10 +19,6 @@ export type FeedbackReportBodyProps = {
   interview?: ReportInterview | null;
   uploads?: { retry: (answerId: string) => void };
 };
-
-function formatAnswerMinutes(durationMs: number) {
-  return `${Math.max(1, Math.round(durationMs / 60000))}분`;
-}
 
 export function FeedbackReportBody({
   session,

@@ -13,6 +13,7 @@ import { HStack, VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
 import type { ReportInterview, ReportTopFix } from '../../domain/report';
 import type { InterviewSessionRecord } from '../../domain/types';
+import { formatAnswerMinutes } from '../../domain/interviewFormatting';
 import { QuestionFeedbackRow } from './QuestionFeedbackAccordion';
 
 export type InterviewAnalysisBodyProps = {
@@ -20,10 +21,6 @@ export type InterviewAnalysisBodyProps = {
   mockExamId: string;
   session?: InterviewSessionRecord | null;
 };
-
-function formatAnswerMinutes(durationMs: number) {
-  return `${Math.max(1, Math.round(durationMs / 60000))}분`;
-}
 
 export function InterviewAnalysisBody({ interview, mockExamId, session = null }: InterviewAnalysisBodyProps) {
   const router = useRouter();

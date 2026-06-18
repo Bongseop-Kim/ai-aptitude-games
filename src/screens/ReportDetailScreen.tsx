@@ -106,7 +106,7 @@ export function ReportDetailScreen() {
   const gateLoading = isLoading || profileLoading;
 
   return (
-    <Screen contentPb="x0" safeEdges={['top', 'left', 'right']}>
+    <Screen contentPb="x0" safeEdges={['top', 'bottom', 'left', 'right']}>
       <Header
         title="종합 리포트"
         subtitle={`모의고사 · ${record?.round ?? '-'}회차 리포트`}
@@ -380,8 +380,10 @@ const FACTOR_WEIGHTS = {
   interview: 40,
 } as const;
 
-function average(values: number[]) {
-  if (values.length === 0) return null;
+function average(values: readonly number[], emptyValue: number): number;
+function average(values: readonly number[], emptyValue: null): number | null;
+function average(values: readonly number[], emptyValue: number | null) {
+  if (values.length === 0) return emptyValue;
   return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
 }
 
@@ -398,8 +400,8 @@ function resolveFactorScores(report: MockExamReport, gameResults: MockExamGameRe
   const patternScores = report.response_pattern?.scales.map((scale) => scale.value) ?? [];
 
   return {
-    game: toWeightedFactorScore(average(gamesWithScores.map((result) => result.score)), FACTOR_WEIGHTS.game),
-    pattern: toWeightedFactorScore(average(patternScores), FACTOR_WEIGHTS.pattern),
+    game: toWeightedFactorScore(average(gamesWithScores.map((result) => result.score), null), FACTOR_WEIGHTS.game),
+    pattern: toWeightedFactorScore(average(patternScores, null), FACTOR_WEIGHTS.pattern),
     interview: toWeightedFactorScore(report.interview.overall_score, FACTOR_WEIGHTS.interview) ?? {
       score: 0,
       max: FACTOR_WEIGHTS.interview,
@@ -560,7 +562,9 @@ function NcsConnectionSummary({ competencies, state }: NcsConnectionSummaryProps
   const sorted = [...competencies].sort((a, b) => b.score - a.score);
   const rows = [
     { label: '강점', tone: 'positive' as const, competency: sorted[0] },
-    { label: '보완', tone: 'warning' as const, competency: sorted[sorted.length - 1] },
+    ...(sorted.length > 1
+      ? [{ label: '보완', tone: 'warning' as const, competency: sorted[sorted.length - 1] }]
+      : []),
   ];
 
   return (
@@ -642,14 +646,6 @@ function ResilienceFeedbackCard({ insights }: ResilienceFeedbackCardProps) {
   );
 }
 
-function averageScore(values: readonly number[]) {
-  if (values.length === 0) {
-    return 0;
-  }
-
-  return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
-}
-
 function isPressureCurve(curve: ResilienceCurve) {
   return (
     curve.length > 0 &&
@@ -678,7 +674,7 @@ function resolveLocalResilienceCurve(
       return {
         gameId: game.id,
         actualScore: result.score,
-        difficulty: averageScore(rounds.map((round) => round.difficulty)) || 50,
+        difficulty: average(rounds.map((round) => round.difficulty), 0) || 50,
       };
     })
     .filter(
