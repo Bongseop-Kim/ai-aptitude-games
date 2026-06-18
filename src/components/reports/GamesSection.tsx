@@ -1,5 +1,6 @@
 import { Fragment } from 'react';
 import { useRouter } from 'expo-router';
+import { Pressable } from 'react-native';
 
 import { games } from '../../data/games';
 import { useGameResultsForMockExam } from '../../data/local/useGameResults';
@@ -8,11 +9,11 @@ import { Grid } from '../../design-system/components/Grid';
 import { HStack, VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
 import type { MockExamRecord } from '../../domain/types';
-import { ProgressBar } from '../readiness/ProgressBar';
 import { Card } from '../ui/Card';
 import { Icon } from '../ui/Icon';
 import { List } from '../ui/List';
 import { Skeleton } from '../ui/Skeleton';
+import { ReportScoreRow } from './ReportScoreRow';
 
 type GamesSectionProps = {
   record: MockExamRecord;
@@ -71,54 +72,35 @@ export function GamesSection({ record, previousRecord }: GamesSectionProps) {
           return (
             <Fragment key={game.id}>
               {game.id !== games[0].id ? <List.Divider /> : null}
-              <List.Item
+              <Pressable
+                accessibilityRole="button"
                 onPress={() => router.push({ pathname: '/games/[id]', params: { id: game.id } } as never)}
                 style={pressedRowStyle}
               >
-                <List.Content>
-                  <VStack gap="x1_5" minHeight="x16">
-                    <HStack align="center" gap="x3">
-                      <VStack flex={0.55} minWidth="x16">
-                        <Text textStyle="t3Bold" maxLines={2}>
-                          {game.name}
+                <HStack align="center" gap="x3">
+                  <Box flex={1}>
+                    <ReportScoreRow
+                      title={game.name}
+                      description={game.skill}
+                      value={result?.score ?? 0}
+                      valueLabel={result?.score != null ? `${result.score}` : '-'}
+                      supportingLabel={delta === null || delta === 0 ? null : deltaLabel(delta)}
+                      supportingColor={delta != null && delta < 0 ? 'fg.critical' : 'fg.positive'}
+                      reserveSupportingLabel
+                    >
+                      <Grid columns={2} gap="x2">
+                        <Text color="fg.neutralMuted" textStyle="t2Regular">
+                          정확도 {result ? formatAccuracy(result.accuracy) : '-'}
                         </Text>
-                        <Text color="fg.neutralSubtle" textStyle="t2Regular" lineHeight="t3" maxLines={2}>
-                          {game.skill}
+                        <Text color="fg.neutralMuted" textStyle="t2Regular">
+                          평균 {result ? formatResponseMs(result.avgResponseMs) : '-'}
                         </Text>
-                      </VStack>
-                      <ProgressBar value={result?.score ?? 0} layout="inline" />
-                      <Text align="right" textStyle="t5Bold">
-                        {result?.score ?? '-'}
-                      </Text>
-                      <HStack align="center" justify="flexEnd" width="x10">
-                        {delta === null || delta === 0 ? (
-                          <Box style={{ opacity: 0 }}>
-                            <Text textStyle="t2Bold">▲ 0</Text>
-                          </Box>
-                        ) : (
-                          <Text
-                            color={delta > 0 ? 'fg.positive' : 'fg.critical'}
-                            textStyle="t2Bold"
-                          >
-                            {deltaLabel(delta)}
-                          </Text>
-                        )}
-                      </HStack>
-                    </HStack>
-                    <Grid columns={2} gap="x2" pl="x16">
-                      <Text color="fg.neutralMuted" textStyle="t2Regular">
-                        정확도 {result ? formatAccuracy(result.accuracy) : '-'}
-                      </Text>
-                      <Text color="fg.neutralMuted" textStyle="t2Regular">
-                        평균 {result ? formatResponseMs(result.avgResponseMs) : '-'}
-                      </Text>
-                    </Grid>
-                  </VStack>
-                </List.Content>
-                <List.Suffix>
+                      </Grid>
+                    </ReportScoreRow>
+                  </Box>
                   <Icon name="ChevronRight" color="fg.neutralSubtle" size="small" />
-                </List.Suffix>
-              </List.Item>
+                </HStack>
+              </Pressable>
             </Fragment>
           );
         })}

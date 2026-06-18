@@ -1,7 +1,7 @@
 import { Fragment } from 'react';
 
 import { SubSectionHead } from '../app/SubSectionHead';
-import { ProgressBar } from '../readiness/ProgressBar';
+import { ReportScoreMarkerLegend, ReportScoreRow } from '../reports/ReportScoreRow';
 import { Badge } from '../ui/Badge';
 import { Card } from '../ui/Card';
 import { List } from '../ui/List';
@@ -59,43 +59,27 @@ export function InterviewAnalysisBody({ interview }: InterviewAnalysisBodyProps)
       <VStack gap="x2">
         <SubSectionHead title="평가 축" caption="또래 평균은 같은 조건으로 응시한 집단의 평균이에요." />
         <Card p="spacingX.globalGutter">
-          <List.Root>
-            {INTERVIEW_AXES.map((axis, index) => {
-              const score = axisScores.get(axis.key) ?? null;
-              return (
-                <Fragment key={axis.key}>
-                  {index > 0 ? <List.Divider /> : null}
-                  <HStack align="center" gap="x3" py="x3">
-                    <VStack flex={0.55} gap="x0_5" minWidth="x16">
-                      <Text textStyle="t4Bold">{axis.name}</Text>
-                      <Text color="fg.neutralSubtle" textStyle="t2Regular" lineHeight="t3" maxLines={2}>
-                        {axis.sub}
-                      </Text>
-                    </VStack>
-                    {score != null ? (
-                      <>
-                        <Box flex={1}>
-                          <ProgressBar value={score.score} layout="inline" />
-                        </Box>
-                        <Text textStyle="t5Bold">{score.score}</Text>
-                        {score.peer_avg != null ? (
-                          <Text color="fg.neutralMuted" textStyle="t2Regular">
-                            또래 {score.peer_avg}
-                          </Text>
-                        ) : null}
-                      </>
-                    ) : (
-                      <Box flex={1}>
-                        <Text color="fg.neutralSubtle" textStyle="t2Regular">
-                          영상 분석 준비 중
-                        </Text>
-                      </Box>
-                    )}
-                  </HStack>
-                </Fragment>
-              );
-            })}
-          </List.Root>
+          <VStack gap="x2">
+            <ReportScoreMarkerLegend label="또래 평균" />
+            <List.Root>
+              {INTERVIEW_AXES.map((axis, index) => {
+                const score = axisScores.get(axis.key) ?? null;
+                return (
+                  <Fragment key={axis.key}>
+                    {index > 0 ? <List.Divider /> : null}
+                    <ReportScoreRow
+                      title={axis.name}
+                      description={axis.sub}
+                      value={score?.score ?? null}
+                      markerValue={score?.peer_avg ?? null}
+                      supportingLabel={score?.peer_avg != null ? `또래 ${score.peer_avg}` : null}
+                      unavailableLabel="영상 분석 준비 중"
+                    />
+                  </Fragment>
+                );
+              })}
+            </List.Root>
+          </VStack>
         </Card>
       </VStack>
 
@@ -107,17 +91,7 @@ export function InterviewAnalysisBody({ interview }: InterviewAnalysisBodyProps)
               {interview.delivery_details.map((detail, index) => (
                 <Fragment key={index}>
                   {index > 0 ? <List.Divider /> : null}
-                  <HStack align="center" gap="x3" py="x3">
-                    <Box flex={0.45} minWidth="x16">
-                      <Text textStyle="t3Medium" maxLines={2}>
-                        {detail.label}
-                      </Text>
-                    </Box>
-                    <Box flex={1}>
-                      <ProgressBar value={detail.value} layout="inline" />
-                    </Box>
-                    <Text textStyle="t5Bold">{detail.value}</Text>
-                  </HStack>
+                  <ReportScoreRow title={detail.label} value={detail.value} />
                 </Fragment>
               ))}
             </List.Root>
@@ -133,22 +107,7 @@ export function InterviewAnalysisBody({ interview }: InterviewAnalysisBodyProps)
               {interview.ncs_units.map((unit, index) => (
                 <Fragment key={unit.label}>
                   {index > 0 ? <List.Divider /> : null}
-                  <HStack align="center" gap="x3" py="x3">
-                    <VStack flex={0.45} gap="x0_5" minWidth="x16">
-                      <Text textStyle="t3Medium" maxLines={2}>
-                        {unit.label}
-                      </Text>
-                      {unit.basis ? (
-                        <Text color="fg.neutralSubtle" textStyle="t2Regular" lineHeight="t3" maxLines={2}>
-                          {unit.basis}
-                        </Text>
-                      ) : null}
-                    </VStack>
-                    <Box flex={1}>
-                      <ProgressBar value={unit.score} layout="inline" />
-                    </Box>
-                    <Text textStyle="t5Bold">{unit.score}</Text>
-                  </HStack>
+                  <ReportScoreRow title={unit.label} description={unit.basis} value={unit.score} />
                 </Fragment>
               ))}
             </List.Root>
