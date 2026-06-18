@@ -1,11 +1,8 @@
-import { Box } from '../../design-system/components/Box';
-import { HStack, VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
+import { List } from '../ui/List';
 import { TagGroup, type TagGroupItem } from '../ui/TagGroup';
 import { BulletBar } from './ReportCharts';
 
-const TITLE_COLUMN_WIDTH = 'x23';
-const SCORE_COLUMN_WIDTH = 'x10';
 const EMPTY_TAG_ITEMS: TagGroupItem[] = [];
 
 export type ReportScoreRowProps = {
@@ -31,21 +28,19 @@ export function ReportScoreRow({
   const resolvedTagItems = hasValue ? tagItems : [...tagItems, { label: unavailableLabel }];
 
   return (
-    <VStack gap="x2" minHeight="x24" py="x3" width="full">
-      <HStack align="center" gap="x3">
-        <Box width={TITLE_COLUMN_WIDTH}>
-          <Text textStyle="t4Bold" maxLines={2}>
-            {title}
-          </Text>
-        </Box>
+    <List.Item>
+      <List.Content>
+        <Text textStyle="t3Medium" maxLines={1}>
+          {title}
+        </Text>
         <BulletBar value={score} peerMedian={markerValue} />
-        <Box width={SCORE_COLUMN_WIDTH}>
-          <Text align="right" textStyle="t5Bold">
-            {scoreLabel}
-          </Text>
-        </Box>
-      </HStack>
-      <TagGroup items={resolvedTagItems} />
-    </VStack>
+        <TagGroup items={resolvedTagItems} />
+      </List.Content>
+      <List.Suffix>
+        <Text align="right" textStyle="t3Bold">
+          {scoreLabel}
+        </Text>
+      </List.Suffix>
+    </List.Item>
   );
 }

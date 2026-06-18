@@ -12,50 +12,46 @@ import { Box } from '../../design-system/components/Box';
 import { HStack, VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
 import type { ReportInterview, ReportTopFix } from '../../domain/report';
+import type { InterviewSessionRecord } from '../../domain/types';
 import { QuestionFeedbackRow } from './QuestionFeedbackAccordion';
 
 export type InterviewAnalysisBodyProps = {
   interview: ReportInterview;
   mockExamId: string;
+  session?: InterviewSessionRecord | null;
 };
 
-const BAND_STEPS = ['부족', '필요', '우수', '완성'] as const;
+function formatAnswerMinutes(durationMs: number) {
+  return `${Math.max(1, Math.round(durationMs / 60000))}분`;
+}
 
-export function InterviewAnalysisBody({ interview, mockExamId }: InterviewAnalysisBodyProps) {
+export function InterviewAnalysisBody({ interview, mockExamId, session = null }: InterviewAnalysisBodyProps) {
   const router = useRouter();
   const axisScores = new Map(interview.axes.map((axis) => [axis.key, axis]));
 
   return (
     <VStack gap="x4">
-      <Card p="spacingX.globalGutter">
+      <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" p="spacingX.globalGutter">
         <VStack gap="x3">
-          <HStack align="center" gap="x2">
-            <Text textStyle="t8Bold">{interview.overall_score}</Text>
-            <Text color="fg.neutralSubtle" textStyle="t3Medium">
-              / 100
-            </Text>
-          </HStack>
-          <HStack gap="x1">
-            {BAND_STEPS.map((step) => {
-              const active = step === interview.band;
-              return (
-                <Box
-                  key={step}
-                  alignItems="center"
-                  bg={active ? 'bg.brandWeak' : 'bg.neutralWeak'}
-                  borderRadius="r2"
-                  flex={1}
-                  py="x1"
-                >
-                  <Text
-                    color={active ? 'fg.brand' : 'fg.neutralSubtle'}
-                    textStyle={active ? 't2Bold' : 't2Regular'}
-                  >
-                    {step}
-                  </Text>
-                </Box>
-              );
-            })}
+          {session ? (
+            <VStack gap="x1">
+              <Text color="fg.neutralSubtle" textStyle="t2Regular">
+                {session.company} · {session.role}
+              </Text>
+              <Text textStyle="t4Bold">
+                질문 {session.questionCount}개 · 총 답변 {formatAnswerMinutes(session.durationMs)}
+              </Text>
+            </VStack>
+          ) : null}
+          {session ? <List.Divider /> : null}
+          <HStack align="center" gap="x3" justify="spaceBetween">
+            <HStack align="center" gap="x1">
+              <Text textStyle="t8Bold">{interview.overall_score}</Text>
+              <Text color="fg.neutralSubtle" textStyle="t3Medium">
+                / 100
+              </Text>
+            </HStack>
+            <Badge label={interview.band} size="small" tone="brand" />
           </HStack>
         </VStack>
       </Card>

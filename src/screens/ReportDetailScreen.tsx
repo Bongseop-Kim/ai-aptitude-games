@@ -484,20 +484,18 @@ function GameDiagnosisSection({
         state={states.resilience}
       />
 
-      <ReportSubsection title="게임별 결과" iconName="Gamepad2" iconColor="fg.brand">
+      <ReportSubsection title="게임별 결과">
         <GamesSection record={record} gameInsights={report?.games ?? null} />
       </ReportSubsection>
 
       <ReportSubsection
         title="앱 5대 역량 프로필"
         caption="NCS 공식 판정이 아니라, 게임 과제를 직업공통능력 관점으로 다시 묶은 참고 지표예요."
-        iconName="ChartNoAxesColumnIncreasing"
-        iconColor="fg.brand"
       >
         <CompetenciesSection competencies={report?.competencies ?? null} state={states.competencies} onRetry={onRetry} />
       </ReportSubsection>
 
-      <ReportSubsection title="응답 패턴 프로필" iconName="Timeline" iconColor="fg.brand">
+      <ReportSubsection title="응답 패턴 프로필">
         <ResponsePatternSection pattern={report?.response_pattern ?? null} state={states.pattern} onRetry={onRetry} />
       </ReportSubsection>
 
@@ -520,19 +518,14 @@ function GameDiagnosisSection({
 type ReportSubsectionProps = {
   title: string;
   caption?: string;
-  iconName: 'Gamepad2' | 'ChartNoAxesColumnIncreasing' | 'Timeline';
-  iconColor: 'fg.brand';
   children: ReactNode;
 };
 
-function ReportSubsection({ title, caption, iconName, iconColor, children }: ReportSubsectionProps) {
+function ReportSubsection({ title, caption, children }: ReportSubsectionProps) {
   return (
     <VStack gap="x2">
       <VStack gap="x0_5">
-        <HStack align="center" gap="x1_5">
-          <Icon name={iconName} color={iconColor} size="small" />
-          <Text textStyle="t4Bold">{title}</Text>
-        </HStack>
+        <Text textStyle="t4Bold">{title}</Text>
         {caption ? (
           <Text color="fg.neutralMuted" textStyle="t2Regular" lineHeight="t3" maxLines={2}>
             {caption}

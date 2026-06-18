@@ -35,7 +35,7 @@ export function FeedbackReportBody({
 
   return (
     <VStack gap="x4">
-      {session ? (
+      {session && !analysisDone ? (
         <Card minHeight="x16" p="spacingX.globalGutter">
           <VStack gap="x1">
             <Text color="fg.neutralSubtle" textStyle="t2Regular">
@@ -52,7 +52,7 @@ export function FeedbackReportBody({
       ) : null}
 
       {analysisDone && interview && mockExamId ? (
-        <InterviewAnalysisBody interview={interview} mockExamId={mockExamId} />
+        <InterviewAnalysisBody interview={interview} mockExamId={mockExamId} session={session} />
       ) : (
         <>
           <VStack gap="x2">
