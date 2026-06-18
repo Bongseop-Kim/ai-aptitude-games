@@ -8,6 +8,7 @@ import type { GamePlayProps } from '../../../domain/games/play';
 import {
   COMPARE_FEEDBACK_MS,
   COMPARE_TOTAL_ROUNDS,
+  compareDifficulty,
   compareCorrectAnswer,
   compareSideLabel,
   compareSides,
@@ -116,6 +117,7 @@ export function ComparePlay({ game, onFinish, onClose }: GamePlayProps) {
     onAdvanceRound: () => {
       setQuestion(createCompareQuestion());
     },
+    getDifficulty: (_answer, currentRound) => compareDifficulty(question, currentRound),
     onComplete: ({ correctCount, responseTimes, rounds }) => {
       onFinish({
         gameId: game.id,

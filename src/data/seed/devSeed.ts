@@ -5,7 +5,9 @@ import { numbersSequenceLength } from '../../domain/games/numbers';
 import { clamp } from '../../domain/games/random';
 import {
   averageResponseMs,
+  clampDifficulty,
   computeGameScore,
+  roundDifficulty,
   type GameRoundResult,
 } from '../../domain/games/results';
 import type { GameId } from '../../domain/types';
@@ -90,6 +92,16 @@ function seedLevelParams(gameId: GameId, roundIndex: number): GameRoundResult['l
   return null;
 }
 
+function seedDifficulty(gameId: GameId, roundIndex: number, totalRounds: number) {
+  if (gameId === 'numbers') {
+    return clampDifficulty(30 + numbersSequenceLength(roundIndex) * 8);
+  }
+  if (gameId === 'memory') {
+    return clampDifficulty(45 + (roundIndex % 3) * 12);
+  }
+  return roundDifficulty(roundIndex, totalRounds, 42, 24);
+}
+
 function buildSeedGameInput(gameId: GameId) {
   const totalRounds = gameContent[gameId].totalRounds;
   const targetAccuracy = randomFloat(0.45, 1);
@@ -105,6 +117,7 @@ function buildSeedGameInput(gameId: GameId) {
       roundIndex,
       correct,
       responseMs: randomInt(600, 2500),
+      difficulty: seedDifficulty(gameId, roundIndex, totalRounds),
       levelParams: seedLevelParams(gameId, roundIndex),
     });
   }
@@ -224,12 +237,31 @@ async function seedMockExamRound(
     await insertSeedExamItems(db, userId, mockExamId, items);
 
     const perGameScores: Record<string, number> = {};
+    const perGameDifficulties: Record<string, number> = {};
     for (const item of items) {
       if (item.itemKey !== 'interview') {
         perGameScores[item.itemKey] = item.score;
       }
     }
-    const report = buildDummyReport({ score: examScore, perGameScores, interviewScore });
+    for (const game of games) {
+      const rounds = await db.getAllAsync<{ difficulty: number }>(
+        `SELECT game_result_rounds.difficulty
+         FROM game_result_rounds
+         INNER JOIN game_results ON game_results.id = game_result_rounds.result_id
+         WHERE game_results.mock_exam_id = ? AND game_results.game_id = ?`,
+        mockExamId,
+        game.id,
+      );
+      perGameDifficulties[game.id] = Math.round(
+        rounds.reduce((sum, round) => sum + round.difficulty, 0) / Math.max(1, rounds.length),
+      );
+    }
+    const report = buildDummyReport({
+      score: examScore,
+      perGameScores,
+      perGameDifficulties,
+      interviewScore,
+    });
     await insertDevReport(db, mockExamId, report);
   });
 }

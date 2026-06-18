@@ -12,6 +12,7 @@ import {
   NUMBERS_MEMORIZE_MS_PER_DIGIT,
   NUMBERS_TOTAL_ROUNDS,
   createNumbersQuestion,
+  numbersDifficulty,
   numbersSequenceLength,
   numbersTargetSequence,
 } from '../../../domain/games/numbers';
@@ -87,6 +88,7 @@ export function NumbersPlay({ game, onFinish, onClose }: GamePlayProps) {
   const { round, picked, headerScore, choose, markQuestionShown } = useRoundPlay<number[]>({
     totalRounds: NUMBERS_TOTAL_ROUNDS,
     feedbackMs: NUMBERS_FEEDBACK_MS,
+    getDifficulty: (_answer, currentRound) => numbersDifficulty(currentRound),
     getLevelParams: (_answer, currentRound) => ({ digits: numbersSequenceLength(currentRound) }),
     onComplete: ({ correctCount, responseTimes, rounds }) => {
       onFinish({

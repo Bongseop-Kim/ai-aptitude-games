@@ -1,3 +1,5 @@
+import { clampDifficulty } from './results';
+
 export type PathCellType = 'empty' | 'wall' | 'person' | 'car';
 
 export type PathPuzzle = {
@@ -92,4 +94,10 @@ export function isPathSeparated(puzzle: PathPuzzle, fences: ReadonlySet<number>)
   }
 
   return true;
+}
+
+export function pathDifficulty(puzzle: PathPuzzle): number {
+  const movingTargets = puzzle.cells.filter((cell) => cell === 'person' || cell === 'car').length;
+  const wallCount = puzzle.cells.filter((cell) => cell === 'wall').length;
+  return clampDifficulty(34 + movingTargets * 6 + puzzle.fenceLimit * 7 + wallCount);
 }

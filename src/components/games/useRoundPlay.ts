@@ -11,6 +11,7 @@ export function useRoundPlay<TAnswer>(options: {
     rounds: GameRoundResult[];
   }) => void;
   onAdvanceRound?: (round: number) => void;
+  getDifficulty?: (answer: TAnswer, round: number) => number;
   getLevelParams?: (answer: TAnswer, round: number) => GameRoundResult['levelParams'];
 }): {
   round: number;
@@ -67,6 +68,7 @@ export function useRoundPlay<TAnswer>(options: {
       roundIndex: round,
       correct: isCorrect,
       responseMs,
+      difficulty: options.getDifficulty?.(value, round) ?? 50,
       levelParams: options.getLevelParams?.(value, round) ?? null,
     });
     const nextCorrectCount = correctCount + (isCorrect ? 1 : 0);

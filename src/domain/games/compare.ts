@@ -1,4 +1,5 @@
 import { randomInt } from './random';
+import { clampDifficulty, roundDifficulty } from './results';
 
 export type CompareSide = 'left' | 'right';
 
@@ -42,4 +43,11 @@ export function getCompareDotPosition(index: number): CompareDotPosition {
     left: `${8 + ((index * 37) % 78)}%`,
     top: `${10 + ((index * 53) % 76)}%`,
   };
+}
+
+export function compareDifficulty(question: CompareQuestion, round: number): number {
+  const gap = Math.abs(question.left - question.right);
+  const crowding = Math.max(question.left, question.right);
+  const gapLoad = Math.max(0, 9 - gap) * 4;
+  return clampDifficulty(30 + gapLoad + crowding + roundDifficulty(round, COMPARE_TOTAL_ROUNDS, 0, 12));
 }

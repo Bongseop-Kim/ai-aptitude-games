@@ -14,6 +14,10 @@ import { GamesSection } from '../components/reports/GamesSection';
 import { ProIntroSheet } from '../components/reports/ProIntroSheet';
 import { ReportPaywall } from '../components/reports/ReportPaywall';
 import { ResponsePatternRows } from '../components/reports/ReportCharts';
+import {
+  ResilienceDifficultyChart,
+  type ResilienceChartPoint,
+} from '../components/reports/ResilienceDifficultyChart';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Icon } from '../components/ui/Icon';
@@ -25,8 +29,11 @@ import { games } from '../data/games';
 import { reportDetailSections } from '../data/reports';
 import { useInterviewSessionForMockExam } from '../data/local/useInterviewSessions';
 import { useInterviewAnswers } from '../data/local/useInterviewAnswers';
-import { useGameResultsForMockExam } from '../data/local/useGameResults';
-import type { GameResultRecord } from '../data/local/gameResults';
+import {
+  useGameResultRoundsForMockExam,
+  useGameResultsForMockExam,
+} from '../data/local/useGameResults';
+import type { GameResultRecord, GameResultRoundRecord } from '../data/local/gameResults';
 import { useMockExamRecord } from '../data/local/useMockExamResults';
 import { useIsPro, useProfile } from '../data/server/useProfile';
 import { useMockExamReport, getReportSectionStates } from '../data/server/useMockExamReport';
@@ -43,6 +50,7 @@ import type {
   ReportResilience,
   ReportResponsePattern,
 } from '../domain/report';
+import { buildPressureRecoveryCurve } from '../domain/reportResilience';
 import type { GameId, MockExamRecord, ReportSectionKey } from '../domain/types';
 import type { ReportSectionStates } from '../data/server/useMockExamReport';
 import { useSQLiteContext } from 'expo-sqlite';
@@ -181,6 +189,7 @@ function ReportContent({ record }: { record: MockExamRecord }) {
   const report = row?.status === 'done' ? row.report : null;
   const readyReport = report?.overall != null && report.interview?.status === 'done' ? report : null;
   const localResults = useGameResultsForMockExam(record.id);
+  const localRounds = useGameResultRoundsForMockExam(record.id);
   const onRetryReport = () => void reportQuery.refetch();
 
   if (!readyReport) {
@@ -211,6 +220,7 @@ function ReportContent({ record }: { record: MockExamRecord }) {
                     record={record}
                     report={readyReport}
                     gameResults={localResults.data}
+                    gameRounds={localRounds.data}
                     states={states}
                     onRetryReport={onRetryReport}
                   />
@@ -341,6 +351,7 @@ type ReportSectionBodyProps = {
   record: MockExamRecord;
   report: MockExamReport;
   gameResults: MockExamGameResults;
+  gameRounds: GameResultRoundRecord[] | undefined;
   states: ReportSectionStates;
   onRetryReport: () => void;
 };
@@ -350,6 +361,7 @@ function ReportSectionBody({
   record,
   report,
   gameResults,
+  gameRounds,
   states,
   onRetryReport,
 }: ReportSectionBodyProps) {
@@ -361,6 +373,8 @@ function ReportSectionBody({
         <GameDiagnosisSection
           record={record}
           report={report}
+          gameResults={gameResults}
+          gameRounds={gameRounds}
           states={states}
           onRetry={onRetryReport}
         />
@@ -503,12 +517,21 @@ function ReflectedFactors({ scores }: { scores: FactorScores }) {
 
 type GameDiagnosisSectionProps = {
   record: MockExamRecord;
+  gameResults: MockExamGameResults;
+  gameRounds: GameResultRoundRecord[] | undefined;
   report: MockExamReport | null;
   states: ReportSectionStates;
   onRetry: () => void;
 };
 
-function GameDiagnosisSection({ record, report, states, onRetry }: GameDiagnosisSectionProps) {
+function GameDiagnosisSection({
+  record,
+  gameResults,
+  gameRounds,
+  report,
+  states,
+  onRetry,
+}: GameDiagnosisSectionProps) {
   const hasFailedCore =
     states.resilience === 'failed' ||
     states.coach === 'failed';
@@ -519,6 +542,8 @@ function GameDiagnosisSection({ record, report, states, onRetry }: GameDiagnosis
   return (
     <VStack gap="x3">
       <ResilienceSummary
+        gameResults={gameResults}
+        gameRounds={gameRounds}
         resilience={report?.resilience ?? null}
         state={states.resilience}
       />
@@ -654,15 +679,7 @@ type ResilienceFeedbackCardProps = {
   insights: NonNullable<ReportResilience>['insights'];
 };
 
-type ResilienceMetrics = {
-  recovery: number;
-  averageScore: number;
-  lowScoreCount: number;
-};
-
 type ResilienceCurve = NonNullable<ReportResilience>['curve'];
-
-const RESILIENCE_LOW_SCORE_GAP = 8;
 
 function ResilienceFeedbackCard({ insights }: ResilienceFeedbackCardProps) {
   if (insights.length === 0) {
@@ -701,161 +718,101 @@ function ResilienceFeedbackCard({ insights }: ResilienceFeedbackCardProps) {
   );
 }
 
-function clampScore(value: number) {
-  return Math.max(0, Math.min(100, value));
-}
-
-function resolveResilienceMetrics(curve: ResilienceCurve): ResilienceMetrics | null {
-  const values = curve.map((point) => clampScore(point.value));
-
+function averageScore(values: readonly number[]) {
   if (values.length === 0) {
-    return null;
+    return 0;
   }
 
-  const lowestValue = Math.min(...values);
-  const lastValue = values[values.length - 1];
-  const averageScore = Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
-  const lowScoreCount = values.filter((value) => value <= averageScore - RESILIENCE_LOW_SCORE_GAP).length;
-
-  return {
-    recovery: Math.max(0, lastValue - lowestValue),
-    averageScore,
-    lowScoreCount,
-  };
+  return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
 }
 
-function resilienceBarHeight(score: number) {
-  if (score >= 90) return 'full';
-  if (score >= 80) return 'x24';
-  if (score >= 70) return 'x21';
-  if (score >= 60) return 'x18';
-  if (score >= 50) return 'x15';
-  if (score >= 40) return 'x12';
-  if (score >= 30) return 'x9';
-  if (score >= 20) return 'x6';
-  return 'x4';
-}
-
-function resilienceAverageLineTop(score: number) {
-  if (score >= 90) return 'x1';
-  if (score >= 80) return 'x3';
-  if (score >= 70) return 'x6';
-  if (score >= 60) return 'x9';
-  if (score >= 50) return 'x12';
-  if (score >= 40) return 'x15';
-  if (score >= 30) return 'x18';
-  if (score >= 20) return 'x21';
-  return 'x23';
-}
-
-function ResilienceStabilityBars({ curve, metrics }: { curve: ResilienceCurve; metrics: ResilienceMetrics }) {
-  const points = curve.map((point, index) => {
-    const score = clampScore(point.value);
-    return {
-      id: `${point.game_id}-${point.segment}-${index}`,
-      score,
-      label: `${index + 1}`,
-      isLow: score <= metrics.averageScore - RESILIENCE_LOW_SCORE_GAP,
-    };
-  });
-
+function isPressureCurve(curve: ResilienceCurve) {
   return (
-    <VStack gap="x2">
-      <HStack align="center" justify="spaceBetween" gap="x2">
-        <Text textStyle="t4Bold">9개 게임 안정성</Text>
-        <Badge label={`평균 ${metrics.averageScore}점`} tone="neutral" size="small" />
-      </HStack>
-      <Box bg="bg.layerFloating" borderRadius="r3" p="x3">
-        <VStack gap="x2">
-          <Box height="x27_5" position="relative">
-            <Box
-              bg="stroke.neutralMuted"
-              height="x0_5"
-              left={0}
-              position="absolute"
-              right={0}
-              top={resilienceAverageLineTop(metrics.averageScore)}
-              zIndex={1}
-            />
-            <HStack align="flexEnd" gap="x1_5" height="full">
-              {points.map((point) => (
-                <VStack key={point.id} align="center" flex={1} gap="x1">
-                  <Box flex={1} justifyContent="flexEnd" width="full">
-                    <Box
-                      accessibilityLabel={`${point.label}번째 게임 ${point.score}점`}
-                      bg={point.isLow ? 'bg.warningSolid' : 'bg.brandSolid'}
-                      borderRadius="r1_5"
-                      height={resilienceBarHeight(point.score)}
-                      width="full"
-                    />
-                  </Box>
-                  <Text align="center" color={point.isLow ? 'fg.warning' : 'fg.neutralSubtle'} textStyle="t1Regular" maxLines={1}>
-                    {point.label}
-                  </Text>
-                </VStack>
-              ))}
-            </HStack>
-          </Box>
-          <HStack align="center" columnGap="x2" rowGap="x1" wrap="wrap">
-            <HStack align="center" gap="x1">
-              <Box bg="stroke.neutralMuted" borderRadius="full" height="x0_5" width="x6" />
-              <Text color="fg.neutralMuted" textStyle="t1Regular">
-                평균선
-              </Text>
-            </HStack>
-            <HStack align="center" gap="x1">
-              <Box bg="bg.brandSolid" borderRadius="full" height="x2" width="x2" />
-              <Text color="fg.neutralMuted" textStyle="t1Regular">
-                평균권
-              </Text>
-            </HStack>
-            <HStack align="center" gap="x1">
-              <Box bg="bg.warningSolid" borderRadius="full" height="x2" width="x2" />
-              <Text color="fg.neutralMuted" textStyle="t1Regular">
-                평균보다 낮은 구간
-              </Text>
-            </HStack>
-          </HStack>
-        </VStack>
-      </Box>
-      <Text color="fg.neutralMuted" textStyle="t2Regular" lineHeight="t3">
-        평균보다 낮은 구간 {metrics.lowScoreCount}개를 기준으로 스트레스 이후 하락 여부를 봤어요.
-      </Text>
-    </VStack>
+    curve.length > 0 &&
+    curve.every(
+      (point) =>
+        point.actual_score != null &&
+        point.difficulty != null &&
+        point.expected_score != null &&
+        point.score_gap != null,
+    )
   );
 }
 
-function ResilienceMetricSummary({ curve, metrics }: { curve: ResilienceCurve; metrics: ResilienceMetrics }) {
-  const recoveryValue = metrics.recovery > 0 ? `+${metrics.recovery}점` : '0점';
+function resolveLocalResilienceCurve(
+  gameResults: MockExamGameResults,
+  gameRounds: GameResultRoundRecord[] | undefined,
+): ResilienceCurve | null {
+  const inputs = games
+    .map((game) => {
+      const result = gameResults?.[game.id];
+      if (!result) {
+        return null;
+      }
+
+      const rounds = gameRounds?.filter((round) => round.gameId === game.id) ?? [];
+      return {
+        gameId: game.id,
+        actualScore: result.score,
+        difficulty: averageScore(rounds.map((round) => round.difficulty)) || 50,
+      };
+    })
+    .filter(
+      (input): input is { actualScore: number; difficulty: number; gameId: GameId } =>
+        input != null,
+    );
+
+  return inputs.length > 0 ? buildPressureRecoveryCurve(inputs) : null;
+}
+
+function resolveDisplayResilienceCurve({
+  gameResults,
+  gameRounds,
+  resilience,
+}: {
+  gameResults: MockExamGameResults;
+  gameRounds: GameResultRoundRecord[] | undefined;
+  resilience: ReportResilience;
+}) {
+  if (resilience?.curve && isPressureCurve(resilience.curve)) {
+    return resilience.curve;
+  }
+
+  const localCurve = resolveLocalResilienceCurve(gameResults, gameRounds);
+  if (localCurve) {
+    return localCurve;
+  }
+
+  if (!resilience?.curve || resilience.curve.length === 0) {
+    return null;
+  }
+
+  return buildPressureRecoveryCurve(
+    resilience.curve.map((point) => ({
+      gameId: point.game_id,
+      actualScore: point.actual_score ?? point.value,
+      difficulty: point.difficulty ?? 50,
+    })),
+  );
+}
+
+function ResilienceDifficultySection({ curve }: { curve: ResilienceCurve }) {
+  const points: ResilienceChartPoint[] = curve.map((point) => ({
+    key: `${point.game_id}-${point.segment}`,
+    actual: point.actual_score ?? point.value,
+    difficulty: point.difficulty ?? 50,
+  }));
 
   return (
     <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" p="spacingX.globalGutter">
       <VStack gap="x4">
         <VStack gap="x1_5">
-          <Text textStyle="t4Bold">스트레스 복원력</Text>
+          <Text textStyle="t4Bold">출제 난이도와 점수</Text>
           <Text color="fg.neutralMuted" textStyle="t3Regular" lineHeight="t4">
-            9개 게임의 점수 흐름에서 평균보다 낮아진 구간과 회복 흐름을 봤어요.
+            게임별 출제 난이도(선)와 실제 점수(막대)를 함께 봤어요. 난이도가 높은 구간에서도 점수가 버텼는지 살펴보세요.
           </Text>
         </VStack>
-        <ResilienceStabilityBars curve={curve} metrics={metrics} />
-        <HStack gap="x2">
-          <Box bg="bg.layerFloating" borderRadius="r3" flex={1} p="x3">
-            <VStack gap="x0_5">
-              <Text color="fg.neutralMuted" textStyle="t2Regular">
-                낮은 구간
-              </Text>
-              <Text textStyle="t6Bold">{metrics.lowScoreCount}개</Text>
-            </VStack>
-          </Box>
-          <Box bg="bg.layerFloating" borderRadius="r3" flex={1} p="x3">
-            <VStack gap="x0_5">
-              <Text color="fg.neutralMuted" textStyle="t2Regular">
-                회복 폭
-              </Text>
-              <Text textStyle="t6Bold">{recoveryValue}</Text>
-            </VStack>
-          </Box>
-        </HStack>
+        <ResilienceDifficultyChart points={points} />
       </VStack>
     </Card>
   );
@@ -878,21 +835,23 @@ function CompetenciesSection({ competencies, state, onRetry }: CompetenciesSecti
 }
 
 type ResilienceSummaryProps = {
+  gameResults: MockExamGameResults;
+  gameRounds: GameResultRoundRecord[] | undefined;
   resilience: ReportResilience;
   state: ReportSectionStates['resilience'];
 };
 
-function ResilienceSummary({ resilience, state }: ResilienceSummaryProps) {
+function ResilienceSummary({ gameResults, gameRounds, resilience, state }: ResilienceSummaryProps) {
   if (resilience == null || state !== 'ready') {
     return null;
   }
 
   const insights = resilience.insights.slice(0, 2);
-  const metrics = resolveResilienceMetrics(resilience.curve);
+  const curve = resolveDisplayResilienceCurve({ gameResults, gameRounds, resilience });
 
   return (
     <VStack gap="x2">
-      {metrics ? <ResilienceMetricSummary curve={resilience.curve} metrics={metrics} /> : null}
+      {curve ? <ResilienceDifficultySection curve={curve} /> : null}
       <ResilienceFeedbackCard insights={insights} />
     </VStack>
   );

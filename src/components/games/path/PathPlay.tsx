@@ -11,6 +11,7 @@ import {
   PATH_TOTAL_ROUNDS,
   createPathSession,
   isPathSeparated,
+  pathDifficulty,
   type PathCellType,
   type PathPuzzle,
 } from '../../../domain/games/path';
@@ -166,6 +167,7 @@ export function PathPlay({ game, onFinish, onClose }: GamePlayProps) {
       roundIndex: round,
       correct: isCorrect,
       responseMs,
+      difficulty: pathDifficulty(puzzle),
       levelParams: null,
     });
     const nextCorrectCount = correctCount + (isCorrect ? 1 : 0);

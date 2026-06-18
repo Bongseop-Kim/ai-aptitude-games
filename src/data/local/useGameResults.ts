@@ -5,10 +5,12 @@ import { games } from '../games';
 import type { GameResultInput } from '../../domain/games/results';
 import type { GameId, GameWithProgress } from '../../domain/types';
 import { useAuth } from '../../providers/AuthProvider';
+import { pushUnsyncedGameResultRounds } from '../sync/gameResultRoundsSync';
 import { pushUnsyncedGameResults } from '../sync/gameResultsSync';
 import {
   getBestScoreForGame,
   getBestScores,
+  getGameResultRoundsForMockExam,
   getGameResultsForMockExam,
   insertGameResult,
 } from './gameResults';
@@ -20,6 +22,8 @@ export const gameResultKeys = {
     ['game-results', userId, 'best', gameId] as const,
   mockExam: (userId: string | null, mockExamId: string | null) =>
     ['game-results', userId, 'mock-exam', mockExamId] as const,
+  mockExamRounds: (userId: string | null, mockExamId: string | null) =>
+    ['game-results', userId, 'mock-exam', mockExamId, 'rounds'] as const,
 };
 
 export function useBestScores() {
@@ -35,6 +39,22 @@ export function useBestScores() {
       return getBestScores(db, userId);
     },
     enabled: userId != null,
+  });
+}
+
+export function useGameResultRoundsForMockExam(mockExamId: string | null) {
+  const db = useSQLiteContext();
+  const { userId } = useAuth();
+
+  return useQuery({
+    queryKey: gameResultKeys.mockExamRounds(userId, mockExamId),
+    queryFn: () => {
+      if (!userId || !mockExamId) {
+        throw new Error('Cannot load game result rounds without an authenticated user and mock exam.');
+      }
+      return getGameResultRoundsForMockExam(db, userId, mockExamId);
+    },
+    enabled: userId != null && mockExamId != null,
   });
 }
 
@@ -101,7 +121,10 @@ export function useSaveGameResult() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: gameResultKeys.all });
       if (userId) {
-        void pushUnsyncedGameResults(db, userId);
+        void (async () => {
+          await pushUnsyncedGameResults(db, userId);
+          await pushUnsyncedGameResultRounds(db, userId);
+        })();
       }
     },
     onError: (error) => {

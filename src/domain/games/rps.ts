@@ -1,5 +1,6 @@
 import type { IconName } from '../../shared/types';
 import { pickRandom } from './random';
+import { clampDifficulty, roundDifficulty } from './results';
 
 export type RpsHand = 'scissors' | 'rock' | 'paper';
 export type RpsRule = 'win' | 'lose' | 'draw';
@@ -54,4 +55,9 @@ export function rpsCorrectAnswer({ aiHand, rule }: RpsQuestion): RpsHand {
   if (rule === 'draw') return aiHand;
   if (rule === 'win') return beatenBy[aiHand];
   return beats[aiHand];
+}
+
+export function rpsDifficulty(question: RpsQuestion, round: number): number {
+  const ruleLoad = question.rule === 'draw' ? 38 : 56;
+  return clampDifficulty(ruleLoad + roundDifficulty(round, RPS_TOTAL_ROUNDS, 0, 14));
 }

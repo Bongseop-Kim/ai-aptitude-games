@@ -1,3 +1,5 @@
+import { clampDifficulty } from './results';
+
 export type NumbersQuestion = {
   sequence: number[];
 };
@@ -33,4 +35,8 @@ export function createNumbersQuestion(round: number): NumbersQuestion {
 
 export function numbersTargetSequence(sequence: readonly number[]): number[] {
   return [...sequence].reverse();
+}
+
+export function numbersDifficulty(round: number): number {
+  return clampDifficulty(30 + numbersSequenceLength(round) * 8);
 }

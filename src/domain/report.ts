@@ -64,6 +64,13 @@ export type ReportResilienceCurvePoint = {
   game_id: string;
   segment: number;
   value: number;
+  actual_score?: number;
+  difficulty?: number;
+  difficulty_jump?: number;
+  expected_score?: number;
+  is_pressure_event?: boolean;
+  next_game_gap?: number | null;
+  score_gap?: number;
 };
 
 export type ReportResilienceInsight = {

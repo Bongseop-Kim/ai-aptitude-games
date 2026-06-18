@@ -1,4 +1,4 @@
-import { averagePointsScore } from './results';
+import { averagePointsScore, clampDifficulty, roundDifficulty } from './results';
 import { pickRandom, shuffle } from './random';
 
 export const CAT_TOTAL_ROUNDS = 6;
@@ -56,4 +56,9 @@ export function catRoundPoints(ok: boolean, strength: number): number {
 
 export function computeCatScore(points: readonly number[]): number {
   return averagePointsScore(points);
+}
+
+export function catDifficulty(question: CatQuestion, round: number): number {
+  const missLoad = question.found ? 0 : 8;
+  return clampDifficulty(42 + missLoad + roundDifficulty(round, CAT_TOTAL_ROUNDS, 0, 16));
 }

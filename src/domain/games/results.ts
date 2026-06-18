@@ -5,6 +5,7 @@ export type GameRoundResult = {
   roundIndex: number;
   correct: boolean;
   responseMs: number;
+  difficulty: number;
   levelParams?: Record<string, number | boolean> | null;
 };
 
@@ -20,6 +21,18 @@ export type GameGrade = 'A' | 'A-' | 'B+' | 'B' | 'C';
 
 export function computeGameScore(correct: number, total: number): number {
   return clamp(Math.round(45 + 55 * (correct / total)), 20, 100);
+}
+
+export function clampDifficulty(value: number): number {
+  return clamp(Math.round(value), 0, 100);
+}
+
+export function roundDifficulty(round: number, totalRounds: number, base = 45, spread = 25): number {
+  if (totalRounds <= 1) {
+    return clampDifficulty(base);
+  }
+
+  return clampDifficulty(base + ((round - 1) / (totalRounds - 1)) * spread);
 }
 
 export function roundScore(correctCount: number, totalRounds: number): number {

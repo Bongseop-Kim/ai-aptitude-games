@@ -17,6 +17,7 @@ import {
   createRotateTarget,
   initialRotateState,
   minClicksFor,
+  rotateDifficulty,
   rotateOps,
   rotateRoundScore,
   statesMatch,
@@ -173,6 +174,7 @@ export function RotatePlay({ game, onFinish, onClose }: GamePlayProps) {
       roundIndex: round,
       correct: isCorrect,
       responseMs,
+      difficulty: rotateDifficulty(minClicks, round),
       levelParams: null,
     });
     const nextCorrectCount = correctCount + (isCorrect ? 1 : 0);

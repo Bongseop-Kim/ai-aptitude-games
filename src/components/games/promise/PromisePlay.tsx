@@ -9,6 +9,7 @@ import {
   PROMISE_FEEDBACK_MS,
   PROMISE_TOTAL_ROUNDS,
   createPromiseSession,
+  promiseDifficulty,
 } from '../../../domain/games/promise';
 import { averageResponseMs, computeGameScore } from '../../../domain/games/results';
 import { toneColors } from '../../../domain/tone';
@@ -23,6 +24,7 @@ export function PromisePlay({ game, onFinish, onClose }: GamePlayProps) {
   const { round, picked, headerScore, choose } = useRoundPlay<number>({
     totalRounds: PROMISE_TOTAL_ROUNDS,
     feedbackMs: PROMISE_FEEDBACK_MS,
+    getDifficulty: (_answer, currentRound) => promiseDifficulty(questions[currentRound - 1], currentRound),
     onComplete: ({ correctCount, responseTimes, rounds }) => {
       onFinish({
         gameId: game.id,

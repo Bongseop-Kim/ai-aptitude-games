@@ -1,7 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 export const LOCAL_DB_NAME = 'ai-aptitude-games.db';
-export const LOCAL_DB_SCHEMA_VERSION = 11;
+export const LOCAL_DB_SCHEMA_VERSION = 12;
 
 type SchemaVersionRow = {
   version: number;
@@ -192,6 +192,12 @@ const migrations: readonly { version: number; sql: string }[] = [
         report TEXT NOT NULL,
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
       );
+    `,
+  },
+  {
+    version: 12,
+    sql: `
+      ALTER TABLE game_result_rounds ADD COLUMN difficulty INTEGER NOT NULL DEFAULT 50;
     `,
   },
 ];

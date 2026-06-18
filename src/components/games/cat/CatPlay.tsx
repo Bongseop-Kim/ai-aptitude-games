@@ -12,6 +12,7 @@ import {
   CAT_GRID_COLUMNS,
   CAT_MEMORIZE_MS,
   CAT_TOTAL_ROUNDS,
+  catDifficulty,
   catAnswerFromConfidence,
   catConfidenceLabels,
   catConfidenceStrength,
@@ -174,6 +175,7 @@ export function CatPlay({ game, onFinish, onClose }: GamePlayProps) {
       setQuestion(createQuestionForRound(foundPlan, nextRound));
       setPhase('memorize');
     },
+    getDifficulty: (_answer, currentRound) => catDifficulty(question, currentRound),
     onComplete: ({ correctCount, responseTimes, rounds }) => {
       onFinish({
         gameId: game.id,

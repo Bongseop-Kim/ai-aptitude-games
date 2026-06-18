@@ -1,5 +1,6 @@
 import type { IconName } from '../../shared/types';
 import { pickRandom, shuffle } from './random';
+import { clampDifficulty, roundDifficulty } from './results';
 
 export type MemoryShape = 'triangle' | 'square' | 'circle' | 'pentagon';
 export type MemoryAnswer = 'diff' | 'n2' | 'n3';
@@ -121,4 +122,9 @@ export function createMemoryRounds(): MemoryRound[] {
     { shape: 'square', answer: 'n3' },
     { shape: 'pentagon', answer: 'diff' },
   ];
+}
+
+export function memoryDifficulty(answer: MemoryAnswer, round: number): number {
+  const nBackLoad = answer === 'n3' ? 74 : answer === 'n2' ? 62 : 40;
+  return clampDifficulty(nBackLoad + roundDifficulty(round, MEMORY_TOTAL_ROUNDS, 0, 8));
 }
