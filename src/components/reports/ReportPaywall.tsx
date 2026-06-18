@@ -1,5 +1,4 @@
 import { ScrollView } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomActionBar } from '../app/BottomActionBar';
 import { Card } from '../ui/Card';
@@ -20,14 +19,13 @@ export type ReportPaywallProps = {
 const includedSections = reportDetailSections.slice(1);
 
 export function ReportPaywall({ onUpgrade }: ReportPaywallProps) {
-  const insets = useSafeAreaInsets();
   const { theme } = useDesignSystemTheme();
 
   return (
     <>
-      <Box flex={1} bleedBottom="spacingY.componentDefault" bleedX="spacingX.globalGutter">
+      <Box flex={1} bleedX="spacingX.globalGutter">
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + theme.dimension.spacingX.globalGutter }}
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: theme.dimension.spacingX.globalGutter }}
           showsVerticalScrollIndicator={false}
         >
           <Box px="spacingX.globalGutter" py="x3">
@@ -80,15 +78,13 @@ export function ReportPaywall({ onUpgrade }: ReportPaywallProps) {
           </Box>
         </ScrollView>
       </Box>
-      <Box px="spacingX.globalGutter" style={{ paddingBottom: insets.bottom }}>
-        <BottomActionBar
-          primary={{
-            label: 'Pro로 리포트 보기',
-            iconLeft: 'Zap',
-            onPress: onUpgrade,
-          }}
-        />
-      </Box>
+      <BottomActionBar
+        primary={{
+          label: 'Pro로 리포트 보기',
+          iconLeft: 'Zap',
+          onPress: onUpgrade,
+        }}
+      />
     </>
   );
 }

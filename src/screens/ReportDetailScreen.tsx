@@ -1,6 +1,5 @@
 import { Fragment, useState } from 'react';
 import { ScrollView } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { Header } from '../components/app/Header';
@@ -112,7 +111,7 @@ export function ReportDetailScreen() {
   const gateLoading = isLoading || profileLoading;
 
   return (
-    <Screen safeEdges={['top', 'left', 'right']}>
+    <Screen>
       <Header
         title="종합 리포트"
         subtitle={`모의고사 · ${record?.round ?? '-'}회차 리포트`}
@@ -131,14 +130,13 @@ export function ReportDetailScreen() {
 }
 
 function LoadingBody() {
-  const insets = useSafeAreaInsets();
   const { theme } = useDesignSystemTheme();
 
   return (
     <>
-      <Box flex={1} bleedBottom="spacingY.componentDefault" bleedX="spacingX.globalGutter">
+      <Box flex={1} bleedX="spacingX.globalGutter">
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + theme.dimension.spacingX.globalGutter }}
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: theme.dimension.spacingX.globalGutter }}
           showsVerticalScrollIndicator={false}
         >
           <Box px="spacingX.globalGutter" py="x3">
@@ -146,21 +144,18 @@ function LoadingBody() {
           </Box>
         </ScrollView>
       </Box>
-      <Box px="spacingX.globalGutter" style={{ paddingBottom: insets.bottom }}>
-        <BottomActionBar primary={{ label: '리포트 준비 중', disabled: true }} />
-      </Box>
+      <BottomActionBar primary={{ label: '리포트 준비 중', disabled: true }} />
     </>
   );
 }
 
 function MissingReportBody({ onBack }: { onBack: () => void }) {
-  const insets = useSafeAreaInsets();
   const { theme } = useDesignSystemTheme();
 
   return (
-    <Box flex={1} bleedBottom="spacingY.componentDefault" bleedX="spacingX.globalGutter">
+    <Box flex={1} bleedX="spacingX.globalGutter">
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + theme.dimension.spacingX.globalGutter }}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: theme.dimension.spacingX.globalGutter }}
         showsVerticalScrollIndicator={false}
       >
         <Box px="spacingX.globalGutter" py="x3">
@@ -173,7 +168,6 @@ function MissingReportBody({ onBack }: { onBack: () => void }) {
 
 function ReportContent({ record }: { record: MockExamRecord }) {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { theme } = useDesignSystemTheme();
   const { data: records = [] } = useMockExamRecords();
   const reportQuery = useMockExamReport(record.id, record.createdAt);
@@ -188,9 +182,9 @@ function ReportContent({ record }: { record: MockExamRecord }) {
 
   return (
     <>
-      <Box flex={1} bleedBottom="spacingY.componentDefault" bleedX="spacingX.globalGutter">
+      <Box flex={1} bleedX="spacingX.globalGutter">
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + theme.dimension.spacingX.globalGutter }}
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: theme.dimension.spacingX.globalGutter }}
           showsVerticalScrollIndicator={false}
         >
           <Box px="spacingX.globalGutter" py="x3">
@@ -213,15 +207,13 @@ function ReportContent({ record }: { record: MockExamRecord }) {
           </Box>
         </ScrollView>
       </Box>
-      <Box px="spacingX.globalGutter" style={{ paddingBottom: insets.bottom }}>
-        <BottomActionBar
-          primary={{
-            label: cta.label,
-            iconRight: 'ArrowRight',
-            onPress: () => router.push({ pathname: '/games/[id]', params: { id: cta.gameId } } as never),
-          }}
-        />
-      </Box>
+      <BottomActionBar
+        primary={{
+          label: cta.label,
+          iconRight: 'ArrowRight',
+          onPress: () => router.push({ pathname: '/games/[id]', params: { id: cta.gameId } } as never),
+        }}
+      />
     </>
   );
 }
