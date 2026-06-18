@@ -12,7 +12,6 @@ import {
   Canvas,
   Easing,
   Group,
-  Path,
   Rect,
   RoundedRect,
   Skia,
@@ -22,7 +21,6 @@ import {
 } from '../../lib/native-motion';
 
 type ChartSize = { width: number; height: number };
-type Point = { x: number; y: number };
 
 const EMPTY_SIZE = { width: 0, height: 0 };
 const BULLET_BAR_TOKENS = {
@@ -31,30 +29,10 @@ const BULLET_BAR_TOKENS = {
   markerWidth: 'x1',
   radius: 'r1_5',
 } as const;
-const CHART_TOKENS = {
-  stressHeight: 'x29',
-  cardRadius: 'r3',
-  lineStrokeWidth: 'x0_5',
-} as const;
 
 function clamp(value: number, min = 0, max = 100) {
   'worklet';
   return Math.max(min, Math.min(max, value));
-}
-
-function buildPolylinePath(points: Point[]) {
-  const builder = Skia.PathBuilder.Make();
-
-  points.forEach((point, index) => {
-    if (index === 0) {
-      builder.moveTo(point.x, point.y);
-      return;
-    }
-
-    builder.lineTo(point.x, point.y);
-  });
-
-  return builder.detach();
 }
 
 function useMeasuredChart() {
@@ -147,60 +125,6 @@ export function BulletBar({ value, peerMedian = null }: BulletBarProps) {
             {hasMarker ? (
               <Rect x={markerX} y={0} width={markerWidth} height={markerHeight} color={markerColor} />
             ) : null}
-          </>
-        ) : null}
-      </Canvas>
-    </Box>
-  );
-}
-
-export type StressResilienceChartProps = {
-  values: number[];
-  warningBand?: { start: number; end: number } | null;
-};
-
-export function StressResilienceChart({ values, warningBand }: StressResilienceChartProps) {
-  const { theme } = useDesignSystemTheme();
-  const { size, onLayout } = useMeasuredChart();
-  const progress = useFocusProgress();
-  const brandColor = resolveColor(theme, 'bg.brandSolid');
-  const warningBg = resolveColor(theme, 'mannerTemp.l4Bg');
-  const chartHeight = theme.dimension.x[CHART_TOKENS.stressHeight];
-  const chartRadius = theme.radius[CHART_TOKENS.cardRadius];
-  const lineStrokeWidth = theme.dimension.x[CHART_TOKENS.lineStrokeWidth];
-  const points = values.map((value, index) => {
-    // Skia path geometry keeps small internal insets so strokes and warning
-    // bands do not clip at chart edges.
-    const x = values.length === 1 ? size.width / 2 : 10 + ((size.width - 20) * index) / (values.length - 1);
-    const y = 8 + (size.height - 16) * (1 - clamp(value) / 100);
-    return { x, y };
-  });
-  const path = buildPolylinePath(points);
-  const bandX = warningBand ? size.width * warningBand.start : 0;
-  const bandWidth = warningBand ? size.width * (warningBand.end - warningBand.start) : 0;
-  const chartSummary = values.length > 0
-    ? `스트레스 복원력 추이. 시작 ${clamp(values[0])}점, 마지막 ${clamp(values[values.length - 1])}점.`
-    : '스트레스 복원력 추이를 준비하고 있어요.';
-
-  return (
-    <Box accessibilityLabel={chartSummary} accessibilityRole="image" height={chartHeight} onLayout={onLayout} width="full">
-      <Canvas style={{ width: '100%', height: '100%' }}>
-        {size.width > 0 ? (
-          <>
-            <RoundedRect x={0} y={0} width={size.width} height={size.height} r={chartRadius} color={resolveColor(theme, 'bg.neutralWeak')} />
-            {warningBand ? (
-              <Rect x={bandX} y={8} width={bandWidth} height={size.height - 16} color={warningBg} />
-            ) : null}
-            <Path
-              path={path}
-              color={brandColor}
-              style="stroke"
-              strokeWidth={lineStrokeWidth}
-              strokeCap="round"
-              strokeJoin="round"
-              start={0}
-              end={progress}
-            />
           </>
         ) : null}
       </Canvas>

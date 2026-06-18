@@ -13,7 +13,7 @@ import { CompetencySection } from '../components/reports/CompetencySection';
 import { GamesSection } from '../components/reports/GamesSection';
 import { ProIntroSheet } from '../components/reports/ProIntroSheet';
 import { ReportPaywall } from '../components/reports/ReportPaywall';
-import { ResponsePatternRows, StressResilienceChart } from '../components/reports/ReportCharts';
+import { ResponsePatternRows } from '../components/reports/ReportCharts';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Icon } from '../components/ui/Icon';
@@ -33,7 +33,6 @@ import { useMockExamReport, getReportSectionStates } from '../data/server/useMoc
 import { retryInterviewMediaUpload } from '../data/media/interviewMediaUpload';
 import { useAuth } from '../providers/AuthProvider';
 import { Box } from '../design-system/components/Box';
-import { Grid } from '../design-system/components/Grid';
 import { HStack, VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
 import { useDesignSystemTheme } from '../design-system/provider';
@@ -651,38 +650,212 @@ function NcsConnectionSummary({ competencies, state }: NcsConnectionSummaryProps
   );
 }
 
-type InsightTileProps = {
-  label: string;
-  title: string;
-  description: string;
-  tone: 'positive' | 'warning';
+type ResilienceFeedbackCardProps = {
+  insights: NonNullable<ReportResilience>['insights'];
 };
 
-function InsightTile({ label, title, description, tone }: InsightTileProps) {
-  const isPositive = tone === 'positive';
-  const iconName = isPositive ? 'TrendingUp' : 'CircleDot';
-  const toneColor = isPositive ? 'fg.positive' : 'mannerTemp.l4Text';
+type ResilienceMetrics = {
+  recovery: number;
+  averageScore: number;
+  lowScoreCount: number;
+};
+
+type ResilienceCurve = NonNullable<ReportResilience>['curve'];
+
+const RESILIENCE_LOW_SCORE_GAP = 8;
+
+function ResilienceFeedbackCard({ insights }: ResilienceFeedbackCardProps) {
+  if (insights.length === 0) {
+    return null;
+  }
 
   return (
-    <Card
-      bg={isPositive ? 'bg.brandWeak' : 'mannerTemp.l4Bg'}
-      borderColor={isPositive ? 'stroke.brandWeak' : 'stroke.neutralWeak'}
-      borderRadius="r3"
-      p="x3"
-    >
-      <VStack gap="x0_5">
-        <HStack align="center" gap="x1">
-          <Icon name={iconName} color={toneColor} size="small" />
-          <Text color="fg.neutralMuted" textStyle="t1Regular">
-            {label}
-          </Text>
+    <Card p="spacingX.globalGutter">
+      <VStack gap="x3">
+        <HStack align="center" gap="x1_5">
+          <Icon name="Lightbulb" color="fg.brand" size="small" />
+          <Text textStyle="t4Bold">종합 피드백</Text>
         </HStack>
-        <Text color={toneColor} textStyle="t5Bold" maxLines={2}>
-          {title}
-        </Text>
-        <Text color="fg.neutralSubtle" textStyle="t2Regular" lineHeight="t3" maxLines={2}>
-          {description}
-        </Text>
+        <List.Root>
+          {insights.map((insight, index) => {
+            const isPositive = insight.tone === 'positive';
+            const label = isPositive ? '강점' : '주의';
+            return (
+              <Fragment key={`${label}-${insight.title}-${index}`}>
+                {index > 0 ? <List.Divider /> : null}
+                <List.Item>
+                  <List.Prefix>
+                    <Badge label={label} tone={isPositive ? 'positive' : 'warning'} size="small" />
+                  </List.Prefix>
+                  <List.Content>
+                    <List.Title>{insight.title}</List.Title>
+                    <List.Detail>{insight.body}</List.Detail>
+                  </List.Content>
+                </List.Item>
+              </Fragment>
+            );
+          })}
+        </List.Root>
+      </VStack>
+    </Card>
+  );
+}
+
+function clampScore(value: number) {
+  return Math.max(0, Math.min(100, value));
+}
+
+function resolveResilienceMetrics(curve: ResilienceCurve): ResilienceMetrics | null {
+  const values = curve.map((point) => clampScore(point.value));
+
+  if (values.length === 0) {
+    return null;
+  }
+
+  const lowestValue = Math.min(...values);
+  const lastValue = values[values.length - 1];
+  const averageScore = Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
+  const lowScoreCount = values.filter((value) => value <= averageScore - RESILIENCE_LOW_SCORE_GAP).length;
+
+  return {
+    recovery: Math.max(0, lastValue - lowestValue),
+    averageScore,
+    lowScoreCount,
+  };
+}
+
+function resilienceBarHeight(score: number) {
+  if (score >= 90) return 'full';
+  if (score >= 80) return 'x24';
+  if (score >= 70) return 'x21';
+  if (score >= 60) return 'x18';
+  if (score >= 50) return 'x15';
+  if (score >= 40) return 'x12';
+  if (score >= 30) return 'x9';
+  if (score >= 20) return 'x6';
+  return 'x4';
+}
+
+function resilienceAverageLineTop(score: number) {
+  if (score >= 90) return 'x1';
+  if (score >= 80) return 'x3';
+  if (score >= 70) return 'x6';
+  if (score >= 60) return 'x9';
+  if (score >= 50) return 'x12';
+  if (score >= 40) return 'x15';
+  if (score >= 30) return 'x18';
+  if (score >= 20) return 'x21';
+  return 'x23';
+}
+
+function ResilienceStabilityBars({ curve, metrics }: { curve: ResilienceCurve; metrics: ResilienceMetrics }) {
+  const points = curve.map((point, index) => {
+    const score = clampScore(point.value);
+    return {
+      id: `${point.game_id}-${point.segment}-${index}`,
+      score,
+      label: `${index + 1}`,
+      isLow: score <= metrics.averageScore - RESILIENCE_LOW_SCORE_GAP,
+    };
+  });
+
+  return (
+    <VStack gap="x2">
+      <HStack align="center" justify="spaceBetween" gap="x2">
+        <Text textStyle="t4Bold">9개 게임 안정성</Text>
+        <Badge label={`평균 ${metrics.averageScore}점`} tone="neutral" size="small" />
+      </HStack>
+      <Box bg="bg.layerFloating" borderRadius="r3" p="x3">
+        <VStack gap="x2">
+          <Box height="x27_5" position="relative">
+            <Box
+              bg="stroke.neutralMuted"
+              height="x0_5"
+              left={0}
+              position="absolute"
+              right={0}
+              top={resilienceAverageLineTop(metrics.averageScore)}
+              zIndex={1}
+            />
+            <HStack align="flexEnd" gap="x1_5" height="full">
+              {points.map((point) => (
+                <VStack key={point.id} align="center" flex={1} gap="x1">
+                  <Box flex={1} justifyContent="flexEnd" width="full">
+                    <Box
+                      accessibilityLabel={`${point.label}번째 게임 ${point.score}점`}
+                      bg={point.isLow ? 'bg.warningSolid' : 'bg.brandSolid'}
+                      borderRadius="r1_5"
+                      height={resilienceBarHeight(point.score)}
+                      width="full"
+                    />
+                  </Box>
+                  <Text align="center" color={point.isLow ? 'fg.warning' : 'fg.neutralSubtle'} textStyle="t1Regular" maxLines={1}>
+                    {point.label}
+                  </Text>
+                </VStack>
+              ))}
+            </HStack>
+          </Box>
+          <HStack align="center" columnGap="x2" rowGap="x1" wrap="wrap">
+            <HStack align="center" gap="x1">
+              <Box bg="stroke.neutralMuted" borderRadius="full" height="x0_5" width="x6" />
+              <Text color="fg.neutralMuted" textStyle="t1Regular">
+                평균선
+              </Text>
+            </HStack>
+            <HStack align="center" gap="x1">
+              <Box bg="bg.brandSolid" borderRadius="full" height="x2" width="x2" />
+              <Text color="fg.neutralMuted" textStyle="t1Regular">
+                평균권
+              </Text>
+            </HStack>
+            <HStack align="center" gap="x1">
+              <Box bg="bg.warningSolid" borderRadius="full" height="x2" width="x2" />
+              <Text color="fg.neutralMuted" textStyle="t1Regular">
+                평균보다 낮은 구간
+              </Text>
+            </HStack>
+          </HStack>
+        </VStack>
+      </Box>
+      <Text color="fg.neutralMuted" textStyle="t2Regular" lineHeight="t3">
+        평균보다 낮은 구간 {metrics.lowScoreCount}개를 기준으로 스트레스 이후 하락 여부를 봤어요.
+      </Text>
+    </VStack>
+  );
+}
+
+function ResilienceMetricSummary({ curve, metrics }: { curve: ResilienceCurve; metrics: ResilienceMetrics }) {
+  const recoveryValue = metrics.recovery > 0 ? `+${metrics.recovery}점` : '0점';
+
+  return (
+    <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" p="spacingX.globalGutter">
+      <VStack gap="x4">
+        <VStack gap="x1_5">
+          <Text textStyle="t4Bold">스트레스 복원력</Text>
+          <Text color="fg.neutralMuted" textStyle="t3Regular" lineHeight="t4">
+            9개 게임의 점수 흐름에서 평균보다 낮아진 구간과 회복 흐름을 봤어요.
+          </Text>
+        </VStack>
+        <ResilienceStabilityBars curve={curve} metrics={metrics} />
+        <HStack gap="x2">
+          <Box bg="bg.layerFloating" borderRadius="r3" flex={1} p="x3">
+            <VStack gap="x0_5">
+              <Text color="fg.neutralMuted" textStyle="t2Regular">
+                낮은 구간
+              </Text>
+              <Text textStyle="t6Bold">{metrics.lowScoreCount}개</Text>
+            </VStack>
+          </Box>
+          <Box bg="bg.layerFloating" borderRadius="r3" flex={1} p="x3">
+            <VStack gap="x0_5">
+              <Text color="fg.neutralMuted" textStyle="t2Regular">
+                회복 폭
+              </Text>
+              <Text textStyle="t6Bold">{recoveryValue}</Text>
+            </VStack>
+          </Box>
+        </HStack>
       </VStack>
     </Card>
   );
@@ -715,40 +888,12 @@ function ResilienceSummary({ resilience, state }: ResilienceSummaryProps) {
   }
 
   const insights = resilience.insights.slice(0, 2);
+  const metrics = resolveResilienceMetrics(resilience.curve);
 
   return (
     <VStack gap="x2">
-      <HStack align="center" gap="x1_5">
-        <Icon name="Zap" color="fg.informative" size="small" />
-        <Text textStyle="t4Bold">스트레스 복원력</Text>
-      </HStack>
-      <Card p="spacingX.globalGutter">
-        <VStack gap="x2">
-          <StressResilienceChart values={resilience.curve.map((point) => point.value)} />
-          <HStack>
-            {resilience.curve.map((point, index) => (
-              <Box key={`${point.game_id}-${index}`} flex={1}>
-                <Text align="center" color="fg.neutralSubtle" textStyle="t1Regular" maxLines={1}>
-                  {gameNameFor(point.game_id)}
-                </Text>
-              </Box>
-            ))}
-          </HStack>
-        </VStack>
-      </Card>
-      {insights.length > 0 ? (
-        <Grid columns={2} gap="x2">
-          {insights.map((insight, index) => (
-            <InsightTile
-              key={`${insight.label}-${index}`}
-              label={insight.label}
-              title={insight.title}
-              description={insight.body}
-              tone={insight.tone === 'positive' ? 'positive' : 'warning'}
-            />
-          ))}
-        </Grid>
-      ) : null}
+      {metrics ? <ResilienceMetricSummary curve={resilience.curve} metrics={metrics} /> : null}
+      <ResilienceFeedbackCard insights={insights} />
     </VStack>
   );
 }

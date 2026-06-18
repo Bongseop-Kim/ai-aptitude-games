@@ -17,7 +17,7 @@ import type {
 //
 // Value ranges (verified against the renderers):
 //   - All scores / percentiles / peer values are 0..100.
-//   - Resilience curve values are 0..100 (StressResilienceChart clamps /100).
+//   - Resilience curve values are 0..100.
 //   - Response-pattern scale values are 0..100, where 50 is the neutral center.
 //   - Interview band uses the Korean BAND_STEPS labels, not the English ReportBand.
 
