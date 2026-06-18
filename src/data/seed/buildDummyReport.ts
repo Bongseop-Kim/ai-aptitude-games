@@ -118,7 +118,7 @@ function interviewBandLabel(score: number) {
 }
 
 // Maps a 0..100 score to a 30..95 percentile (top-N% style: higher score → lower
-// number). PercentileBar and the competency "상위 N%" copy both read this scale.
+// number). Overall and competency "상위 N%" copy both read this scale.
 function percentileForScore(score: number) {
   return clampScore(95 - (score / 100) * 65);
 }

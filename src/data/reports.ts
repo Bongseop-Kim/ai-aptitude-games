@@ -13,6 +13,5 @@ export const reportDetailSections: ReportDetailSection[] = [
   { key: 'interview', title: 'AI 면접 피드백' },
   { key: 'resilience', title: '스트레스 복원력' },
   { key: 'pattern', title: '응답 패턴 프로필' },
-  { key: 'peer', title: '성장 추이' },
   { key: 'coach', title: 'AI 코치 · 개선 플랜' },
 ];

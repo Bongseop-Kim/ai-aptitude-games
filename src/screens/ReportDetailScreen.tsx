@@ -4,7 +4,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { Header } from '../components/app/Header';
 import { SectionHead } from '../components/app/SectionHead';
-import { SubSectionHead } from '../components/app/SubSectionHead';
 import { Screen } from '../components/app/Screen';
 import { BottomActionBar } from '../components/app/BottomActionBar';
 import { ReservedSlot } from '../components/app/ReservedSlot';
@@ -14,7 +13,7 @@ import { CompetencySection } from '../components/reports/CompetencySection';
 import { GamesSection } from '../components/reports/GamesSection';
 import { ProIntroSheet } from '../components/reports/ProIntroSheet';
 import { ReportPaywall } from '../components/reports/ReportPaywall';
-import { GrowthTrendChart, PercentileBar, ResponsePatternRows, StressResilienceChart } from '../components/reports/ReportCharts';
+import { ResponsePatternRows, StressResilienceChart } from '../components/reports/ReportCharts';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Icon } from '../components/ui/Icon';
@@ -334,8 +333,6 @@ function ReportSectionBody({
       return <ResilienceSection resilience={report?.resilience ?? null} state={states.resilience} onRetry={onRetryReport} />;
     case 'pattern':
       return <ResponsePatternSection pattern={report?.response_pattern ?? null} state={states.pattern} onRetry={onRetryReport} />;
-    case 'peer':
-      return <GrowthSection record={record} records={records} overall={report?.overall ?? null} />;
     case 'coach':
       return <CoachSection coach={report?.coach ?? null} state={states.coach} onRetry={onRetryReport} />;
   }
@@ -794,58 +791,6 @@ function InterviewFeedbackSection({ mockExamId, report }: InterviewFeedbackSecti
         },
       }}
     />
-  );
-}
-
-type GrowthSectionProps = {
-  record: MockExamRecord;
-  records: MockExamRecord[];
-  overall: ReportOverall | null;
-};
-
-function GrowthSection({ record, records, overall }: GrowthSectionProps) {
-  const chronologicalRecords = records
-    .filter((item) => item.round <= record.round)
-    .reverse();
-  const scores = chronologicalRecords.map((item) => item.score);
-  const delta = record.score - (scores[0] ?? record.score);
-  const showPeer = overall?.percentile != null && overall.cohort != null;
-
-  return (
-    <VStack gap="x3">
-      <Card p="spacingX.globalGutter">
-        {scores.length >= 2 ? (
-          <VStack gap="x2">
-            <GrowthTrendChart scores={scores} />
-            <HStack bg="bg.brandWeak" borderRadius="r3" gap="x2" px="x3" py="x2">
-              <Icon name="TrendingUp" color="fg.brand" size="small" />
-              <Text color="fg.brand" textStyle="t3Medium">
-                첫 회차 대비 {formatScoreDelta(delta)}점 성장했어요
-              </Text>
-            </HStack>
-          </VStack>
-        ) : (
-          <VStack align="center" justify="center" minHeight="x16">
-            <Text align="center" color="fg.neutralMuted" textStyle="t3Regular">
-              다음 회차를 완료하면 성장 추이를 볼 수 있어요.
-            </Text>
-          </VStack>
-        )}
-      </Card>
-      {showPeer && overall ? (
-        <VStack gap="x2">
-          <SubSectionHead title="또래 비교" caption="또래는 같은 조건으로 응시한 비교 집단이에요." />
-          <Card p="spacingX.globalGutter">
-            <VStack gap="x2">
-              <Text color="fg.neutralMuted" textStyle="t2Regular">
-                {overall.cohort?.label} {overall.cohort?.n.toLocaleString()}명 기준 · 상위 {overall.percentile}%
-              </Text>
-              <PercentileBar percentile={overall.percentile ?? 50} />
-            </VStack>
-          </Card>
-        </VStack>
-      ) : null}
-    </VStack>
   );
 }
 

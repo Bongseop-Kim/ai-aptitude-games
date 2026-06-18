@@ -51,7 +51,6 @@ export type ReportSectionKey =
   | 'interview'
   | 'resilience'
   | 'pattern'
-  | 'peer'
   | 'coach';
 
 export type MockExamRecord = {

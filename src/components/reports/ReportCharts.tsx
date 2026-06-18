@@ -10,7 +10,6 @@ import { useDesignSystemTheme } from '../../design-system/provider';
 import type { ReportResponsePatternScale } from '../../domain/report';
 import {
   Canvas,
-  Circle,
   Easing,
   Group,
   Path,
@@ -34,12 +33,8 @@ const BULLET_BAR_TOKENS = {
 } as const;
 const CHART_TOKENS = {
   stressHeight: 'x29',
-  growthHeight: 'x23',
-  percentileHeight: 'x12',
   cardRadius: 'r3',
-  trackRadius: 'r1_5',
   lineStrokeWidth: 'x0_5',
-  pointStrokeWidth: 'x0_5',
 } as const;
 
 function clamp(value: number, min = 0, max = 100) {
@@ -289,119 +284,5 @@ export function ResponsePatternRows({ scales }: { scales: ReportResponsePatternS
         </VStack>
       ))}
     </VStack>
-  );
-}
-
-export type PercentileBarProps = {
-  percentile: number;
-};
-
-export function PercentileBar({ percentile }: PercentileBarProps) {
-  const { theme } = useDesignSystemTheme();
-  const { size, onLayout } = useMeasuredChart();
-  const progress = useFocusProgress(450);
-  const clampedPercentile = clamp(percentile);
-  const markerWidth = theme.dimension.x.x1;
-  const trackRadius = theme.radius[CHART_TOKENS.trackRadius];
-  const percentileHeight = theme.dimension.x[CHART_TOKENS.percentileHeight];
-  const trackThickness = theme.dimension.x.x6;
-  const trackY = (percentileHeight - trackThickness) / 2;
-  const markerThickness = theme.dimension.x.x10;
-  const markerY = (percentileHeight - markerThickness) / 2;
-  const markerX = useDerivedValue(() => {
-    const targetX = size.width * ((100 - clampedPercentile) / 100) * progress.value;
-    return clamp(targetX, 0, Math.max(0, size.width - markerWidth));
-  }, [clampedPercentile, size.width]);
-
-  return (
-    <VStack gap="x2">
-      <Box height={percentileHeight} onLayout={onLayout} position="relative" width="full">
-        <Canvas style={{ width: '100%', height: '100%' }}>
-          {size.width > 0 ? (
-            <>
-              <RoundedRect
-                x={0}
-                y={trackY}
-                width={size.width}
-                height={trackThickness}
-                r={trackRadius}
-                color={resolveColor(theme, 'bg.neutralWeak')}
-              />
-              <Group>
-                <Rect x={markerX} y={markerY} width={markerWidth} height={markerThickness} color={resolveColor(theme, 'fg.brand')} />
-              </Group>
-            </>
-          ) : null}
-        </Canvas>
-      </Box>
-      <HStack justify="spaceBetween">
-        <Text color="fg.neutralSubtle" textStyle="t1Regular">상위 1%</Text>
-        <Text color="fg.neutralSubtle" textStyle="t1Regular">50%</Text>
-        <Text color="fg.neutralSubtle" textStyle="t1Regular">하위 1%</Text>
-      </HStack>
-    </VStack>
-  );
-}
-
-export type GrowthTrendChartProps = {
-  scores: number[];
-};
-
-export function GrowthTrendChart({ scores }: GrowthTrendChartProps) {
-  const { theme } = useDesignSystemTheme();
-  const { size, onLayout } = useMeasuredChart();
-  const progress = useFocusProgress();
-  const brandColor = resolveColor(theme, 'bg.brandSolid');
-  const pointFillColor = resolveColor(theme, 'bg.layerFloating');
-  const chartHeight = theme.dimension.x[CHART_TOKENS.growthHeight];
-  const lineStrokeWidth = theme.dimension.x[CHART_TOKENS.lineStrokeWidth];
-  const pointStrokeWidth = theme.dimension.x[CHART_TOKENS.pointStrokeWidth];
-  const points = scores.map((score, index) => ({
-    // Skia path geometry keeps small internal insets so points and strokes do
-    // not clip at chart edges. A fixed 0–100 scale matches StressResilienceChart
-    // and keeps growth comparable across reports instead of exaggerating small deltas.
-    x: scores.length === 1 ? size.width / 2 : 14 + ((size.width - 28) * index) / (scores.length - 1),
-    y: 12 + (size.height - 28) * (1 - clamp(score) / 100),
-  }));
-  const path = buildPolylinePath(points);
-  const firstScore = scores.length > 0 ? clamp(scores[0]) : null;
-  const lastScore = scores.length > 0 ? clamp(scores[scores.length - 1]) : null;
-  const chartSummary = scores.length > 0
-    ? `성장 추이. 첫 회차 ${firstScore}점, 최근 ${lastScore}점.`
-    : '성장 추이를 준비하고 있어요.';
-
-  return (
-    <Box accessibilityLabel={chartSummary} accessibilityRole="image" height={chartHeight} onLayout={onLayout} width="full">
-      <Canvas style={{ width: '100%', height: '100%' }}>
-        {size.width > 0 ? (
-          <>
-            <Path
-              path={path}
-              color={brandColor}
-              style="stroke"
-              strokeWidth={lineStrokeWidth}
-              strokeCap="round"
-              strokeJoin="round"
-              start={0}
-              end={progress}
-            />
-            {points.map((point, index) => (
-              <Circle key={index} cx={point.x} cy={point.y} r={4} color={pointFillColor} />
-            ))}
-            {points.map((point, index) => (
-              <Circle
-                key={`stroke-${index}`}
-                cx={point.x}
-                cy={point.y}
-                r={4}
-                color={brandColor}
-                style="stroke"
-                strokeWidth={pointStrokeWidth}
-              />
-            ))}
-          </>
-        ) : null}
-      </Canvas>
-    </Box>
   );
 }
