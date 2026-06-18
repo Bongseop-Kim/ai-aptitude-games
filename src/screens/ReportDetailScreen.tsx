@@ -41,7 +41,6 @@ import type {
   MockExamReport,
   ReportCoach,
   ReportCompetencyScore,
-  ReportHighlights,
   ReportResilience,
   ReportResponsePattern,
 } from '../domain/report';
@@ -522,25 +521,15 @@ type GameDiagnosisSectionProps = {
 };
 
 function GameDiagnosisSection({ record, previousRecord, report, states, onRetry }: GameDiagnosisSectionProps) {
-  const results = useGameResultsForMockExam(record.id);
-  const rankedGames = rankedGamesForResults(results.data);
   const hasFailedCore =
-    states.highlights === 'failed' ||
     states.resilience === 'failed' ||
     states.coach === 'failed';
   const hasPendingCore =
-    states.highlights === 'pending' ||
     states.resilience === 'pending' ||
     states.coach === 'pending';
 
   return (
     <VStack gap="x3">
-      <DiagnosisHighlights
-        highlights={report?.highlights ?? null}
-        rankedGames={rankedGames}
-        resultsLoading={results.isLoading}
-      />
-
       <ResilienceSummary
         resilience={report?.resilience ?? null}
         state={states.resilience}
@@ -792,166 +781,6 @@ function ResponsePatternSection({ pattern, state, onRetry }: ResponsePatternSect
     <Card p="spacingX.globalGutter">
       <ResponsePatternRows scales={pattern.scales} />
     </Card>
-  );
-}
-
-type DiagnosisHighlightsProps = {
-  highlights: ReportHighlights | null;
-  rankedGames: ReturnType<typeof rankedGamesForResults>;
-  resultsLoading: boolean;
-};
-
-type DiagnosisHighlightItem = {
-  key: string;
-  gameName: string;
-  skill: string;
-  note?: string;
-  score: number;
-  action?: { label: string; onPress: () => void };
-};
-
-function DiagnosisHighlights({ highlights, rankedGames, resultsLoading }: DiagnosisHighlightsProps) {
-  const router = useRouter();
-  const localStrengths = rankedGames.slice(0, 3);
-  const localGrowthAreas = [...rankedGames].reverse().slice(0, 3);
-  const strengthItems: DiagnosisHighlightItem[] = highlights
-    ? highlights.strengths.map((item, index) => ({
-        key: `${item.game_id}-${index}`,
-        gameName: gameNameFor(item.game_id),
-        skill: item.skill,
-        note: item.note,
-        score: item.score,
-      }))
-    : localStrengths.map((item) => ({
-        key: item.game.id,
-        gameName: item.game.name,
-        skill: item.game.skill,
-        score: item.result?.score ?? 0,
-      }));
-  const growthItems: DiagnosisHighlightItem[] = highlights
-    ? highlights.growth_areas.map((item, index) => ({
-        key: `${item.game_id}-${index}`,
-        gameName: gameNameFor(item.game_id),
-        skill: item.skill,
-        note: item.note,
-        score: item.score,
-        action: {
-          label: `이 게임 ${item.action.minutes}분 훈련하기`,
-          onPress: () => router.push({ pathname: '/games/[id]', params: { id: item.action.game_id } } as never),
-        },
-      }))
-    : localGrowthAreas.map((item) => ({
-        key: item.game.id,
-        gameName: item.game.name,
-        skill: item.game.skill,
-        score: item.result?.score ?? 0,
-        action: {
-          label: `이 게임 ${item.game.minutes}분 훈련하기`,
-          onPress: () => router.push({ pathname: '/games/[id]', params: { id: item.game.id } } as never),
-        },
-      }));
-
-  if (!highlights && resultsLoading) {
-    return (
-      <VStack gap="x3">
-        <Skeleton borderRadius="r4" height="x16" width="full" />
-        <Skeleton borderRadius="r4" height="x16" width="full" />
-      </VStack>
-    );
-  }
-
-  return (
-    <VStack gap="x2">
-      <HStack align="center" gap="x1_5">
-        <Icon name="Target" color="fg.brand" size="small" />
-        <Text textStyle="t4Bold">강점과 보완</Text>
-      </HStack>
-      <Card p="spacingX.globalGutter">
-        <VStack gap="x4">
-          <HighlightList
-            title="강점 3개"
-            iconName="TrendingUp"
-            iconColor="fg.positive"
-            items={strengthItems}
-            tone="positive"
-          />
-          <HighlightList
-            title="보완 3개"
-            iconName="CircleDot"
-            iconColor="mannerTemp.l4Text"
-            items={growthItems}
-            tone="warning"
-          />
-        </VStack>
-      </Card>
-    </VStack>
-  );
-}
-
-type HighlightListProps = {
-  title: string;
-  iconName: 'TrendingUp' | 'CircleDot';
-  iconColor: 'fg.positive' | 'mannerTemp.l4Text';
-  items: DiagnosisHighlightItem[];
-  tone: 'positive' | 'warning';
-};
-
-function HighlightList({ title, iconName, iconColor, items, tone }: HighlightListProps) {
-  return (
-    <VStack gap="x2">
-      <HStack align="center" gap="x1_5">
-        <Icon name={iconName} color={iconColor} size="small" />
-        <Text textStyle="t4Bold">{title}</Text>
-      </HStack>
-      <List.Root>
-        {items.map((item, index) => (
-          <Fragment key={item.key}>
-            {index > 0 ? <List.Divider /> : null}
-            <HighlightRow
-              gameName={item.gameName}
-              skill={item.skill}
-              note={item.note}
-              score={item.score}
-              index={index}
-              tone={tone}
-              action={item.action}
-            />
-          </Fragment>
-        ))}
-      </List.Root>
-    </VStack>
-  );
-}
-
-type HighlightRowProps = {
-  gameName: string;
-  skill: string;
-  note?: string;
-  score: number;
-  index: number;
-  tone: 'positive' | 'warning';
-  action?: { label: string; onPress: () => void };
-};
-
-function HighlightRow({ gameName, skill, note, score, index, tone, action }: HighlightRowProps) {
-  return (
-    <List.Item>
-      <List.Prefix>
-        <Text color="fg.neutralSubtle" textStyle="t3Bold">{index + 1}</Text>
-      </List.Prefix>
-      <List.Content>
-        <List.Title>{gameName}</List.Title>
-        <List.Detail>{note ?? skill}</List.Detail>
-        {action ? (
-          <Button label={action.label} size="small" variant="weak" onPress={action.onPress} />
-        ) : null}
-      </List.Content>
-      <List.Suffix>
-        <Text color={tone === 'positive' ? 'fg.positive' : 'mannerTemp.l4Text'} textStyle="t5Bold">
-          {score}
-        </Text>
-      </List.Suffix>
-    </List.Item>
   );
 }
 
