@@ -10,6 +10,7 @@ import {
   MEMORY_FEEDBACK_MS,
   MEMORY_TOTAL_ROUNDS,
   createMemoryRounds,
+  memoryDifficulty,
   memoryAnswerLabel,
   memoryAnswers,
   memoryShapeIcon,
@@ -26,6 +27,8 @@ export function MemoryPlay({ game, onFinish, onClose }: GamePlayProps) {
   const { round, picked, headerScore, choose } = useRoundPlay<MemoryAnswer>({
     totalRounds: MEMORY_TOTAL_ROUNDS,
     feedbackMs: MEMORY_FEEDBACK_MS,
+    getDifficulty: (_answer, currentRound) =>
+      memoryDifficulty(rounds[currentRound - 1]?.answer ?? 'diff', currentRound),
     getLevelParams: (_answer, currentRound) => {
       const target = rounds[currentRound - 1]?.answer;
       if (target === 'n2') return { n_back: 2 };

@@ -10,6 +10,7 @@ import {
   POTION_TOTAL_ROUNDS,
   createPotionQuestion,
   createPotionSession,
+  potionDifficulty,
   potionColorLabel,
   type PotionColor,
 } from '../../../domain/games/potion';
@@ -34,6 +35,7 @@ export function PotionPlay({ game, onFinish, onClose }: GamePlayProps) {
     onAdvanceRound: () => {
       setQuestion(createPotionQuestion(session));
     },
+    getDifficulty: (_answer, currentRound) => potionDifficulty(question, currentRound),
     onComplete: ({ correctCount, responseTimes, rounds }) => {
       onFinish({
         gameId: game.id,

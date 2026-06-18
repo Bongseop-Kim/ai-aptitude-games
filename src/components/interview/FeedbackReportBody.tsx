@@ -4,6 +4,7 @@ import type { InterviewAnswerRow } from '../../data/local/interviewAnswers';
 import { Box } from '../../design-system/components/Box';
 import { VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
+import { formatAnswerMinutes } from '../../domain/interviewFormatting';
 import type { ReportInterview } from '../../domain/report';
 import type { InterviewSessionRecord } from '../../domain/types';
 import { Card } from '../ui/Card';
@@ -12,18 +13,16 @@ import { InterviewAnswersMeasuredList } from './InterviewAnswersMeasuredList';
 
 export type FeedbackReportBodyProps = {
   session: InterviewSessionRecord | null;
+  mockExamId?: string;
   answers?: InterviewAnswerRow[];
   answersLoading?: boolean;
   interview?: ReportInterview | null;
   uploads?: { retry: (answerId: string) => void };
 };
 
-function formatAnswerMinutes(durationMs: number) {
-  return `${Math.max(1, Math.round(durationMs / 60000))}분`;
-}
-
 export function FeedbackReportBody({
   session,
+  mockExamId,
   answers = [],
   answersLoading = false,
   interview = null,
@@ -33,7 +32,7 @@ export function FeedbackReportBody({
 
   return (
     <VStack gap="x4">
-      {session ? (
+      {session && !analysisDone ? (
         <Card minHeight="x16" p="spacingX.globalGutter">
           <VStack gap="x1">
             <Text color="fg.neutralSubtle" textStyle="t2Regular">
@@ -49,8 +48,8 @@ export function FeedbackReportBody({
         </Card>
       ) : null}
 
-      {analysisDone && interview ? (
-        <InterviewAnalysisBody interview={interview} />
+      {analysisDone && interview && mockExamId ? (
+        <InterviewAnalysisBody interview={interview} mockExamId={mockExamId} session={session} />
       ) : (
         <>
           <VStack gap="x2">

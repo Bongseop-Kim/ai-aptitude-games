@@ -1,11 +1,9 @@
 import { Fragment } from 'react';
 
-import { HStack, VStack } from '../../design-system/components/Stack';
-import { Text } from '../../design-system/components/Text';
 import type { ReportCompetencyScore } from '../../domain/report';
-import { Card } from '../ui/Card';
 import { List } from '../ui/List';
-import { BulletBar } from './ReportCharts';
+import { ReportScoreListCard } from './ReportScoreListCard';
+import { ReportScoreRow } from './ReportScoreRow';
 
 const COMPETENCY_LABELS: Record<ReportCompetencyScore['key'], string> = {
   trust: '신뢰',
@@ -34,35 +32,27 @@ export function CompetencySection({ competencies }: CompetencySectionProps) {
   );
 
   return (
-    <Card>
-      <List.Root>
-        {ordered.map((competency, index) => (
-          <Fragment key={competency.key}>
-            {index > 0 ? <List.Divider /> : null}
-            <CompetencyBulletRow competency={competency} />
-          </Fragment>
-        ))}
-      </List.Root>
-    </Card>
+    <ReportScoreListCard markerLegendLabel="또래 중앙값">
+      {ordered.map((competency, index) => (
+        <Fragment key={competency.key}>
+          {index > 0 ? <List.Divider /> : null}
+          <CompetencyBulletRow competency={competency} />
+        </Fragment>
+      ))}
+    </ReportScoreListCard>
   );
 }
 
 function CompetencyBulletRow({ competency }: { competency: ReportCompetencyScore }) {
   return (
-    <HStack align="center" gap="x3" py="x3">
-      <VStack flex={0.55} gap="x0_5" minWidth="x16">
-        <Text textStyle="t4Bold">{COMPETENCY_LABELS[competency.key]}</Text>
-        <Text color="fg.neutralSubtle" textStyle="t2Regular" lineHeight="t3" maxLines={2}>
-          {competency.note}
-        </Text>
-      </VStack>
-      <BulletBar value={competency.score} peerMedian={competency.peer_median} />
-      <Text textStyle="t5Bold">{competency.score}</Text>
-      {competency.percentile != null ? (
-        <Text color="fg.neutralMuted" textStyle="t2Regular">
-          상위 {competency.percentile}%
-        </Text>
-      ) : null}
-    </HStack>
+    <ReportScoreRow
+      title={COMPETENCY_LABELS[competency.key]}
+      value={competency.score}
+      markerValue={competency.peer_median}
+      tagItems={[
+        { label: competency.note },
+        ...(competency.percentile != null ? [{ label: `상위 ${competency.percentile}%` }] : []),
+      ]}
+    />
   );
 }

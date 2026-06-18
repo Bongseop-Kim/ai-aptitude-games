@@ -10,6 +10,7 @@ import {
   RPS_FEEDBACK_MS,
   RPS_TOTAL_ROUNDS,
   createRpsQuestion,
+  rpsDifficulty,
   rpsCorrectAnswer,
   rpsHandIcon,
   rpsHandLabel,
@@ -31,6 +32,7 @@ export function RpsPlay({ game, onFinish, onClose }: GamePlayProps) {
     onAdvanceRound: () => {
       setQuestion(createRpsQuestion());
     },
+    getDifficulty: (_answer, currentRound) => rpsDifficulty(question, currentRound),
     onComplete: ({ correctCount, responseTimes, rounds }) => {
       onFinish({
         gameId: game.id,

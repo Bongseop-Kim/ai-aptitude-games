@@ -1,5 +1,6 @@
 import { games } from '../games';
 import { GENERIC_QUESTION_BANK } from '../interview/genericQuestionBank';
+import { buildPressureRecoveryCurve, resolvePressureRecoverySummary } from '../../domain/reportResilience';
 import type {
   MockExamReport,
   ReportBand,
@@ -17,13 +18,14 @@ import type {
 //
 // Value ranges (verified against the renderers):
 //   - All scores / percentiles / peer values are 0..100.
-//   - Resilience curve values are 0..100 (StressResilienceChart clamps /100).
+//   - Resilience curve values are 0..100.
 //   - Response-pattern scale values are 0..100, where 50 is the neutral center.
 //   - Interview band uses the Korean BAND_STEPS labels, not the English ReportBand.
 
 type BuildDummyReportInput = {
   score: number;
   perGameScores: Record<string, number>;
+  perGameDifficulties?: Record<string, number>;
   interviewScore: number;
 };
 
@@ -92,10 +94,11 @@ const QUESTION_FEEDBACK: { good: string; fix: string; why: string } = {
   why: '상황 대처와 직무 적합성을 함께 확인하기 위한 질문이에요.',
 };
 
-const NCS_UNITS: { label: string; offset: number }[] = [
-  { label: '문제해결', offset: 4 },
-  { label: '의사소통', offset: -3 },
-  { label: '대인관계', offset: 1 },
+const NCS_UNITS: { label: string; basis: string; offset: number }[] = [
+  { label: '문제해결능력', basis: '상황을 구조화하고 대안을 고른 답변 흐름을 봤어요.', offset: 4 },
+  { label: '의사소통능력', basis: '핵심을 먼저 말하고 근거를 이어 가는 방식을 봤어요.', offset: -3 },
+  { label: '대인관계능력', basis: '협업 상황에서 상대와 조율하는 태도를 봤어요.', offset: 1 },
+  { label: '자기관리능력', basis: '목표와 우선순위를 유지하는 답변 흐름을 봤어요.', offset: -2 },
 ];
 
 function clampScore(value: number) {
@@ -118,7 +121,7 @@ function interviewBandLabel(score: number) {
 }
 
 // Maps a 0..100 score to a 30..95 percentile (top-N% style: higher score → lower
-// number). PercentileBar and the competency "상위 N%" copy both read this scale.
+// number). Overall and competency "상위 N%" copy both read this scale.
 function percentileForScore(score: number) {
   return clampScore(95 - (score / 100) * 65);
 }
@@ -145,6 +148,7 @@ function buildGameInsight(gameId: string, score: number): ReportGameInsight {
     game_id: gameId,
     insight: GAME_INSIGHTS[gameId] ?? '안정적인 수행을 보였어요.',
     percentile: percentileForScore(score),
+    peer_median: clampScore(score - 6),
   };
 }
 
@@ -196,6 +200,15 @@ export function buildDummyReport(input: BuildDummyReportInput): MockExamReport {
   const gameInsights = games.map((game) =>
     buildGameInsight(game.id, clampScore(input.perGameScores[game.id] ?? score)),
   );
+  const resilienceCurve = buildPressureRecoveryCurve(
+    games.map((game, index) => ({
+      gameId: game.id,
+      actualScore: clampScore(input.perGameScores[game.id] ?? score),
+      difficulty: input.perGameDifficulties?.[game.id] ?? clampScore(44 + ((index * 9) % 34)),
+    })),
+  );
+  const resilienceSummary = resolvePressureRecoverySummary(resilienceCurve);
+  const eventGame = games.find((game) => game.id === resilienceSummary.event?.game_id);
 
   const interviewAxes: ReportInterviewAxis[] = INTERVIEW_AXIS_KEYS.map((key) => {
     const axisScore = clampScore(interviewScore + INTERVIEW_AXIS_OFFSETS[key]);
@@ -223,23 +236,21 @@ export function buildDummyReport(input: BuildDummyReportInput): MockExamReport {
       growth_areas: weakest.map((item) => buildGrowthArea(item.id, item.score)),
     },
     resilience: {
-      curve: games.map((game, index) => ({
-        game_id: game.id,
-        segment: index,
-        value: clampScore(score - 10 + ((index * 7) % 25)),
-      })),
+      curve: resilienceCurve,
       insights: [
         {
-          tone: 'positive',
+          tone: resilienceSummary.impact === 'continued' ? 'warning' : 'positive',
           label: '강점',
-          title: '후반 집중 유지',
-          body: '시간이 지나도 정확도가 크게 떨어지지 않고 안정적으로 유지됐어요.',
+          title: resilienceSummary.event ? '압박 직후 영향 확인' : '큰 압박 구간 없음',
+          body: resilienceSummary.event
+            ? `${eventGame?.name ?? '해당 게임'} 이후 다음 게임의 예상 대비 차이를 확인했어요.`
+            : '이번 회차에서는 예상보다 크게 흔들린 게임이 뚜렷하지 않았어요.',
         },
         {
           tone: 'warning',
           label: '주의',
-          title: '난도 급변 구간',
-          body: '난도가 갑자기 오르는 구간에서 반응 속도가 잠시 흔들렸어요.',
+          title: '난도와 점수 차이',
+          body: '출제 난도와 예상 점수를 함께 보고, 단순 낮은 점수와 압박 이후 흔들림을 구분했어요.',
         },
       ],
     },
@@ -270,6 +281,7 @@ export function buildDummyReport(input: BuildDummyReportInput): MockExamReport {
       axes: interviewAxes,
       ncs_units: NCS_UNITS.map((unit) => ({
         label: unit.label,
+        basis: unit.basis,
         score: clampScore(interviewScore + unit.offset),
       })),
       top_fixes: [

@@ -1,11 +1,14 @@
 import * as Crypto from 'expo-crypto';
+import { Asset } from 'expo-asset';
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { numbersSequenceLength } from '../../domain/games/numbers';
 import { clamp } from '../../domain/games/random';
 import {
   averageResponseMs,
+  clampDifficulty,
   computeGameScore,
+  roundDifficulty,
   type GameRoundResult,
 } from '../../domain/games/results';
 import type { GameId } from '../../domain/types';
@@ -21,6 +24,13 @@ import { buildDummyReport } from './buildDummyReport';
 
 const SEED_INTERVIEW_COMPANY = '리플로우';
 const SEED_INTERVIEW_ROLE = '프론트엔드 엔지니어';
+const DEV_SAMPLE_VIDEO = require('../../../assets/dev/interview-answer-sample.mp4');
+const SEED_ANSWER_TEXTS = [
+  '저는 사용자 경험을 먼저 정의하고, 전환율과 이탈 지표를 함께 보며 우선순위를 정했습니다.',
+  '갈등이 생겼을 때는 각자의 목표를 먼저 확인하고, 출시 일정에 맞춰 선택지를 좁혔습니다.',
+  '처음 맡은 영역은 작은 실험으로 검증한 뒤 팀 문서에 남겨 같은 문제가 반복되지 않게 했습니다.',
+  '실패한 기능은 원인을 나눠 보고, 다음 배포에서는 측정 가능한 기준을 먼저 세웠습니다.',
+];
 
 export type DevSeedSummary = {
   gameResults: number;
@@ -54,16 +64,26 @@ function randomDateWithinPastDays(days: number) {
   return new Date(Date.now() - Math.random() * days * DAY_MS);
 }
 
-function buildSeedInterviewAnswerInputs(count: number): InterviewAnswerInput[] {
-  return GENERIC_QUESTION_BANK.it.slice(0, count).map((question) => ({
+async function resolveDevSampleVideoUri() {
+  const asset = Asset.fromModule(DEV_SAMPLE_VIDEO);
+  await asset.downloadAsync();
+  return asset.localUri ?? asset.uri;
+}
+
+function buildSeedInterviewAnswerInputs(
+  count: number,
+  options: { sampleVideoUri?: string | null } = {},
+): InterviewAnswerInput[] {
+  return GENERIC_QUESTION_BANK.it.slice(0, count).map((question, index) => ({
     questionId: question.id,
     questionText: question.text,
+    answerText: SEED_ANSWER_TEXTS[index % SEED_ANSWER_TEXTS.length],
     category: question.category,
     questionSource: 'generic',
     prepMs: 20 * 1000,
     answerMs: randomInt(60, 90) * 1000,
     retakeCount: 0,
-    mediaLocalUri: null,
+    mediaLocalUri: index === 0 ? options.sampleVideoUri ?? null : null,
   }));
 }
 
@@ -90,6 +110,16 @@ function seedLevelParams(gameId: GameId, roundIndex: number): GameRoundResult['l
   return null;
 }
 
+function seedDifficulty(gameId: GameId, roundIndex: number, totalRounds: number) {
+  if (gameId === 'numbers') {
+    return clampDifficulty(30 + numbersSequenceLength(roundIndex) * 8);
+  }
+  if (gameId === 'memory') {
+    return clampDifficulty(45 + (roundIndex % 3) * 12);
+  }
+  return roundDifficulty(roundIndex, totalRounds, 42, 24);
+}
+
 function buildSeedGameInput(gameId: GameId) {
   const totalRounds = gameContent[gameId].totalRounds;
   const targetAccuracy = randomFloat(0.45, 1);
@@ -105,6 +135,7 @@ function buildSeedGameInput(gameId: GameId) {
       roundIndex,
       correct,
       responseMs: randomInt(600, 2500),
+      difficulty: seedDifficulty(gameId, roundIndex, totalRounds),
       levelParams: seedLevelParams(gameId, roundIndex),
     });
   }
@@ -160,7 +191,7 @@ async function insertSeedExamItems(
 async function seedMockExamRound(
   db: SQLiteDatabase,
   userId: string,
-  options: { startedAt: Date },
+  options: { startedAt: Date; sampleVideoUri?: string | null },
 ) {
   await db.withTransactionAsync(async () => {
     const mockExamId = Crypto.randomUUID();
@@ -199,7 +230,12 @@ async function seedMockExamRound(
       },
       { id: interviewId, createdAt: interviewCompletedAt, mockExamId },
     );
-    await insertInterviewAnswers(db, userId, interviewId, buildSeedInterviewAnswerInputs(8));
+    await insertInterviewAnswers(
+      db,
+      userId,
+      interviewId,
+      buildSeedInterviewAnswerInputs(8, { sampleVideoUri: options.sampleVideoUri }),
+    );
     items.push({
       itemKey: 'interview',
       interviewSessionId: interviewId,
@@ -224,12 +260,31 @@ async function seedMockExamRound(
     await insertSeedExamItems(db, userId, mockExamId, items);
 
     const perGameScores: Record<string, number> = {};
+    const perGameDifficulties: Record<string, number> = {};
     for (const item of items) {
       if (item.itemKey !== 'interview') {
         perGameScores[item.itemKey] = item.score;
       }
     }
-    const report = buildDummyReport({ score: examScore, perGameScores, interviewScore });
+    for (const game of games) {
+      const rounds = await db.getAllAsync<{ difficulty: number }>(
+        `SELECT game_result_rounds.difficulty
+         FROM game_result_rounds
+         INNER JOIN game_results ON game_results.id = game_result_rounds.result_id
+         WHERE game_results.mock_exam_id = ? AND game_results.game_id = ?`,
+        mockExamId,
+        game.id,
+      );
+      perGameDifficulties[game.id] = Math.round(
+        rounds.reduce((sum, round) => sum + round.difficulty, 0) / Math.max(1, rounds.length),
+      );
+    }
+    const report = buildDummyReport({
+      score: examScore,
+      perGameScores,
+      perGameDifficulties,
+      interviewScore,
+    });
     await insertDevReport(db, mockExamId, report);
   });
 }
@@ -240,6 +295,7 @@ export async function seedDevData(db: SQLiteDatabase, userId: string): Promise<D
   }
 
   let gameResults = 0;
+  const sampleVideoUri = await resolveDevSampleVideoUri();
   for (const game of games) {
     const resultCount = randomInt(1, 2);
     for (let index = 0; index < resultCount; index += 1) {
@@ -282,20 +338,23 @@ export async function seedDevData(db: SQLiteDatabase, userId: string): Promise<D
       db,
       userId,
       sessionId,
-      buildSeedInterviewAnswerInputs(session.questionCount),
+      buildSeedInterviewAnswerInputs(session.questionCount, {
+        sampleVideoUri: index === 0 ? sampleVideoUri : null,
+      }),
     );
   }
   const interviews = interviewSessions.length;
 
   const existingMockExamCount = await getMockExamResultCount(db, userId);
   if (existingMockExamCount > 0) {
-    await seedMockExamRound(db, userId, { startedAt: new Date() });
+    await seedMockExamRound(db, userId, { startedAt: new Date(), sampleVideoUri });
     return { gameResults: gameResults + games.length, mockExams: 1, interviews: interviews + 1, reports: 1 };
   }
 
   for (let round = 0; round < 6; round += 1) {
     await seedMockExamRound(db, userId, {
       startedAt: weeklyMockExamDate(round),
+      sampleVideoUri: round === 0 ? sampleVideoUri : null,
     });
   }
 

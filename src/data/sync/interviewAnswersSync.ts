@@ -8,6 +8,7 @@ type UnsyncedInterviewAnswerRow = {
   user_id: string;
   question_id: string;
   question_text: string;
+  answer_text: string | null;
   category: string;
   question_source: string;
   prep_ms: number;
@@ -36,7 +37,7 @@ export async function pushUnsyncedInterviewAnswers(db: SQLiteDatabase, userId: s
 
   try {
     const rows = await db.getAllAsync<UnsyncedInterviewAnswerRow>(
-      'SELECT id, session_id, user_id, question_id, question_text, category, question_source, prep_ms, answer_ms, retake_count, media_path, media_status, created_at FROM interview_answers WHERE synced = 0 AND user_id = ?',
+      'SELECT id, session_id, user_id, question_id, question_text, answer_text, category, question_source, prep_ms, answer_ms, retake_count, media_path, media_status, created_at FROM interview_answers WHERE synced = 0 AND user_id = ?',
       userId,
     );
     if (rows.length === 0) {
@@ -49,6 +50,7 @@ export async function pushUnsyncedInterviewAnswers(db: SQLiteDatabase, userId: s
       user_id: row.user_id,
       question_id: row.question_id,
       question_text: row.question_text,
+      answer_text: row.answer_text,
       category: row.category,
       question_source: row.question_source,
       prep_ms: row.prep_ms,

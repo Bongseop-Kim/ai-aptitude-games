@@ -66,6 +66,7 @@ async function uploadSingle(db: SQLiteDatabase, userId: string, row: InterviewAn
           user_id: userId,
           question_id: row.questionId,
           question_text: row.questionText,
+          answer_text: row.answerText,
           category: row.category,
           question_source: row.questionSource,
           prep_ms: row.prepMs,

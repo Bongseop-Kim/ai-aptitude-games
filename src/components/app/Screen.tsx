@@ -3,19 +3,25 @@ import { type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { VStack } from '../../design-system/components/Stack';
-import type { ColorToken } from '../../design-system/components/style-props';
+import type { ColorToken, TokenLength } from '../../design-system/components/style-props';
 
 export type ScreenSafeEdge = 'top' | 'bottom' | 'left' | 'right';
 
 export type ScreenProps = {
   bg?: ColorToken;
   children: ReactNode;
+  contentPb?: TokenLength;
   safeEdges?: readonly ScreenSafeEdge[];
 };
 
 const defaultSafeEdges: readonly ScreenSafeEdge[] = ['top', 'bottom', 'left', 'right'];
 
-export function Screen({ bg = 'bg.layerBasement', children, safeEdges = defaultSafeEdges }: ScreenProps) {
+export function Screen({
+  bg = 'bg.layerBasement',
+  children,
+  contentPb = 'spacingY.componentDefault',
+  safeEdges = defaultSafeEdges,
+}: ScreenProps) {
   const insets = useSafeAreaInsets();
   const safeEdgeSet = new Set(safeEdges);
   const safeAreaStyle: ViewStyle = {
@@ -27,7 +33,7 @@ export function Screen({ bg = 'bg.layerBasement', children, safeEdges = defaultS
 
   return (
     <VStack bg={bg} flex={1} style={safeAreaStyle}>
-      <VStack flex={1} px="spacingX.globalGutter" py="spacingY.componentDefault">
+      <VStack flex={1} px="spacingX.globalGutter" pt="spacingY.componentDefault" pb={contentPb}>
         {children}
       </VStack>
     </VStack>

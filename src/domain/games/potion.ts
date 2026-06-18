@@ -1,5 +1,6 @@
 import type { IconName } from '../../shared/types';
 import { pickRandom } from './random';
+import { clampDifficulty, roundDifficulty } from './results';
 
 export type PotionColor = 'red' | 'blue';
 
@@ -38,4 +39,10 @@ export function createPotionQuestion(session: PotionSession): PotionQuestion {
   const result = ingredients.includes(session.keyIngredient) ? 'red' : 'blue';
 
   return { ingredients, result };
+}
+
+export function potionDifficulty(question: PotionQuestion, round: number): number {
+  const uniqueIngredientCount = new Set(question.ingredients).size;
+  const resultLoad = question.result === 'red' ? 6 : 0;
+  return clampDifficulty(34 + uniqueIngredientCount * 5 + resultLoad + roundDifficulty(round, POTION_TOTAL_ROUNDS, 0, 18));
 }

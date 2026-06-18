@@ -1,13 +1,10 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import { ScrollView } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { Header } from '../components/app/Header';
 import { SectionHead } from '../components/app/SectionHead';
-import { SubSectionHead } from '../components/app/SubSectionHead';
 import { Screen } from '../components/app/Screen';
-import { BottomActionBar } from '../components/app/BottomActionBar';
 import { ReservedSlot } from '../components/app/ReservedSlot';
 import { FeedbackReportBody } from '../components/interview/FeedbackReportBody';
 import { AnalysisStatusCard } from '../components/reports/AnalysisStatusCard';
@@ -15,7 +12,11 @@ import { CompetencySection } from '../components/reports/CompetencySection';
 import { GamesSection } from '../components/reports/GamesSection';
 import { ProIntroSheet } from '../components/reports/ProIntroSheet';
 import { ReportPaywall } from '../components/reports/ReportPaywall';
-import { GrowthTrendChart, PercentileBar, ResponsePatternRows, StressResilienceChart } from '../components/reports/ReportCharts';
+import { ResponsePatternRows } from '../components/reports/ReportCharts';
+import {
+  ResilienceDifficultyChart,
+  type ResilienceChartPoint,
+} from '../components/reports/ResilienceDifficultyChart';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Icon } from '../components/ui/Icon';
@@ -23,32 +24,30 @@ import { List } from '../components/ui/List';
 import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/ui/Skeleton';
 import { ReadinessGauge } from '../components/readiness/ReadinessGauge';
-import { gameContent } from '../data/gameContent';
 import { games } from '../data/games';
 import { reportDetailSections } from '../data/reports';
 import { useInterviewSessionForMockExam } from '../data/local/useInterviewSessions';
 import { useInterviewAnswers } from '../data/local/useInterviewAnswers';
-import { useGameResultsForMockExam } from '../data/local/useGameResults';
-import type { GameResultRecord } from '../data/local/gameResults';
-import { useMockExamRecord, useMockExamRecords } from '../data/local/useMockExamResults';
+import {
+  useGameResultRoundsForMockExam,
+  useGameResultsForMockExam,
+} from '../data/local/useGameResults';
+import type { GameResultRecord, GameResultRoundRecord } from '../data/local/gameResults';
+import { useMockExamRecord } from '../data/local/useMockExamResults';
 import { useIsPro, useProfile } from '../data/server/useProfile';
 import { useMockExamReport, getReportSectionStates } from '../data/server/useMockExamReport';
 import { retryInterviewMediaUpload } from '../data/media/interviewMediaUpload';
 import { useAuth } from '../providers/AuthProvider';
 import { Box } from '../design-system/components/Box';
-import { Grid } from '../design-system/components/Grid';
 import { HStack, VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
-import { useDesignSystemTheme } from '../design-system/provider';
 import type {
   MockExamReport,
-  ReportCoach,
   ReportCompetencyScore,
-  ReportHighlights,
-  ReportOverall,
   ReportResilience,
   ReportResponsePattern,
 } from '../domain/report';
+import { buildPressureRecoveryCurve } from '../domain/reportResilience';
 import type { GameId, MockExamRecord, ReportSectionKey } from '../domain/types';
 import type { ReportSectionStates } from '../data/server/useMockExamReport';
 import { useSQLiteContext } from 'expo-sqlite';
@@ -61,6 +60,29 @@ const COMPETENCY_LABELS: Record<ReportCompetencyScore['key'], string> = {
   fit: '조직적합',
 };
 
+const NCS_COMPETENCY_LINKS: Record<ReportCompetencyScore['key'], { label: string; basis: string }> = {
+  trust: {
+    label: '직업윤리',
+    basis: '일관된 선택과 책임 있는 판단을 함께 봤어요.',
+  },
+  strategy: {
+    label: '문제해결능력',
+    basis: '제한된 정보에서 원인을 찾고 대안을 고르는 흐름을 봤어요.',
+  },
+  relationship: {
+    label: '대인관계능력',
+    basis: '협업 신호를 읽고 갈등을 조율하는 방식을 봤어요.',
+  },
+  value: {
+    label: '자기관리능력',
+    basis: '본인의 기준과 우선순위를 유지하는 흐름을 봤어요.',
+  },
+  fit: {
+    label: '대인관계능력',
+    basis: '조직 안에서 역할을 맞추고 협업하는 태도를 봤어요.',
+  },
+};
+
 function formatFullDate(sqliteUtcDatetime: string) {
   const date = new Date(`${sqliteUtcDatetime.replace(' ', 'T')}Z`);
   return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
@@ -71,35 +93,7 @@ function formatDurationLabel(durationMs: number) {
   return `${totalMinutes}분 소요`;
 }
 
-function formatScoreDelta(delta: number) {
-  return delta >= 0 ? `+${delta}` : String(delta);
-}
-
-function totalGameRounds() {
-  return games.reduce((sum, game) => sum + gameContent[game.id].totalRounds, 0);
-}
-
-function previousRecordFor(record: MockExamRecord, records: MockExamRecord[]) {
-  return records.find((item) => item.round === record.round - 1) ?? null;
-}
-
-function gameNameFor(gameId: string) {
-  return games.find((game) => game.id === gameId)?.name ?? gameId;
-}
-
 type MockExamGameResults = Partial<Record<GameId, GameResultRecord>> | undefined;
-
-function rankedGamesForResults(results: MockExamGameResults) {
-  return games
-    .map((game) => ({ game, result: results?.[game.id] }))
-    .filter((item) => item.result != null)
-    .sort((a, b) => (b.result?.score ?? 0) - (a.result?.score ?? 0));
-}
-
-function weakestGameForResults(results: MockExamGameResults) {
-  const rankedGames = rankedGamesForResults(results);
-  return rankedGames[rankedGames.length - 1] ?? null;
-}
 
 export function ReportDetailScreen() {
   const router = useRouter();
@@ -112,7 +106,7 @@ export function ReportDetailScreen() {
   const gateLoading = isLoading || profileLoading;
 
   return (
-    <Screen safeEdges={['top', 'left', 'right']}>
+    <Screen contentPb="x0" safeEdges={['top', 'bottom', 'left', 'right']}>
       <Header
         title="종합 리포트"
         subtitle={`모의고사 · ${record?.round ?? '-'}회차 리포트`}
@@ -131,39 +125,22 @@ export function ReportDetailScreen() {
 }
 
 function LoadingBody() {
-  const insets = useSafeAreaInsets();
-  const { theme } = useDesignSystemTheme();
-
   return (
-    <>
-      <Box flex={1} bleedBottom="spacingY.componentDefault" bleedX="spacingX.globalGutter">
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + theme.dimension.spacingX.globalGutter }}
-          showsVerticalScrollIndicator={false}
-        >
-          <Box px="spacingX.globalGutter" py="x3">
-            <ReportDetailSkeleton />
-          </Box>
-        </ScrollView>
-      </Box>
-      <Box px="spacingX.globalGutter" style={{ paddingBottom: insets.bottom }}>
-        <BottomActionBar primary={{ label: '리포트 준비 중', disabled: true }} />
-      </Box>
-    </>
+    <Box flex={1} bleedX="spacingX.globalGutter">
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+        <Box px="spacingX.globalGutter" pt="x3" pb="x8">
+          <ReportDetailSkeleton />
+        </Box>
+      </ScrollView>
+    </Box>
   );
 }
 
 function MissingReportBody({ onBack }: { onBack: () => void }) {
-  const insets = useSafeAreaInsets();
-  const { theme } = useDesignSystemTheme();
-
   return (
-    <Box flex={1} bleedBottom="spacingY.componentDefault" bleedX="spacingX.globalGutter">
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + theme.dimension.spacingX.globalGutter }}
-        showsVerticalScrollIndicator={false}
-      >
-        <Box px="spacingX.globalGutter" py="x3">
+    <Box flex={1} bleedX="spacingX.globalGutter">
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+        <Box px="spacingX.globalGutter" pt="x3" pb="x8">
           <MissingReport onBack={onBack} />
         </Box>
       </ScrollView>
@@ -172,71 +149,68 @@ function MissingReportBody({ onBack }: { onBack: () => void }) {
 }
 
 function ReportContent({ record }: { record: MockExamRecord }) {
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { theme } = useDesignSystemTheme();
-  const { data: records = [] } = useMockExamRecords();
   const reportQuery = useMockExamReport(record.id, record.createdAt);
   const row = reportQuery.data ?? null;
   const states = getReportSectionStates(row);
   const report = row?.status === 'done' ? row.report : null;
-  const previousRecord = previousRecordFor(record, records);
+  const readyReport = report?.overall != null && report.interview?.status === 'done' ? report : null;
   const localResults = useGameResultsForMockExam(record.id);
+  const localRounds = useGameResultRoundsForMockExam(record.id);
   const onRetryReport = () => void reportQuery.refetch();
 
-  const cta = resolveBottomCta(report, localResults.data);
+  if (!readyReport) {
+    return (
+      <ReportAnalysisPending
+        failed={row?.status === 'failed'}
+        onRetry={onRetryReport}
+      />
+    );
+  }
 
   return (
-    <>
-      <Box flex={1} bleedBottom="spacingY.componentDefault" bleedX="spacingX.globalGutter">
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + theme.dimension.spacingX.globalGutter }}
-          showsVerticalScrollIndicator={false}
-        >
-          <Box px="spacingX.globalGutter" py="x3">
-            <VStack gap="x8">
-              {reportDetailSections.map((section) => (
-                <VStack key={section.key} gap="x3">
-                  {section.key !== 'cover' ? <SectionHead title={section.title} /> : null}
-                  <ReportSectionBody
-                    sectionKey={section.key}
-                    record={record}
-                    records={records}
-                    previousRecord={previousRecord}
-                    report={report}
-                    states={states}
-                    onRetryReport={onRetryReport}
-                  />
-                </VStack>
-              ))}
-            </VStack>
-          </Box>
-        </ScrollView>
-      </Box>
-      <Box px="spacingX.globalGutter" style={{ paddingBottom: insets.bottom }}>
-        <BottomActionBar
-          primary={{
-            label: cta.label,
-            iconRight: 'ArrowRight',
-            onPress: () => router.push({ pathname: '/games/[id]', params: { id: cta.gameId } } as never),
-          }}
-        />
-      </Box>
-    </>
+    <Box flex={1} bleedX="spacingX.globalGutter">
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+        <Box px="spacingX.globalGutter" pt="x3" pb="x8">
+          <VStack gap="x8">
+            {reportDetailSections.map((section) => (
+              <VStack key={section.key} gap="x3">
+                {section.key === 'summary' ? null : <SectionHead title={section.title} />}
+                <ReportSectionBody
+                  sectionKey={section.key}
+                  record={record}
+                  report={readyReport}
+                  gameResults={localResults.data}
+                  gameRounds={localRounds.data}
+                  states={states}
+                  onRetryReport={onRetryReport}
+                />
+              </VStack>
+            ))}
+          </VStack>
+        </Box>
+      </ScrollView>
+    </Box>
   );
 }
 
-function resolveBottomCta(report: MockExamReport | null, results: MockExamGameResults): { label: string; gameId: string } {
-  const growth = report?.highlights?.growth_areas?.[0];
-  if (growth) {
-    return {
-      label: `${gameNameFor(growth.action.game_id)} ${growth.action.minutes}분 훈련하기`,
-      gameId: growth.action.game_id,
-    };
-  }
-  const weakest = weakestGameForResults(results);
-  const fallback = weakest?.game ?? games[0];
-  return { label: `${fallback.name} ${fallback.minutes}분 훈련하기`, gameId: fallback.id };
+function ReportAnalysisPending({ failed, onRetry }: { failed: boolean; onRetry: () => void }) {
+  return (
+    <Box flex={1} bleedX="spacingX.globalGutter">
+      <Box px="spacingX.globalGutter" pt="x3" pb="x8">
+        <AnalysisStatusCard
+          variant={failed ? 'failed' : 'pending'}
+          title={failed ? '리포트를 분석하지 못했어요' : '면접 답변을 분석하고 있어요'}
+          body={
+            failed
+              ? '다시 시도하면 종합 리포트를 업데이트할 수 있어요.'
+              : '분석이 끝나면 종합 리포트를 열 수 있어요.'
+          }
+          minHeight="x60"
+          onRetry={onRetry}
+        />
+      </Box>
+    </Box>
+  );
 }
 
 function ReportDetailSkeleton() {
@@ -311,9 +285,9 @@ function MissingReport({ onBack }: MissingReportProps) {
 type ReportSectionBodyProps = {
   sectionKey: ReportSectionKey;
   record: MockExamRecord;
-  records: MockExamRecord[];
-  previousRecord: MockExamRecord | null;
-  report: MockExamReport | null;
+  report: MockExamReport;
+  gameResults: MockExamGameResults;
+  gameRounds: GameResultRoundRecord[] | undefined;
   states: ReportSectionStates;
   onRetryReport: () => void;
 };
@@ -321,189 +295,444 @@ type ReportSectionBodyProps = {
 function ReportSectionBody({
   sectionKey,
   record,
-  records,
-  previousRecord,
   report,
+  gameResults,
+  gameRounds,
   states,
   onRetryReport,
 }: ReportSectionBodyProps) {
   switch (sectionKey) {
-    case 'cover':
-      return <CoverSection record={record} records={records} overall={report?.overall ?? null} competencies={report?.competencies ?? null} state={states.overall} />;
-    case 'games':
-      return <GamesSection record={record} previousRecord={previousRecord} />;
-    case 'competencies':
-      return <CompetenciesSection competencies={report?.competencies ?? null} state={states.competencies} onRetry={onRetryReport} />;
-    case 'highlights':
-      return <HighlightsSection record={record} highlights={report?.highlights ?? null} state={states.highlights} />;
+    case 'summary':
+      return <SummarySection record={record} gameResults={gameResults} report={report} states={states} />;
+    case 'game':
+      return (
+        <GameDiagnosisSection
+          record={record}
+          report={report}
+          gameResults={gameResults}
+          gameRounds={gameRounds}
+          states={states}
+          onRetry={onRetryReport}
+        />
+      );
     case 'interview':
       return <InterviewFeedbackSection mockExamId={record.id} report={report} state={states.interview} />;
-    case 'resilience':
-      return <ResilienceSection resilience={report?.resilience ?? null} state={states.resilience} onRetry={onRetryReport} />;
-    case 'pattern':
-      return <ResponsePatternSection pattern={report?.response_pattern ?? null} state={states.pattern} onRetry={onRetryReport} />;
-    case 'peer':
-      return <GrowthSection record={record} records={records} overall={report?.overall ?? null} />;
-    case 'coach':
-      return <CoachSection coach={report?.coach ?? null} state={states.coach} onRetry={onRetryReport} />;
   }
 }
 
-type CoverSectionProps = {
+type SummarySectionProps = {
   record: MockExamRecord;
-  records: MockExamRecord[];
-  overall: ReportOverall | null;
-  competencies: ReportCompetencyScore[] | null;
-  state: ReportSectionStates['overall'];
+  gameResults: MockExamGameResults;
+  report: MockExamReport;
+  states: ReportSectionStates;
 };
 
-function CoverSection({ record, records, overall, competencies, state }: CoverSectionProps) {
-  const results = useGameResultsForMockExam(record.id);
-  const firstRecord = records.find((item) => item.round === 1);
-  const firstDelta = firstRecord ? record.score - firstRecord.score : 0;
-  const rankedGames = rankedGamesForResults(results.data);
-  const strongest = rankedGames[0];
-  const weakest = weakestGameForResults(results.data);
-
-  const score = overall?.score ?? record.score;
-  const range = overall?.score_range ?? null;
-  const showRange = range != null && range[0] !== range[1];
-  const showStatusBadge = overall == null || record.round !== 1;
-  const statusBadgeLabel = overall ? `첫 회차 대비 ${formatScoreDelta(firstDelta)}` : '분석 중';
-  const statusBadgeTone = overall ? (firstDelta >= 0 ? 'positive' : 'critical') : 'neutral';
-  const summaryVisible = Boolean(overall?.summary);
-
-  const competencyTiles = resolveCompetencyTiles(competencies);
+function SummarySection({ record, gameResults, report, states }: SummarySectionProps) {
+  const { overall } = report;
+  const competencies = report.competencies;
+  const factorScores = resolveFactorScores(report, gameResults);
+  const score = totalFactorScore(factorScores);
 
   return (
-    <VStack gap="x3">
-      <VStack gap="x0_5">
-        <Text color="fg.neutralSubtle" textStyle="t2Regular">
+    <VStack gap="x4">
+      <VStack gap="x1">
+        <Text textStyle="t8Bold">오늘의 역량 지도</Text>
+        <Text color="fg.neutralSubtle" textStyle="t3Regular">
           {formatFullDate(record.createdAt)} · {formatDurationLabel(record.durationMs)}
-        </Text>
-        <Text textStyle="t9Bold">오늘의 역량 지도</Text>
-        <Text color="fg.neutralMuted" textStyle="t3Regular">
-          9개 게임 · {totalGameRounds()}문항 · 5대 역량 분석
         </Text>
       </VStack>
 
       <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" p="spacingX.globalGutter">
-        <HStack align="center" gap="x4">
-          <ReadinessGauge score={score} size="x27_5" unit="none" />
-          <VStack flex={1} gap="x2">
-            <Text color="fg.neutralMuted" textStyle="t2Regular">
-              종합 준비도
+        <VStack gap="x3">
+          <HStack align="center" gap="x4">
+            <ReadinessGauge score={score} size="x27_5" unit="none" />
+            <ReflectedFactors scores={factorScores} />
+          </HStack>
+          <List.Divider />
+          <VStack gap="x1">
+            <Text textStyle="t4Bold">AI 종합 피드백</Text>
+            <Text color="fg.neutralMuted" textStyle="t3Regular" lineHeight="t4">
+              {overall.summary}
             </Text>
-            <HStack align="center" gap="x1_5">
-              <Text textStyle="t10Bold">{score}</Text>
-              <Text color="fg.neutralSubtle" textStyle="t3Regular">/ 100</Text>
-            </HStack>
-            <ReservedSlot visible={showRange}>
-              <Text color="fg.neutralSubtle" textStyle="t3Regular">
-                {range ? `${range[0]}~${range[1]} 범위` : '0~0 범위'}
-              </Text>
-            </ReservedSlot>
-            <ReservedSlot height="x6" visible={showStatusBadge}>
-              <Badge label={statusBadgeLabel} tone={statusBadgeTone} size="small" />
-            </ReservedSlot>
           </VStack>
-        </HStack>
+        </VStack>
       </Card>
 
-      <Card p="spacingX.globalGutter">
-        <ReservedSlot minHeight="x8" visible={summaryVisible}>
-          <Text color="fg.neutralMuted" textStyle="t3Regular">
-            {overall?.summary ?? '결과를 분석하고 있어요. 곧 요약을 확인할 수 있어요.'}
-          </Text>
-        </ReservedSlot>
-      </Card>
+      <NcsConnectionSummary competencies={competencies} state={states.competencies} />
+    </VStack>
+  );
+}
 
-      <Grid columns={2} gap="x2">
-        {competencyTiles ? (
-          <>
-            <InsightTile
-              label="강한 영역"
-              title={`${COMPETENCY_LABELS[competencyTiles.max.key]} · ${competencyTiles.max.score}`}
-              description={competencyTiles.max.note}
-              tone="positive"
-            />
-            <InsightTile
-              label="보완 영역"
-              title={`${COMPETENCY_LABELS[competencyTiles.min.key]} · ${competencyTiles.min.score}`}
-              description={competencyTiles.min.note}
-              tone="warning"
-            />
-          </>
-        ) : (
-          <>
-            <InsightTile
-              label="강한 영역"
-              title={strongest ? `${strongest.game.name} · ${strongest.result?.score}` : '확인 중'}
-              description={strongest?.game.description ?? '게임 기록을 확인하고 있어요.'}
-              tone="positive"
-            />
-            <InsightTile
-              label="보완 영역"
-              title={weakest ? `${weakest.game.name} · ${weakest.result?.score}` : '확인 중'}
-              description={weakest?.game.description ?? '게임 기록을 확인하고 있어요.'}
-              tone="warning"
-            />
-          </>
-        )}
-      </Grid>
+type FactorScores = {
+  game: WeightedFactorScore | null;
+  pattern: WeightedFactorScore | null;
+  interview: WeightedFactorScore;
+};
 
-      <ReservedSlot height="x6" visible={state === 'pending'}>
-        <Badge label="분석 중" tone="neutral" size="small" />
+type WeightedFactorScore = {
+  score: number;
+  max: number;
+};
+
+const FACTOR_WEIGHTS = {
+  game: 40,
+  pattern: 20,
+  interview: 40,
+} as const;
+
+function average(values: readonly number[], emptyValue: number): number;
+function average(values: readonly number[], emptyValue: null): number | null;
+function average(values: readonly number[], emptyValue: number | null) {
+  if (values.length === 0) return emptyValue;
+  return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
+}
+
+function toWeightedFactorScore(rawScore: number | null, max: number): WeightedFactorScore | null {
+  if (rawScore == null) return null;
+  return {
+    score: Math.round((rawScore * max) / 100),
+    max,
+  };
+}
+
+function resolveFactorScores(report: MockExamReport, gameResults: MockExamGameResults): FactorScores {
+  const gamesWithScores = Object.values(gameResults ?? {}).filter((result): result is GameResultRecord => result != null);
+  const patternScores = report.response_pattern?.scales.map((scale) => scale.value) ?? [];
+
+  return {
+    game: toWeightedFactorScore(average(gamesWithScores.map((result) => result.score), null), FACTOR_WEIGHTS.game),
+    pattern: toWeightedFactorScore(average(patternScores, null), FACTOR_WEIGHTS.pattern),
+    interview: toWeightedFactorScore(report.interview.overall_score, FACTOR_WEIGHTS.interview) ?? {
+      score: 0,
+      max: FACTOR_WEIGHTS.interview,
+    },
+  };
+}
+
+function formatFactorScore(score: WeightedFactorScore | null) {
+  return score == null ? '- / -' : `${score.score} / ${score.max}`;
+}
+
+function totalFactorScore(scores: FactorScores) {
+  return (scores.game?.score ?? 0) + (scores.pattern?.score ?? 0) + scores.interview.score;
+}
+
+function ReflectedFactors({ scores }: { scores: FactorScores }) {
+  const rows = [
+    {
+      title: '게임 수행',
+      score: scores.game,
+    },
+    {
+      title: '응답 패턴',
+      score: scores.pattern,
+    },
+    {
+      title: 'AI 면접',
+      score: scores.interview,
+    },
+  ];
+
+  return (
+    <VStack flex={1} gap="x2">
+      <HStack align="center" gap="x1_5">
+        <Icon name="CircleCheck" color="fg.brand" size="small" />
+        <Text textStyle="t4Bold">반영 요소</Text>
+      </HStack>
+      <VStack gap="x1_5">
+        {rows.map((row) => (
+          <HStack key={row.title} align="center" justify="spaceBetween" gap="x2">
+            <Text color="fg.neutralMuted" textStyle="t3Regular">
+              {row.title}
+            </Text>
+            <Text textStyle="t4Bold">{formatFactorScore(row.score)}</Text>
+          </HStack>
+        ))}
+      </VStack>
+    </VStack>
+  );
+}
+
+type GameDiagnosisSectionProps = {
+  record: MockExamRecord;
+  gameResults: MockExamGameResults;
+  gameRounds: GameResultRoundRecord[] | undefined;
+  report: MockExamReport | null;
+  states: ReportSectionStates;
+  onRetry: () => void;
+};
+
+function GameDiagnosisSection({
+  record,
+  gameResults,
+  gameRounds,
+  report,
+  states,
+  onRetry,
+}: GameDiagnosisSectionProps) {
+  const coreStates = [states.resilience, states.coach];
+  const hasFailedCore = coreStates.includes('failed');
+  const hasPendingCore = coreStates.includes('pending');
+
+  return (
+    <VStack gap="x3">
+      <ResilienceSummary
+        gameResults={gameResults}
+        gameRounds={gameRounds}
+        resilience={report?.resilience ?? null}
+        state={states.resilience}
+      />
+
+      <ReportSubsection title="게임별 결과">
+        <GamesSection record={record} gameInsights={report?.games ?? null} />
+      </ReportSubsection>
+
+      <ReportSubsection
+        title="앱 5대 역량 프로필"
+        caption="NCS 공식 판정이 아니라, 게임 과제를 직업공통능력 관점으로 다시 묶은 참고 지표예요."
+      >
+        <CompetenciesSection competencies={report?.competencies ?? null} state={states.competencies} onRetry={onRetry} />
+      </ReportSubsection>
+
+      <ReportSubsection title="응답 패턴 프로필">
+        <ResponsePatternSection pattern={report?.response_pattern ?? null} state={states.pattern} onRetry={onRetry} />
+      </ReportSubsection>
+
+      {hasFailedCore ? (
+        <AnalysisStatusCard
+          variant="failed"
+          title="일부 진단을 불러오지 못했어요"
+          body="다시 시도하면 게임 진단을 업데이트할 수 있어요."
+          onRetry={onRetry}
+        />
+      ) : null}
+
+      <ReservedSlot height="x6" visible={hasPendingCore}>
+        <Badge label="추가 분석 준비 중" tone="neutral" size="small" />
       </ReservedSlot>
     </VStack>
   );
 }
 
-function resolveCompetencyTiles(competencies: ReportCompetencyScore[] | null) {
-  if (competencies == null || competencies.length === 0) {
-    return null;
-  }
-  let max = competencies[0];
-  let min = competencies[0];
-  for (const item of competencies) {
-    if (item.score > max.score) max = item;
-    if (item.score < min.score) min = item;
-  }
-  return { max, min };
-}
-
-type InsightTileProps = {
-  label: string;
+type ReportSubsectionProps = {
   title: string;
-  description: string;
-  tone: 'positive' | 'warning';
+  caption?: string;
+  children: ReactNode;
 };
 
-function InsightTile({ label, title, description, tone }: InsightTileProps) {
-  const isPositive = tone === 'positive';
-  const iconName = isPositive ? 'TrendingUp' : 'CircleDot';
-  const toneColor = isPositive ? 'fg.positive' : 'mannerTemp.l4Text';
+function ReportSubsection({ title, caption, children }: ReportSubsectionProps) {
+  return (
+    <VStack gap="x2">
+      <VStack gap="x1">
+        <Text textStyle="t5Bold">{title}</Text>
+        {caption ? (
+          <Text color="fg.neutralMuted" textStyle="t3Regular" lineHeight="t4" maxLines={2}>
+            {caption}
+          </Text>
+        ) : null}
+      </VStack>
+      {children}
+    </VStack>
+  );
+}
+
+type NcsConnectionSummaryProps = {
+  competencies: ReportCompetencyScore[] | null;
+  state: ReportSectionStates['competencies'];
+};
+
+function NcsConnectionSummary({ competencies, state }: NcsConnectionSummaryProps) {
+  if (state === 'failed') {
+    return null;
+  }
+
+  if (competencies == null || competencies.length === 0 || state !== 'ready') {
+    return (
+      <Card minHeight="x16" p="spacingX.globalGutter">
+        <VStack gap="x1">
+          <HStack align="center" gap="x1_5">
+            <Icon name="BadgeCheck" color="fg.brand" size="small" />
+            <Text textStyle="t4Bold">NCS 기반 피드백 요약</Text>
+          </HStack>
+        </VStack>
+      </Card>
+    );
+  }
+
+  const sorted = [...competencies].sort((a, b) => b.score - a.score);
+  const rows = [
+    { label: '강점', tone: 'positive' as const, competency: sorted[0] },
+    ...(sorted.length > 1
+      ? [{ label: '보완', tone: 'warning' as const, competency: sorted[sorted.length - 1] }]
+      : []),
+  ];
 
   return (
-    <Card
-      bg={isPositive ? 'bg.brandWeak' : 'mannerTemp.l4Bg'}
-      borderColor={isPositive ? 'stroke.brandWeak' : 'stroke.neutralWeak'}
-      borderRadius="r3"
-      p="x3"
-    >
-      <VStack gap="x0_5">
-        <HStack align="center" gap="x1">
-          <Icon name={iconName} color={toneColor} size="small" />
-          <Text color="fg.neutralMuted" textStyle="t1Regular">
-            {label}
-          </Text>
+    <Card p="spacingX.globalGutter">
+      <VStack gap="x3">
+        <HStack align="center" gap="x1_5">
+          <Icon name="BadgeCheck" color="fg.brand" size="small" />
+          <Text textStyle="t4Bold">NCS 기반 피드백 요약</Text>
         </HStack>
-        <Text color={toneColor} textStyle="t5Bold" maxLines={2}>
-          {title}
-        </Text>
-        <Text color="fg.neutralSubtle" textStyle="t2Regular" lineHeight="t3" maxLines={2}>
-          {description}
-        </Text>
+        <List.Root>
+          {rows.map((row, index) => {
+            const link = NCS_COMPETENCY_LINKS[row.competency.key];
+            return (
+              <Fragment key={`${row.label}-${row.competency.key}`}>
+                {index > 0 ? <List.Divider /> : null}
+                <List.Item>
+                  <List.Prefix>
+                    <Badge label={row.label} tone={row.tone} size="small" />
+                  </List.Prefix>
+                  <List.Content>
+                    <List.Title>
+                      {link.label} · {COMPETENCY_LABELS[row.competency.key]}
+                    </List.Title>
+                    <List.Detail>{link.basis}</List.Detail>
+                  </List.Content>
+                  <List.Suffix>
+                    <Text textStyle="t5Bold">{row.competency.score}</Text>
+                  </List.Suffix>
+                </List.Item>
+              </Fragment>
+            );
+          })}
+        </List.Root>
+      </VStack>
+    </Card>
+  );
+}
+
+type ResilienceFeedbackCardProps = {
+  insights: NonNullable<ReportResilience>['insights'];
+};
+
+type ResilienceCurve = NonNullable<ReportResilience>['curve'];
+
+function ResilienceFeedbackCard({ insights }: ResilienceFeedbackCardProps) {
+  if (insights.length === 0) {
+    return null;
+  }
+
+  return (
+    <Card p="spacingX.globalGutter">
+      <VStack gap="x3">
+        <HStack align="center" gap="x1_5">
+          <Icon name="Lightbulb" color="fg.brand" size="small" />
+          <Text textStyle="t4Bold">종합 피드백</Text>
+        </HStack>
+        <List.Root>
+          {insights.map((insight, index) => {
+            const isPositive = insight.tone === 'positive';
+            const label = isPositive ? '강점' : '주의';
+            return (
+              <Fragment key={`${label}-${insight.title}-${index}`}>
+                {index > 0 ? <List.Divider /> : null}
+                <List.Item>
+                  <List.Prefix>
+                    <Badge label={label} tone={isPositive ? 'positive' : 'warning'} size="small" />
+                  </List.Prefix>
+                  <List.Content>
+                    <List.Title>{insight.title}</List.Title>
+                    <List.Detail>{insight.body}</List.Detail>
+                  </List.Content>
+                </List.Item>
+              </Fragment>
+            );
+          })}
+        </List.Root>
+      </VStack>
+    </Card>
+  );
+}
+
+function isPressureCurve(curve: ResilienceCurve) {
+  return (
+    curve.length > 0 &&
+    curve.every(
+      (point) =>
+        point.actual_score != null &&
+        point.difficulty != null &&
+        point.expected_score != null &&
+        point.score_gap != null,
+    )
+  );
+}
+
+function resolveLocalResilienceCurve(
+  gameResults: MockExamGameResults,
+  gameRounds: GameResultRoundRecord[] | undefined,
+): ResilienceCurve | null {
+  const inputs = games
+    .map((game) => {
+      const result = gameResults?.[game.id];
+      if (!result) {
+        return null;
+      }
+
+      const rounds = gameRounds?.filter((round) => round.gameId === game.id) ?? [];
+      return {
+        gameId: game.id,
+        actualScore: result.score,
+        difficulty: average(rounds.map((round) => round.difficulty), 0) || 50,
+      };
+    })
+    .filter(
+      (input): input is { actualScore: number; difficulty: number; gameId: GameId } =>
+        input != null,
+    );
+
+  return inputs.length > 0 ? buildPressureRecoveryCurve(inputs) : null;
+}
+
+function resolveDisplayResilienceCurve({
+  gameResults,
+  gameRounds,
+  resilience,
+}: {
+  gameResults: MockExamGameResults;
+  gameRounds: GameResultRoundRecord[] | undefined;
+  resilience: ReportResilience;
+}) {
+  if (resilience?.curve && isPressureCurve(resilience.curve)) {
+    return resilience.curve;
+  }
+
+  const localCurve = resolveLocalResilienceCurve(gameResults, gameRounds);
+  if (localCurve) {
+    return localCurve;
+  }
+
+  if (!resilience?.curve || resilience.curve.length === 0) {
+    return null;
+  }
+
+  return buildPressureRecoveryCurve(
+    resilience.curve.map((point) => ({
+      gameId: point.game_id,
+      actualScore: point.actual_score ?? point.value,
+      difficulty: point.difficulty ?? 50,
+    })),
+  );
+}
+
+function ResilienceDifficultySection({ curve }: { curve: ResilienceCurve }) {
+  const points: ResilienceChartPoint[] = curve.map((point) => ({
+    key: `${point.game_id}-${point.segment}`,
+    actual: point.actual_score ?? point.value,
+    difficulty: point.difficulty ?? 50,
+  }));
+
+  return (
+    <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" p="spacingX.globalGutter">
+      <VStack gap="x4">
+        <VStack gap="x1_5">
+          <Text textStyle="t4Bold">출제 난이도와 점수</Text>
+          <Text color="fg.neutralMuted" textStyle="t3Regular" lineHeight="t4">
+            게임별 출제 난이도(선)와 실제 점수(막대)를 함께 봤어요. 난이도가 높은 구간에서도 점수가 버텼는지 살펴보세요.
+          </Text>
+        </VStack>
+        <ResilienceDifficultyChart points={points} />
       </VStack>
     </Card>
   );
@@ -525,49 +754,25 @@ function CompetenciesSection({ competencies, state, onRetry }: CompetenciesSecti
   return <CompetencySection competencies={competencies} />;
 }
 
-type ResilienceSectionProps = {
+type ResilienceSummaryProps = {
+  gameResults: MockExamGameResults;
+  gameRounds: GameResultRoundRecord[] | undefined;
   resilience: ReportResilience;
   state: ReportSectionStates['resilience'];
-  onRetry: () => void;
 };
 
-function ResilienceSection({ resilience, state, onRetry }: ResilienceSectionProps) {
-  if (state === 'failed') {
-    return <AnalysisStatusCard variant="failed" minHeight="x60" onRetry={onRetry} />;
-  }
+function ResilienceSummary({ gameResults, gameRounds, resilience, state }: ResilienceSummaryProps) {
   if (resilience == null || state !== 'ready') {
-    return <AnalysisStatusCard variant="pending" minHeight="x60" />;
+    return null;
   }
 
   const insights = resilience.insights.slice(0, 2);
+  const curve = resolveDisplayResilienceCurve({ gameResults, gameRounds, resilience });
 
   return (
     <VStack gap="x3">
-      <Card p="spacingX.globalGutter">
-        <VStack gap="x2">
-          <StressResilienceChart values={resilience.curve.map((point) => point.value)} />
-          <HStack>
-            {resilience.curve.map((point, index) => (
-              <Box key={`${point.game_id}-${index}`} flex={1}>
-                <Text align="center" color="fg.neutralSubtle" textStyle="t1Regular" maxLines={1}>
-                  {gameNameFor(point.game_id)}
-                </Text>
-              </Box>
-            ))}
-          </HStack>
-        </VStack>
-      </Card>
-      <Grid columns={2} gap="x2">
-        {insights.map((insight, index) => (
-          <InsightTile
-            key={`${insight.label}-${index}`}
-            label={insight.label}
-            title={insight.title}
-            description={insight.body}
-            tone={insight.tone === 'positive' ? 'positive' : 'warning'}
-          />
-        ))}
-      </Grid>
+      {curve ? <ResilienceDifficultySection curve={curve} /> : null}
+      <ResilienceFeedbackCard insights={insights} />
     </VStack>
   );
 }
@@ -589,177 +794,6 @@ function ResponsePatternSection({ pattern, state, onRetry }: ResponsePatternSect
     <Card p="spacingX.globalGutter">
       <ResponsePatternRows scales={pattern.scales} />
     </Card>
-  );
-}
-
-type HighlightsSectionProps = {
-  record: MockExamRecord;
-  highlights: ReportHighlights | null;
-  state: ReportSectionStates['highlights'];
-};
-
-function HighlightsSection({ record, highlights }: HighlightsSectionProps) {
-  if (highlights) {
-    return <ServerHighlights highlights={highlights} />;
-  }
-  return <LocalHighlights record={record} />;
-}
-
-function ServerHighlights({ highlights }: { highlights: ReportHighlights }) {
-  const router = useRouter();
-
-  return (
-    <VStack gap="x4">
-      <VStack gap="x2">
-        <HStack align="center" gap="x1_5">
-          <Icon name="TrendingUp" color="fg.positive" size="small" />
-          <Text textStyle="t4Bold">강점 Top 3</Text>
-        </HStack>
-        <List.Root>
-          {highlights.strengths.map((item, index) => (
-            <Fragment key={`${item.game_id}-${index}`}>
-              {index > 0 ? <List.Divider /> : null}
-              <HighlightRow
-                gameName={gameNameFor(item.game_id)}
-                skill={item.skill}
-                note={item.note}
-                score={item.score}
-                index={index}
-                tone="positive"
-              />
-            </Fragment>
-          ))}
-        </List.Root>
-      </VStack>
-      <VStack gap="x2">
-        <HStack align="center" gap="x1_5">
-          <Icon name="CircleDot" color="mannerTemp.l4Text" size="small" />
-          <Text textStyle="t4Bold">보완 Top 3</Text>
-        </HStack>
-        <List.Root>
-          {highlights.growth_areas.map((item, index) => (
-            <Fragment key={`${item.game_id}-${index}`}>
-              {index > 0 ? <List.Divider /> : null}
-              <HighlightRow
-                gameName={gameNameFor(item.game_id)}
-                skill={item.skill}
-                note={item.note}
-                score={item.score}
-                index={index}
-                tone="warning"
-                action={{
-                  label: `이 게임 ${item.action.minutes}분 훈련하기`,
-                  onPress: () =>
-                    router.push({ pathname: '/games/[id]', params: { id: item.action.game_id } } as never),
-                }}
-              />
-            </Fragment>
-          ))}
-        </List.Root>
-      </VStack>
-    </VStack>
-  );
-}
-
-function LocalHighlights({ record }: { record: MockExamRecord }) {
-  const router = useRouter();
-  const results = useGameResultsForMockExam(record.id);
-  const rankedGames = games
-    .map((game) => ({ game, result: results.data?.[game.id] }))
-    .filter((item) => item.result != null)
-    .sort((a, b) => (b.result?.score ?? 0) - (a.result?.score ?? 0));
-  const strengths = rankedGames.slice(0, 3);
-  const growthAreas = [...rankedGames].reverse().slice(0, 3);
-
-  if (results.isLoading) {
-    return (
-      <VStack gap="x3">
-        <Skeleton borderRadius="r4" height="x16" width="full" />
-        <Skeleton borderRadius="r4" height="x16" width="full" />
-      </VStack>
-    );
-  }
-
-  return (
-    <VStack gap="x4">
-      <VStack gap="x2">
-        <HStack align="center" gap="x1_5">
-          <Icon name="TrendingUp" color="fg.positive" size="small" />
-          <Text textStyle="t4Bold">강점 Top 3</Text>
-        </HStack>
-        <List.Root>
-          {strengths.map((item, index) => (
-            <Fragment key={item.game.id}>
-              {index > 0 ? <List.Divider /> : null}
-              <HighlightRow
-                gameName={item.game.name}
-                skill={item.game.skill}
-                score={item.result?.score ?? 0}
-                index={index}
-                tone="positive"
-              />
-            </Fragment>
-          ))}
-        </List.Root>
-      </VStack>
-      <VStack gap="x2">
-        <HStack align="center" gap="x1_5">
-          <Icon name="CircleDot" color="mannerTemp.l4Text" size="small" />
-          <Text textStyle="t4Bold">보완 Top 3</Text>
-        </HStack>
-        <List.Root>
-          {growthAreas.map((item, index) => (
-            <Fragment key={item.game.id}>
-              {index > 0 ? <List.Divider /> : null}
-              <HighlightRow
-                gameName={item.game.name}
-                skill={item.game.skill}
-                score={item.result?.score ?? 0}
-                index={index}
-                tone="warning"
-                action={{
-                  label: `이 게임 ${item.game.minutes}분 훈련하기`,
-                  onPress: () =>
-                    router.push({ pathname: '/games/[id]', params: { id: item.game.id } } as never),
-                }}
-              />
-            </Fragment>
-          ))}
-        </List.Root>
-      </VStack>
-    </VStack>
-  );
-}
-
-type HighlightRowProps = {
-  gameName: string;
-  skill: string;
-  note?: string;
-  score: number;
-  index: number;
-  tone: 'positive' | 'warning';
-  action?: { label: string; onPress: () => void };
-};
-
-function HighlightRow({ gameName, skill, note, score, index, tone, action }: HighlightRowProps) {
-  return (
-    <List.Item>
-      <List.Prefix>
-        <Text color="fg.neutralSubtle" textStyle="t3Bold">{index + 1}</Text>
-      </List.Prefix>
-      <List.Content>
-        <List.Title>{gameName}</List.Title>
-        <List.Detail>{note ?? skill}</List.Detail>
-        {action ? (
-          <Button label={action.label} size="small" variant="weak" onPress={action.onPress} />
-        ) : null}
-      </List.Content>
-      <List.Suffix>
-        <Text color={tone === 'positive' ? 'fg.positive' : 'mannerTemp.l4Text'} textStyle="t5Bold">
-          {score}
-        </Text>
-      </List.Suffix>
-    </List.Item>
   );
 }
 
@@ -791,6 +825,7 @@ function InterviewFeedbackSection({ mockExamId, report }: InterviewFeedbackSecti
   return (
     <FeedbackReportBody
       session={session ?? null}
+      mockExamId={mockExamId}
       answers={answers}
       answersLoading={answersLoading || answersFetching}
       interview={report?.interview ?? null}
@@ -802,120 +837,5 @@ function InterviewFeedbackSection({ mockExamId, report }: InterviewFeedbackSecti
         },
       }}
     />
-  );
-}
-
-type GrowthSectionProps = {
-  record: MockExamRecord;
-  records: MockExamRecord[];
-  overall: ReportOverall | null;
-};
-
-function GrowthSection({ record, records, overall }: GrowthSectionProps) {
-  const chronologicalRecords = records
-    .filter((item) => item.round <= record.round)
-    .reverse();
-  const scores = chronologicalRecords.map((item) => item.score);
-  const delta = record.score - (scores[0] ?? record.score);
-  const showPeer = overall?.percentile != null && overall.cohort != null;
-
-  return (
-    <VStack gap="x3">
-      <Card p="spacingX.globalGutter">
-        {scores.length >= 2 ? (
-          <VStack gap="x2">
-            <GrowthTrendChart scores={scores} />
-            <HStack bg="bg.brandWeak" borderRadius="r3" gap="x2" px="x3" py="x2">
-              <Icon name="TrendingUp" color="fg.brand" size="small" />
-              <Text color="fg.brand" textStyle="t3Medium">
-                첫 회차 대비 {formatScoreDelta(delta)}점 성장했어요
-              </Text>
-            </HStack>
-          </VStack>
-        ) : (
-          <VStack align="center" justify="center" minHeight="x16">
-            <Text align="center" color="fg.neutralMuted" textStyle="t3Regular">
-              다음 회차를 완료하면 성장 추이를 볼 수 있어요.
-            </Text>
-          </VStack>
-        )}
-      </Card>
-      {showPeer && overall ? (
-        <VStack gap="x2">
-          <SubSectionHead title="또래 비교" caption="또래는 같은 조건으로 응시한 비교 집단이에요." />
-          <Card p="spacingX.globalGutter">
-            <VStack gap="x2">
-              <Text color="fg.neutralMuted" textStyle="t2Regular">
-                {overall.cohort?.label} {overall.cohort?.n.toLocaleString()}명 기준 · 상위 {overall.percentile}%
-              </Text>
-              <PercentileBar percentile={overall.percentile ?? 50} />
-            </VStack>
-          </Card>
-        </VStack>
-      ) : null}
-    </VStack>
-  );
-}
-
-type CoachSectionProps = {
-  coach: ReportCoach | null;
-  state: ReportSectionStates['coach'];
-  onRetry: () => void;
-};
-
-function CoachSection({ coach, state, onRetry }: CoachSectionProps) {
-  const router = useRouter();
-
-  if (state === 'failed') {
-    return <AnalysisStatusCard variant="failed" minHeight="x60" onRetry={onRetry} />;
-  }
-  if (coach == null || state !== 'ready') {
-    return <AnalysisStatusCard variant="pending" minHeight="x60" />;
-  }
-
-  return (
-    <VStack gap="x3">
-      <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" p="spacingX.globalGutter">
-        <VStack gap="x2">
-          <Text textStyle="t5Bold">{coach.insight.title}</Text>
-          <Text color="fg.neutralMuted" textStyle="t3Regular">
-            {coach.insight.body}
-          </Text>
-        </VStack>
-      </Card>
-      <Card p="spacingX.globalGutter">
-        <List.Root>
-          {coach.plan.map((item, index) => (
-            <Fragment key={`${item.day_range}-${index}`}>
-              {index > 0 ? <List.Divider /> : null}
-              <List.Item
-                onPress={() =>
-                  router.push(
-                    item.game_id === 'mock-exam'
-                      ? ({ pathname: '/mock-exam' } as never)
-                      : ({ pathname: '/games/[id]', params: { id: item.game_id } } as never),
-                  )
-                }
-              >
-                <List.Prefix>
-                  <Badge label={item.day_range} tone="brand" size="small" />
-                </List.Prefix>
-                <List.Content>
-                  <List.Title>
-                    {item.game_id === 'mock-exam' ? '모의고사 재도전' : gameNameFor(item.game_id)}
-                  </List.Title>
-                  <List.Detail>
-                    {item.level_label} · {item.minutes_per_day}분/일
-                  </List.Detail>
-                </List.Content>
-                <List.Suffix>
-                  <Icon name="ChevronRight" color="fg.neutralSubtle" size="small" />
-                </List.Suffix>
-              </List.Item>
-            </Fragment>
-          ))}
-        </List.Root>
-      </Card>
-    </VStack>
   );
 }

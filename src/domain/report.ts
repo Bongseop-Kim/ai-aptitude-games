@@ -35,6 +35,7 @@ export type ReportGameInsight = {
   game_id: string;
   insight: string | null;
   percentile: number | null;
+  peer_median?: number | null;
 };
 
 export type ReportHighlightAction = {
@@ -63,6 +64,13 @@ export type ReportResilienceCurvePoint = {
   game_id: string;
   segment: number;
   value: number;
+  actual_score?: number;
+  difficulty?: number;
+  difficulty_jump?: number;
+  expected_score?: number;
+  is_pressure_event?: boolean;
+  next_game_gap?: number | null;
+  score_gap?: number;
 };
 
 export type ReportResilienceInsight = {
@@ -114,6 +122,7 @@ export type ReportInterviewAxis = {
 export type ReportNcsUnit = {
   label: string;
   score: number;
+  basis?: string;
 };
 
 export type ReportTopFix = {

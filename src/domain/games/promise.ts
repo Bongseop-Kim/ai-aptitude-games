@@ -1,5 +1,6 @@
 import type { IconName } from '../../shared/types';
 import { shuffle } from './random';
+import { clampDifficulty, roundDifficulty } from './results';
 
 export type PromiseClue = {
   who: string;
@@ -93,4 +94,8 @@ const promiseQuestionBank: readonly PromiseQuestion[] = [
 
 export function createPromiseSession(): PromiseQuestion[] {
   return shuffle(promiseQuestionBank).slice(0, PROMISE_TOTAL_ROUNDS);
+}
+
+export function promiseDifficulty(question: PromiseQuestion, round: number): number {
+  return clampDifficulty(44 + question.clues.length * 5 + question.options.length * 2 + roundDifficulty(round, PROMISE_TOTAL_ROUNDS, 0, 10));
 }

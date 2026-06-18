@@ -1,5 +1,5 @@
 import type { IconName } from '../../shared/types';
-import { averagePointsScore } from './results';
+import { averagePointsScore, clampDifficulty, roundDifficulty } from './results';
 import { clamp, randomInt } from './random';
 
 export const ROTATE_TOTAL_ROUNDS = 4;
@@ -146,4 +146,8 @@ export function rotateRoundScore(correct: boolean, clicks: number, minClicks: nu
 
 export function computeRotateScore(roundScores: readonly number[]): number {
   return averagePointsScore(roundScores);
+}
+
+export function rotateDifficulty(minClicks: number, round: number): number {
+  return clampDifficulty(34 + minClicks * 10 + roundDifficulty(round, ROTATE_TOTAL_ROUNDS, 0, 10));
 }

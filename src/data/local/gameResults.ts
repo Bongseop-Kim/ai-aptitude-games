@@ -18,6 +18,15 @@ export type GameResultRecord = {
   createdAt: string;
 };
 
+export type GameResultRoundRecord = {
+  gameId: GameId;
+  resultId: string;
+  roundIndex: number;
+  correct: boolean;
+  responseMs: number;
+  difficulty: number;
+};
+
 type GameResultRow = {
   id: string;
   game_id: GameId;
@@ -25,6 +34,15 @@ type GameResultRow = {
   accuracy: number;
   avg_response_ms: number;
   created_at: string;
+};
+
+type GameResultRoundRow = {
+  game_id: GameId;
+  result_id: string;
+  round_index: number;
+  correct: number;
+  response_ms: number;
+  difficulty: number;
 };
 
 type GameResultOptions = {
@@ -78,14 +96,16 @@ export async function insertGameResult(
         round_index,
         correct,
         response_ms,
+        difficulty,
         level_params
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       Crypto.randomUUID(),
       id,
       userId,
       round.roundIndex,
       round.correct ? 1 : 0,
       round.responseMs,
+      round.difficulty,
       round.levelParams == null ? null : JSON.stringify(round.levelParams),
     );
   }
@@ -135,4 +155,35 @@ export async function getGameResultsForMockExam(
   }
 
   return resultMap;
+}
+
+export async function getGameResultRoundsForMockExam(
+  db: SQLiteDatabase,
+  userId: string,
+  mockExamId: string,
+) {
+  const rows = await db.getAllAsync<GameResultRoundRow>(
+    `SELECT
+       game_results.game_id,
+       game_result_rounds.result_id,
+       game_result_rounds.round_index,
+       game_result_rounds.correct,
+       game_result_rounds.response_ms,
+       game_result_rounds.difficulty
+     FROM game_result_rounds
+     INNER JOIN game_results ON game_results.id = game_result_rounds.result_id
+     WHERE game_result_rounds.user_id = ? AND game_results.mock_exam_id = ?
+     ORDER BY game_results.created_at ASC, game_result_rounds.round_index ASC`,
+    userId,
+    mockExamId,
+  );
+
+  return rows.map((row): GameResultRoundRecord => ({
+    gameId: row.game_id,
+    resultId: row.result_id,
+    roundIndex: row.round_index,
+    correct: row.correct === 1,
+    responseMs: row.response_ms,
+    difficulty: row.difficulty,
+  }));
 }

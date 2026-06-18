@@ -9,6 +9,7 @@ type UnsyncedGameResultRoundRow = {
   round_index: number;
   correct: number;
   response_ms: number;
+  difficulty: number;
   level_params: string | null;
   created_at: string;
 };
@@ -33,7 +34,7 @@ export async function pushUnsyncedGameResultRounds(db: SQLiteDatabase, userId: s
 
   try {
     const rows = await db.getAllAsync<UnsyncedGameResultRoundRow>(
-      `SELECT id, result_id, user_id, round_index, correct, response_ms, level_params, created_at
+      `SELECT id, result_id, user_id, round_index, correct, response_ms, difficulty, level_params, created_at
        FROM game_result_rounds
        WHERE synced = 0 AND user_id = ?`,
       userId,
@@ -49,6 +50,7 @@ export async function pushUnsyncedGameResultRounds(db: SQLiteDatabase, userId: s
       round_index: row.round_index,
       correct: row.correct === 1,
       response_ms: row.response_ms,
+      difficulty: row.difficulty,
       level_params: parseLevelParams(row.level_params),
       created_at: toIsoUtc(row.created_at),
     }));
