@@ -405,6 +405,7 @@ export function InterviewFlowScreen() {
     const answers: InterviewAnswerInput[] = drafts.map((draft) => ({
       questionId: draft.question.id,
       questionText: draft.question.text,
+      answerText: null,
       category: draft.question.category,
       questionSource: draft.question.source,
       prepMs: draft.prepMs,

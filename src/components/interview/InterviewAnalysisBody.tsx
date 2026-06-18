@@ -1,4 +1,5 @@
 import { Fragment } from 'react';
+import { useRouter } from 'expo-router';
 
 import { SubSectionHead } from '../app/SubSectionHead';
 import { ReportScoreListCard } from '../reports/ReportScoreListCard';
@@ -11,15 +12,17 @@ import { Box } from '../../design-system/components/Box';
 import { HStack, VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
 import type { ReportInterview, ReportTopFix } from '../../domain/report';
-import { QuestionFeedbackAccordion } from './QuestionFeedbackAccordion';
+import { QuestionFeedbackRow } from './QuestionFeedbackAccordion';
 
 export type InterviewAnalysisBodyProps = {
   interview: ReportInterview;
+  mockExamId: string;
 };
 
 const BAND_STEPS = ['부족', '필요', '우수', '완성'] as const;
 
-export function InterviewAnalysisBody({ interview }: InterviewAnalysisBodyProps) {
+export function InterviewAnalysisBody({ interview, mockExamId }: InterviewAnalysisBodyProps) {
+  const router = useRouter();
   const axisScores = new Map(interview.axes.map((axis) => [axis.key, axis]));
 
   return (
@@ -116,39 +119,70 @@ export function InterviewAnalysisBody({ interview }: InterviewAnalysisBodyProps)
       {interview.top_fixes.length > 0 ? (
         <VStack gap="x2">
           <SubSectionHead title="우선 보완 포인트" />
-          {interview.top_fixes.map((fix, index) => (
-            <TopFixCard key={index} fix={fix} />
-          ))}
+          <Card py="x1">
+            <List.Root>
+              {interview.top_fixes.map((fix, index) => (
+                <Fragment key={index}>
+                  {index > 0 ? <List.Divider /> : null}
+                  <TopFixRow fix={fix} index={index} />
+                </Fragment>
+              ))}
+            </List.Root>
+          </Card>
         </VStack>
       ) : null}
 
       {interview.questions.length > 0 ? (
         <VStack gap="x2">
           <SubSectionHead title="질문별 피드백" />
-          {interview.questions.map((question, index) => (
-            <QuestionFeedbackAccordion key={question.question_id} question={question} index={index} />
-          ))}
+          <Card py="x1">
+            <List.Root>
+              {interview.questions.map((question, index) => (
+                <Fragment key={question.question_id}>
+                  {index > 0 ? <List.Divider /> : null}
+                  <QuestionFeedbackRow
+                    question={question}
+                    index={index}
+                    onPress={() => {
+                      router.push({
+                        pathname: '/reports/[id]/interview-questions/[questionId]',
+                        params: { id: mockExamId, questionId: question.question_id },
+                      } as never);
+                    }}
+                  />
+                </Fragment>
+              ))}
+            </List.Root>
+          </Card>
         </VStack>
       ) : null}
     </VStack>
   );
 }
 
-function TopFixCard({ fix }: { fix: ReportTopFix }) {
+function TopFixRow({ fix, index }: { fix: ReportTopFix; index: number }) {
   const axisName = INTERVIEW_AXES.find((axis) => axis.key === fix.axis)?.name ?? fix.axis;
 
   return (
-    <Card p="spacingX.globalGutter">
-      <VStack gap="x1_5">
+    <List.Item>
+      <List.Prefix>
+        <Text color="fg.neutralSubtle" textStyle="t3Bold">
+          {index + 1}
+        </Text>
+      </List.Prefix>
+      <List.Content>
         <HStack align="center" gap="x1_5">
-          <Badge label={axisName} size="small" tone="informative" />
-          {fix.pro ? <Badge label="Pro" size="small" tone="brandSolid" /> : null}
+          <Box flex={1}>
+            <Text textStyle="t3Medium" maxLines={1}>
+              {fix.title}
+            </Text>
+          </Box>
+          <Badge label={axisName} size="xs" tone="informative" />
         </HStack>
-        <Text textStyle="t4Bold">{fix.title}</Text>
         <Text color="fg.neutralMuted" textStyle="t2Regular">
           {fix.body}
         </Text>
-      </VStack>
-    </Card>
+      </List.Content>
+    </List.Item>
   );
 }

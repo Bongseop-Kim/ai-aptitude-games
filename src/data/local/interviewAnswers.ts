@@ -4,6 +4,7 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 export type InterviewAnswerInput = {
   questionId: string;
   questionText: string;
+  answerText: string | null;
   category: string;
   questionSource: 'generic' | 'job_posting' | 'resume';
   prepMs: number;
@@ -19,6 +20,7 @@ export type InterviewAnswerRow = {
   sessionId: string;
   questionId: string;
   questionText: string;
+  answerText: string | null;
   category: string;
   questionSource: InterviewAnswerInput['questionSource'];
   prepMs: number;
@@ -34,6 +36,7 @@ type InterviewAnswerDbRow = {
   session_id: string;
   question_id: string;
   question_text: string;
+  answer_text: string | null;
   category: string;
   question_source: InterviewAnswerInput['questionSource'];
   prep_ms: number;
@@ -50,6 +53,7 @@ function toInterviewAnswerRow(row: InterviewAnswerDbRow): InterviewAnswerRow {
     sessionId: row.session_id,
     questionId: row.question_id,
     questionText: row.question_text,
+    answerText: row.answer_text,
     category: row.category,
     questionSource: row.question_source,
     prepMs: row.prep_ms,
@@ -62,7 +66,7 @@ function toInterviewAnswerRow(row: InterviewAnswerDbRow): InterviewAnswerRow {
 }
 
 const SELECT_COLUMNS =
-  'id, session_id, question_id, question_text, category, question_source, prep_ms, answer_ms, retake_count, media_local_uri, media_path, media_status';
+  'id, session_id, question_id, question_text, answer_text, category, question_source, prep_ms, answer_ms, retake_count, media_local_uri, media_path, media_status';
 
 // Does not open a transaction; callers wrap the combined session + answers save
 // in a single db.withTransactionAsync (see completeMockExamInterviewItem).
@@ -85,6 +89,7 @@ export async function insertInterviewAnswers(
         user_id,
         question_id,
         question_text,
+        answer_text,
         category,
         question_source,
         prep_ms,
@@ -92,12 +97,13 @@ export async function insertInterviewAnswers(
         retake_count,
         media_local_uri,
         media_status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       id,
       sessionId,
       userId,
       input.questionId,
       input.questionText,
+      input.answerText,
       input.category,
       input.questionSource,
       input.prepMs,

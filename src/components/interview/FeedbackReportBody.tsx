@@ -12,6 +12,7 @@ import { InterviewAnswersMeasuredList } from './InterviewAnswersMeasuredList';
 
 export type FeedbackReportBodyProps = {
   session: InterviewSessionRecord | null;
+  mockExamId?: string;
   answers?: InterviewAnswerRow[];
   answersLoading?: boolean;
   interview?: ReportInterview | null;
@@ -24,6 +25,7 @@ function formatAnswerMinutes(durationMs: number) {
 
 export function FeedbackReportBody({
   session,
+  mockExamId,
   answers = [],
   answersLoading = false,
   interview = null,
@@ -49,8 +51,8 @@ export function FeedbackReportBody({
         </Card>
       ) : null}
 
-      {analysisDone && interview ? (
-        <InterviewAnalysisBody interview={interview} />
+      {analysisDone && interview && mockExamId ? (
+        <InterviewAnalysisBody interview={interview} mockExamId={mockExamId} />
       ) : (
         <>
           <VStack gap="x2">

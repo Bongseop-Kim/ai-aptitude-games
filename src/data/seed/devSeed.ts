@@ -1,4 +1,5 @@
 import * as Crypto from 'expo-crypto';
+import { Asset } from 'expo-asset';
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { numbersSequenceLength } from '../../domain/games/numbers';
@@ -23,6 +24,13 @@ import { buildDummyReport } from './buildDummyReport';
 
 const SEED_INTERVIEW_COMPANY = '리플로우';
 const SEED_INTERVIEW_ROLE = '프론트엔드 엔지니어';
+const DEV_SAMPLE_VIDEO = require('../../../assets/dev/interview-answer-sample.mp4');
+const SEED_ANSWER_TEXTS = [
+  '저는 사용자 경험을 먼저 정의하고, 전환율과 이탈 지표를 함께 보며 우선순위를 정했습니다.',
+  '갈등이 생겼을 때는 각자의 목표를 먼저 확인하고, 출시 일정에 맞춰 선택지를 좁혔습니다.',
+  '처음 맡은 영역은 작은 실험으로 검증한 뒤 팀 문서에 남겨 같은 문제가 반복되지 않게 했습니다.',
+  '실패한 기능은 원인을 나눠 보고, 다음 배포에서는 측정 가능한 기준을 먼저 세웠습니다.',
+];
 
 export type DevSeedSummary = {
   gameResults: number;
@@ -56,16 +64,26 @@ function randomDateWithinPastDays(days: number) {
   return new Date(Date.now() - Math.random() * days * DAY_MS);
 }
 
-function buildSeedInterviewAnswerInputs(count: number): InterviewAnswerInput[] {
-  return GENERIC_QUESTION_BANK.it.slice(0, count).map((question) => ({
+async function resolveDevSampleVideoUri() {
+  const asset = Asset.fromModule(DEV_SAMPLE_VIDEO);
+  await asset.downloadAsync();
+  return asset.localUri ?? asset.uri;
+}
+
+function buildSeedInterviewAnswerInputs(
+  count: number,
+  options: { sampleVideoUri?: string | null } = {},
+): InterviewAnswerInput[] {
+  return GENERIC_QUESTION_BANK.it.slice(0, count).map((question, index) => ({
     questionId: question.id,
     questionText: question.text,
+    answerText: SEED_ANSWER_TEXTS[index % SEED_ANSWER_TEXTS.length],
     category: question.category,
     questionSource: 'generic',
     prepMs: 20 * 1000,
     answerMs: randomInt(60, 90) * 1000,
     retakeCount: 0,
-    mediaLocalUri: null,
+    mediaLocalUri: index === 0 ? options.sampleVideoUri ?? null : null,
   }));
 }
 
@@ -173,7 +191,7 @@ async function insertSeedExamItems(
 async function seedMockExamRound(
   db: SQLiteDatabase,
   userId: string,
-  options: { startedAt: Date },
+  options: { startedAt: Date; sampleVideoUri?: string | null },
 ) {
   await db.withTransactionAsync(async () => {
     const mockExamId = Crypto.randomUUID();
@@ -212,7 +230,12 @@ async function seedMockExamRound(
       },
       { id: interviewId, createdAt: interviewCompletedAt, mockExamId },
     );
-    await insertInterviewAnswers(db, userId, interviewId, buildSeedInterviewAnswerInputs(8));
+    await insertInterviewAnswers(
+      db,
+      userId,
+      interviewId,
+      buildSeedInterviewAnswerInputs(8, { sampleVideoUri: options.sampleVideoUri }),
+    );
     items.push({
       itemKey: 'interview',
       interviewSessionId: interviewId,
@@ -272,6 +295,7 @@ export async function seedDevData(db: SQLiteDatabase, userId: string): Promise<D
   }
 
   let gameResults = 0;
+  const sampleVideoUri = await resolveDevSampleVideoUri();
   for (const game of games) {
     const resultCount = randomInt(1, 2);
     for (let index = 0; index < resultCount; index += 1) {
@@ -314,20 +338,23 @@ export async function seedDevData(db: SQLiteDatabase, userId: string): Promise<D
       db,
       userId,
       sessionId,
-      buildSeedInterviewAnswerInputs(session.questionCount),
+      buildSeedInterviewAnswerInputs(session.questionCount, {
+        sampleVideoUri: index === 0 ? sampleVideoUri : null,
+      }),
     );
   }
   const interviews = interviewSessions.length;
 
   const existingMockExamCount = await getMockExamResultCount(db, userId);
   if (existingMockExamCount > 0) {
-    await seedMockExamRound(db, userId, { startedAt: new Date() });
+    await seedMockExamRound(db, userId, { startedAt: new Date(), sampleVideoUri });
     return { gameResults: gameResults + games.length, mockExams: 1, interviews: interviews + 1, reports: 1 };
   }
 
   for (let round = 0; round < 6; round += 1) {
     await seedMockExamRound(db, userId, {
       startedAt: weeklyMockExamDate(round),
+      sampleVideoUri: round === 0 ? sampleVideoUri : null,
     });
   }
 

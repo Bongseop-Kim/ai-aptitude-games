@@ -839,6 +839,7 @@ function InterviewFeedbackSection({ mockExamId, report }: InterviewFeedbackSecti
   return (
     <FeedbackReportBody
       session={session ?? null}
+      mockExamId={mockExamId}
       answers={answers}
       answersLoading={answersLoading || answersFetching}
       interview={report?.interview ?? null}

@@ -10,7 +10,7 @@ export type BadgeVariantTone = BadgeTone | 'brandSolid';
 export type BadgeProps = {
   label: string;
   tone?: BadgeVariantTone;
-  size?: 'small' | 'medium';
+  size?: 'xs' | 'small' | 'medium';
 };
 
 const badgeColors: Record<BadgeVariantTone, { bg: ColorToken; color: ColorToken }> = {
@@ -25,10 +25,13 @@ const badgeColors: Record<BadgeVariantTone, { bg: ColorToken; color: ColorToken 
 
 export function Badge({ label, tone = 'neutral', size = 'medium' }: BadgeProps) {
   const colors = badgeColors[tone];
+  const px = size === 'xs' ? 'x1_5' : size === 'small' ? 'x2' : 'x2_5';
+  const py = size === 'xs' ? 'x0_5' : 'x1';
+  const textStyle = size === 'xs' ? 't1Medium' : size === 'small' ? 't2Medium' : 't3Medium';
 
   return (
-    <Box bg={colors.bg} borderRadius="full" px={size === 'small' ? 'x2' : 'x2_5'} py="x1">
-      <Text color={colors.color} textStyle={size === 'small' ? 't2Medium' : 't3Medium'} maxLines={1}>
+    <Box bg={colors.bg} borderRadius="full" px={px} py={py}>
+      <Text color={colors.color} textStyle={textStyle} maxLines={1}>
         {label}
       </Text>
     </Box>
