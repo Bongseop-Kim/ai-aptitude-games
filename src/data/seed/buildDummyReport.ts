@@ -92,10 +92,11 @@ const QUESTION_FEEDBACK: { good: string; fix: string; why: string } = {
   why: '상황 대처와 직무 적합성을 함께 확인하기 위한 질문이에요.',
 };
 
-const NCS_UNITS: { label: string; offset: number }[] = [
-  { label: '문제해결', offset: 4 },
-  { label: '의사소통', offset: -3 },
-  { label: '대인관계', offset: 1 },
+const NCS_UNITS: { label: string; basis: string; offset: number }[] = [
+  { label: '문제해결능력', basis: '상황을 구조화하고 대안을 고른 답변 흐름을 봤어요.', offset: 4 },
+  { label: '의사소통능력', basis: '핵심을 먼저 말하고 근거를 이어 가는 방식을 봤어요.', offset: -3 },
+  { label: '대인관계능력', basis: '협업 상황에서 상대와 조율하는 태도를 봤어요.', offset: 1 },
+  { label: '자기관리능력', basis: '목표와 우선순위를 유지하는 답변 흐름을 봤어요.', offset: -2 },
 ];
 
 function clampScore(value: number) {
@@ -270,6 +271,7 @@ export function buildDummyReport(input: BuildDummyReportInput): MockExamReport {
       axes: interviewAxes,
       ncs_units: NCS_UNITS.map((unit) => ({
         label: unit.label,
+        basis: unit.basis,
         score: clampScore(interviewScore + unit.offset),
       })),
       top_fixes: [

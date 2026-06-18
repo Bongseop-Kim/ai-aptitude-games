@@ -58,6 +58,29 @@ const COMPETENCY_LABELS: Record<ReportCompetencyScore['key'], string> = {
   fit: '조직적합',
 };
 
+const NCS_COMPETENCY_LINKS: Record<ReportCompetencyScore['key'], { label: string; basis: string }> = {
+  trust: {
+    label: '직업윤리',
+    basis: '일관된 선택과 책임 있는 판단을 함께 봤어요.',
+  },
+  strategy: {
+    label: '문제해결능력',
+    basis: '제한된 정보에서 원인을 찾고 대안을 고르는 흐름을 봤어요.',
+  },
+  relationship: {
+    label: '대인관계능력',
+    basis: '협업 신호를 읽고 갈등을 조율하는 방식을 봤어요.',
+  },
+  value: {
+    label: '자기관리능력',
+    basis: '본인의 기준과 우선순위를 유지하는 흐름을 봤어요.',
+  },
+  fit: {
+    label: '대인관계능력',
+    basis: '조직 안에서 역할을 맞추고 협업하는 태도를 봤어요.',
+  },
+};
+
 function formatFullDate(sqliteUtcDatetime: string) {
   const date = new Date(`${sqliteUtcDatetime.replace(' ', 'T')}Z`);
   return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
@@ -437,6 +460,8 @@ function SummarySection({ record, records, report, states }: SummarySectionProps
           </>
         )}
       </Grid>
+
+      <NcsConnectionSummary competencies={competencies} state={states.competencies} />
     </VStack>
   );
 }
@@ -478,7 +503,12 @@ function GameDiagnosisSection({ record, previousRecord, report, states, onRetry 
         <GamesSection record={record} previousRecord={previousRecord} />
       </ReportSubsection>
 
-      <ReportSubsection title="5대 역량 프로필" iconName="ChartNoAxesColumnIncreasing" iconColor="fg.brand">
+      <ReportSubsection
+        title="앱 5대 역량 프로필"
+        caption="NCS 공식 판정이 아니라, 게임 과제를 직업공통능력 관점으로 다시 묶은 참고 지표예요."
+        iconName="ChartNoAxesColumnIncreasing"
+        iconColor="fg.brand"
+      >
         <CompetenciesSection competencies={report?.competencies ?? null} state={states.competencies} onRetry={onRetry} />
       </ReportSubsection>
 
@@ -506,18 +536,26 @@ function GameDiagnosisSection({ record, previousRecord, report, states, onRetry 
 
 type ReportSubsectionProps = {
   title: string;
+  caption?: string;
   iconName: 'Gamepad2' | 'ChartNoAxesColumnIncreasing' | 'Timeline';
   iconColor: 'fg.brand';
   children: ReactNode;
 };
 
-function ReportSubsection({ title, iconName, iconColor, children }: ReportSubsectionProps) {
+function ReportSubsection({ title, caption, iconName, iconColor, children }: ReportSubsectionProps) {
   return (
     <VStack gap="x2">
-      <HStack align="center" gap="x1_5">
-        <Icon name={iconName} color={iconColor} size="small" />
-        <Text textStyle="t4Bold">{title}</Text>
-      </HStack>
+      <VStack gap="x0_5">
+        <HStack align="center" gap="x1_5">
+          <Icon name={iconName} color={iconColor} size="small" />
+          <Text textStyle="t4Bold">{title}</Text>
+        </HStack>
+        {caption ? (
+          <Text color="fg.neutralMuted" textStyle="t2Regular" lineHeight="t3" maxLines={2}>
+            {caption}
+          </Text>
+        ) : null}
+      </VStack>
       {children}
     </VStack>
   );
@@ -534,6 +572,82 @@ function resolveCompetencyTiles(competencies: ReportCompetencyScore[] | null) {
     if (item.score < min.score) min = item;
   }
   return { max, min };
+}
+
+type NcsConnectionSummaryProps = {
+  competencies: ReportCompetencyScore[] | null;
+  state: ReportSectionStates['competencies'];
+};
+
+function NcsConnectionSummary({ competencies, state }: NcsConnectionSummaryProps) {
+  if (state === 'failed') {
+    return null;
+  }
+
+  if (competencies == null || competencies.length === 0 || state !== 'ready') {
+    return (
+      <Card minHeight="x16" p="spacingX.globalGutter">
+        <VStack gap="x1">
+          <HStack align="center" gap="x1_5">
+            <Icon name="BadgeCheck" color="fg.brand" size="small" />
+            <Text textStyle="t4Bold">NCS 연결 요약</Text>
+          </HStack>
+          <Text color="fg.neutralMuted" textStyle="t2Regular">
+            앱 5대 역량을 NCS 직업공통능력 관점으로 정리하고 있어요.
+          </Text>
+        </VStack>
+      </Card>
+    );
+  }
+
+  const sorted = [...competencies].sort((a, b) => b.score - a.score);
+  const rows = [
+    { label: '강점', tone: 'positive' as const, competency: sorted[0] },
+    { label: '보완', tone: 'warning' as const, competency: sorted[sorted.length - 1] },
+  ];
+
+  return (
+    <Card p="spacingX.globalGutter">
+      <VStack gap="x3">
+        <VStack gap="x0_5">
+          <HStack align="center" gap="x1_5">
+            <Icon name="BadgeCheck" color="fg.brand" size="small" />
+            <Text textStyle="t4Bold">NCS 연결 요약</Text>
+          </HStack>
+          <Text color="fg.neutralMuted" textStyle="t2Regular" lineHeight="t3">
+            앱 5대 역량을 NCS 직업공통능력 관점으로 다시 묶어 본 참고 지표예요.
+          </Text>
+        </VStack>
+        <List.Root>
+          {rows.map((row, index) => {
+            const link = NCS_COMPETENCY_LINKS[row.competency.key];
+            return (
+              <Fragment key={`${row.label}-${row.competency.key}`}>
+                {index > 0 ? <List.Divider /> : null}
+                <List.Item>
+                  <List.Prefix>
+                    <Badge label={row.label} tone={row.tone} size="small" />
+                  </List.Prefix>
+                  <List.Content>
+                    <List.Title>
+                      {link.label} · {COMPETENCY_LABELS[row.competency.key]}
+                    </List.Title>
+                    <List.Detail>{link.basis}</List.Detail>
+                  </List.Content>
+                  <List.Suffix>
+                    <Text textStyle="t5Bold">{row.competency.score}</Text>
+                  </List.Suffix>
+                </List.Item>
+              </Fragment>
+            );
+          })}
+        </List.Root>
+        <Text color="fg.neutralSubtle" textStyle="t2Regular" lineHeight="t3">
+          출신지, 학력, 외모 같은 배경 정보가 아니라 게임과 답변 행동을 바탕으로 계산해요.
+        </Text>
+      </VStack>
+    </Card>
+  );
 }
 
 type InsightTileProps = {
@@ -732,14 +846,14 @@ function DiagnosisHighlights({ highlights, rankedGames, resultsLoading }: Diagno
       <Card p="spacingX.globalGutter">
         <VStack gap="x4">
           <HighlightList
-            title="강점 Top 3"
+            title="강점 3개"
             iconName="TrendingUp"
             iconColor="fg.positive"
             items={strengthItems}
             tone="positive"
           />
           <HighlightList
-            title="보완 Top 3"
+            title="보완 3개"
             iconName="CircleDot"
             iconColor="mannerTemp.l4Text"
             items={growthItems}

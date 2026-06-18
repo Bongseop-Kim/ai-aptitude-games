@@ -114,6 +114,7 @@ export type ReportInterviewAxis = {
 export type ReportNcsUnit = {
   label: string;
   score: number;
+  basis?: string;
 };
 
 export type ReportTopFix = {

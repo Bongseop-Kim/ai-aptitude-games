@@ -127,18 +127,23 @@ export function InterviewAnalysisBody({ interview }: InterviewAnalysisBodyProps)
 
       {interview.ncs_units.length > 0 ? (
         <VStack gap="x2">
-          <SubSectionHead title="NCS 능력단위" caption="직무에서 자주 쓰는 행동 단위로 답변을 다시 묶어 본 값이에요." />
+          <SubSectionHead title="NCS 능력단위" caption="NCS 직업공통능력 기준으로 답변 행동을 다시 묶어 본 참고 지표예요." />
           <Card p="spacingX.globalGutter">
             <List.Root>
               {interview.ncs_units.map((unit, index) => (
-                <Fragment key={index}>
+                <Fragment key={unit.label}>
                   {index > 0 ? <List.Divider /> : null}
                   <HStack align="center" gap="x3" py="x3">
-                    <Box flex={0.45} minWidth="x16">
+                    <VStack flex={0.45} gap="x0_5" minWidth="x16">
                       <Text textStyle="t3Medium" maxLines={2}>
                         {unit.label}
                       </Text>
-                    </Box>
+                      {unit.basis ? (
+                        <Text color="fg.neutralSubtle" textStyle="t2Regular" lineHeight="t3" maxLines={2}>
+                          {unit.basis}
+                        </Text>
+                      ) : null}
+                    </VStack>
                     <Box flex={1}>
                       <ProgressBar value={unit.score} layout="inline" />
                     </Box>
