@@ -27,8 +27,10 @@ import {
 } from '../../lib/native-motion';
 
 type ChartSize = { width: number; height: number };
+type RadarScale = { x: number; y: number };
 
 const EMPTY_SIZE = { width: 0, height: 0 };
+const RADAR_FOUR_POINT_RATIO = 1.06;
 const BULLET_BAR_TOKENS = {
   trackHeight: 'x1_5',
   markerHeight: 'x3',
@@ -52,10 +54,16 @@ const RADAR_LABEL_GAP = 22;
 const RADAR_VALUE_POINT_RADIUS = 3.5;
 const RADAR_COMPARISON_POINT_RADIUS = 2.5;
 const RADAR_STROKE_WIDTH = 2;
+const RADAR_LINE_PHASE_END = 0.72;
 
 function clamp(value: number, min = 0, max = 100) {
   'worklet';
   return Math.max(min, Math.min(max, value));
+}
+
+function phaseProgress(value: number, start: number, end: number) {
+  'worklet';
+  return clamp((value - start) / (end - start), 0, 1);
 }
 
 function useMeasuredChart() {
@@ -153,18 +161,38 @@ function resolveRadarCenter(size: ChartSize) {
   };
 }
 
-function resolveRadarRadius(size: ChartSize) {
+function resolveRadarScale(size: ChartSize, total: number): RadarScale {
   if (size.width <= 0 || size.height <= 0) {
-    return 0;
+    return { x: 0, y: 0 };
   }
 
-  return Math.max(
-    0,
-    Math.min(
-      size.width - RADAR_HORIZONTAL_INSET * 2,
-      size.height - RADAR_VERTICAL_INSET * 2,
-    ) / 2,
-  );
+  const availableWidth = Math.max(0, size.width - RADAR_HORIZONTAL_INSET * 2);
+  const availableHeight = Math.max(0, size.height - RADAR_VERTICAL_INSET * 2);
+
+  if (total === 4) {
+    const xRadius = Math.min(availableWidth / 2, (availableHeight * RADAR_FOUR_POINT_RATIO) / 2);
+
+    return { x: xRadius, y: xRadius / RADAR_FOUR_POINT_RATIO };
+  }
+
+  const radius = Math.min(availableWidth, availableHeight) / 2;
+
+  return { x: radius, y: radius };
+}
+
+function resolveRadarLabelScale(size: ChartSize, center: { x: number; y: number }, scale: RadarScale) {
+  return {
+    x: Math.min(
+      scale.x + RADAR_LABEL_GAP,
+      Math.max(0, center.x - RADAR_AXIS_LABEL_WIDTH / 2),
+      Math.max(0, size.width - center.x - RADAR_AXIS_LABEL_WIDTH / 2),
+    ),
+    y: Math.min(
+      scale.y + RADAR_LABEL_GAP,
+      Math.max(0, center.y - RADAR_AXIS_LABEL_HEIGHT / 2),
+      Math.max(0, size.height - center.y - RADAR_AXIS_LABEL_HEIGHT / 2),
+    ),
+  };
 }
 
 function resolveRadarAngle(index: number, total: number) {
@@ -174,20 +202,20 @@ function resolveRadarAngle(index: number, total: number) {
 function resolveRadarCoordinate({
   angle,
   center,
-  radius,
+  scale,
   value,
 }: {
   angle: number;
   center: { x: number; y: number };
-  radius: number;
+  scale: RadarScale;
   value: number;
 }) {
-  const distance = radius * (clamp(value) / 100);
+  const distanceRatio = clamp(value) / 100;
 
   return {
     angle,
-    x: center.x + Math.cos(angle) * distance,
-    y: center.y + Math.sin(angle) * distance,
+    x: center.x + Math.cos(angle) * scale.x * distanceRatio,
+    y: center.y + Math.sin(angle) * scale.y * distanceRatio,
   };
 }
 
@@ -254,31 +282,31 @@ export function RadarChart({
     .join('|');
   const progress = useFocusProgress(700, animationKey);
   const center = resolveRadarCenter(size);
-  const radius = resolveRadarRadius(size);
-  const labelRadius = radius + RADAR_LABEL_GAP;
   const canRenderRadar = points.length >= 3;
+  const radarScale = resolveRadarScale(size, points.length);
+  const labelScale = resolveRadarLabelScale(size, center, radarScale);
   const hasComparison = canRenderRadar && points.every((point) => point.comparisonValue != null);
   const gridColor = resolveColor(theme, 'stroke.neutralWeak');
   const axisColor = resolveColor(theme, 'stroke.neutralSubtle');
   const valueColor = resolveColor(theme, 'bg.brandSolid');
   const comparisonColor = resolveColor(theme, 'mannerTemp.l5Text');
   const pointFill = resolveColor(theme, 'bg.layerFloating');
-  const radarTransform = useDerivedValue(
-    () => [
-      { translateX: center.x },
-      { translateY: center.y },
-      { scale: progress.get() },
-      { translateX: -center.x },
-      { translateY: -center.y },
-    ],
-    [center.x, center.y],
+  const lineProgress = useDerivedValue(
+    () => phaseProgress(progress.get(), 0, RADAR_LINE_PHASE_END),
+    [],
   );
+  const fillProgress = useDerivedValue(
+    () => phaseProgress(progress.get(), RADAR_LINE_PHASE_END, 1),
+    [],
+  );
+  const comparisonFillOpacity = useDerivedValue(() => fillProgress.get() * 0.18, []);
+  const valueFillOpacity = useDerivedValue(() => fillProgress.get() * 0.22, []);
   const axisCoordinates = canRenderRadar
     ? points.map((_, index) =>
         resolveRadarCoordinate({
           angle: resolveRadarAngle(index, points.length),
           center,
-          radius,
+          scale: radarScale,
           value: 100,
         }),
       )
@@ -288,7 +316,7 @@ export function RadarChart({
         resolveRadarCoordinate({
           angle: resolveRadarAngle(index, points.length),
           center,
-          radius,
+          scale: radarScale,
           value: point.value ?? 0,
         }),
       )
@@ -298,7 +326,7 @@ export function RadarChart({
         resolveRadarCoordinate({
           angle: resolveRadarAngle(index, points.length),
           center,
-          radius,
+          scale: radarScale,
           value: point.comparisonValue ?? 0,
         }),
       )
@@ -308,7 +336,7 @@ export function RadarChart({
         ...resolveRadarCoordinate({
           angle: resolveRadarAngle(index, points.length),
           center,
-          radius: labelRadius,
+          scale: labelScale,
           value: 100,
         }),
         label: point.label,
@@ -321,7 +349,7 @@ export function RadarChart({
             resolveRadarCoordinate({
               angle: resolveRadarAngle(index, points.length),
               center,
-              radius,
+              scale: radarScale,
               value: step,
             }),
           ),
@@ -361,7 +389,7 @@ export function RadarChart({
           position="relative"
           width="full"
         >
-          {size.width > 0 && radius > 0 ? (
+          {size.width > 0 && radarScale.x > 0 && radarScale.y > 0 ? (
             <>
               <Canvas style={{ width: '100%', height: '100%' }}>
                 {gridPaths.map((path, index) => (
@@ -383,45 +411,47 @@ export function RadarChart({
                   />
                 ))}
                 {hasComparison ? (
-                  <Group transform={radarTransform}>
-                    <Path color={comparisonColor} opacity={0.18} path={comparisonPath} />
+                  <Group>
                     <Path
                       color={comparisonColor}
-                      end={progress}
+                      end={lineProgress}
                       path={comparisonPath}
                       strokeCap="round"
                       strokeJoin="round"
                       strokeWidth={RADAR_STROKE_WIDTH}
                       style="stroke"
                     />
+                    <Path color={comparisonColor} opacity={comparisonFillOpacity} path={comparisonPath} />
                     {comparisonCoordinates.map((point) => (
                       <Circle
                         key={`comparison-${point.angle}`}
                         color={comparisonColor}
                         cx={point.x}
                         cy={point.y}
+                        opacity={fillProgress}
                         r={RADAR_COMPARISON_POINT_RADIUS}
                       />
                     ))}
                   </Group>
                 ) : null}
-                <Group transform={radarTransform}>
-                  <Path color={valueColor} opacity={0.22} path={valuePath} />
+                <Group>
                   <Path
                     color={valueColor}
-                    end={progress}
+                    end={lineProgress}
                     path={valuePath}
                     strokeCap="round"
                     strokeJoin="round"
                     strokeWidth={RADAR_STROKE_WIDTH}
                     style="stroke"
                   />
+                  <Path color={valueColor} opacity={valueFillOpacity} path={valuePath} />
                   {valueCoordinates.map((point) => (
                     <Circle
                       key={`value-fill-${point.angle}`}
                       color={pointFill}
                       cx={point.x}
                       cy={point.y}
+                      opacity={fillProgress}
                       r={RADAR_VALUE_POINT_RADIUS}
                     />
                   ))}
@@ -431,6 +461,7 @@ export function RadarChart({
                       color={valueColor}
                       cx={point.x}
                       cy={point.y}
+                      opacity={fillProgress}
                       r={RADAR_VALUE_POINT_RADIUS}
                       strokeWidth={1.8}
                       style="stroke"
@@ -445,7 +476,7 @@ export function RadarChart({
                 position="absolute"
                 style={{
                   left: center.x - 20,
-                  top: center.y - radius * 0.5 - 11,
+                  top: center.y - radarScale.y * 0.5 - 11,
                   width: 40,
                 }}
               >
@@ -457,7 +488,7 @@ export function RadarChart({
                 position="absolute"
                 style={{
                   left: center.x - 20,
-                  top: center.y - radius - 16,
+                  top: center.y - radarScale.y - 16,
                   width: 40,
                 }}
               >
