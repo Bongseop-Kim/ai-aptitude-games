@@ -19,6 +19,7 @@ import {
 } from '../components/reports/ResilienceDifficultyChart';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
+import { HelpBubbleInfoTrigger } from '../components/ui/HelpBubble';
 import { Icon } from '../components/ui/Icon';
 import { List } from '../components/ui/List';
 import { Badge } from '../components/ui/Badge';
@@ -102,6 +103,30 @@ const DETAIL_CHART_ITEMS = [
   { label: '역량', value: 'competencies' },
   { label: '패턴', value: 'pattern' },
 ] as const satisfies readonly { label: string; value: DetailChartKey }[];
+
+type ChartHelpCopy = {
+  title: string;
+  description: string;
+};
+
+const DETAIL_CHART_HELP: Partial<Record<DetailChartKey, ChartHelpCopy>> = {
+  competencies: {
+    title: '역량은 이렇게 봤어요',
+    description:
+      '9개 게임의 점수와 면접 분석을 신뢰·전략·관계·가치·조직적합 기준으로 묶어 0~100점으로 계산했어요. 또래 중앙값은 같은 직군 지원자 기준이에요.',
+  },
+  pattern: {
+    title: '패턴은 이렇게 봤어요',
+    description:
+      '게임 기록의 점수, 응답 흐름, 난이도 변화를 함께 보고 성향 위치를 표시했어요. 50은 양쪽 성향의 중간이에요.',
+  },
+};
+
+const RESILIENCE_DIFFICULTY_HELP: ChartHelpCopy = {
+  title: '출제 난이도와 점수는 이렇게 봤어요',
+  description:
+    '게임별 출제 난이도와 실제 점수를 함께 봤어요. 난이도가 높은 구간에서도 점수가 버텼는지 확인해요.',
+};
 
 export function ReportDetailScreen() {
   const router = useRouter();
@@ -552,13 +577,19 @@ function ReportChartsSwitcher({
           <VStack>
             <CompetenciesSection
               competencies={report?.competencies ?? null}
+              help={DETAIL_CHART_HELP.competencies}
               state={states.competencies}
               onRetry={onRetry}
             />
           </VStack>
         ) : null}
         {chartKey === 'pattern' ? (
-          <ResponsePatternSection pattern={report?.response_pattern ?? null} state={states.pattern} onRetry={onRetry} />
+          <ResponsePatternSection
+            help={DETAIL_CHART_HELP.pattern}
+            pattern={report?.response_pattern ?? null}
+            state={states.pattern}
+            onRetry={onRetry}
+          />
         ) : null}
       </VStack>
     </ReportSubsection>
@@ -774,35 +805,24 @@ function ResilienceDifficultySection({ curve }: { curve: ResilienceCurve }) {
     difficulty: point.difficulty ?? 50,
   }));
 
-  return (
-    <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" p="spacingX.globalGutter">
-      <VStack gap="x4">
-        <VStack gap="x1_5">
-          <Text textStyle="t4Bold">출제 난이도와 점수</Text>
-          <Text color="fg.neutralMuted" textStyle="t3Regular" lineHeight="t4">
-            게임별 출제 난이도(선)와 실제 점수(막대)를 함께 봤어요. 난이도가 높은 구간에서도 점수가 버텼는지 살펴보세요.
-          </Text>
-        </VStack>
-        <ResilienceDifficultyChart points={points} />
-      </VStack>
-    </Card>
-  );
+  return <ResilienceDifficultyChart points={points} help={RESILIENCE_DIFFICULTY_HELP} />;
 }
 
 type CompetenciesSectionProps = {
   competencies: ReportCompetencyScore[] | null;
+  help?: ChartHelpCopy;
   state: ReportSectionStates['competencies'];
   onRetry: () => void;
 };
 
-function CompetenciesSection({ competencies, state, onRetry }: CompetenciesSectionProps) {
+function CompetenciesSection({ competencies, help, state, onRetry }: CompetenciesSectionProps) {
   if (state === 'failed') {
     return <AnalysisStatusCard variant="failed" minHeight="x60" onRetry={onRetry} />;
   }
   if (competencies == null || state !== 'ready') {
     return <AnalysisStatusCard variant="pending" minHeight="x60" />;
   }
-  return <CompetencySection competencies={competencies} />;
+  return <CompetencySection competencies={competencies} help={help} />;
 }
 
 type ResilienceSummaryProps = {
@@ -829,12 +849,13 @@ function ResilienceSummary({ gameResults, gameRounds, resilience, state }: Resil
 }
 
 type ResponsePatternSectionProps = {
+  help?: ChartHelpCopy;
   pattern: ReportResponsePattern;
   state: ReportSectionStates['pattern'];
   onRetry: () => void;
 };
 
-function ResponsePatternSection({ pattern, state, onRetry }: ResponsePatternSectionProps) {
+function ResponsePatternSection({ help, pattern, state, onRetry }: ResponsePatternSectionProps) {
   if (state === 'failed') {
     return <AnalysisStatusCard variant="failed" minHeight="x60" onRetry={onRetry} />;
   }
@@ -842,8 +863,11 @@ function ResponsePatternSection({ pattern, state, onRetry }: ResponsePatternSect
     return <AnalysisStatusCard variant="pending" minHeight="x60" />;
   }
   return (
-    <Card p="spacingX.globalGutter">
-      <ResponsePatternRows scales={pattern.scales} />
+    <Card p="spacingX.globalGutter" position="relative">
+      {help ? <HelpBubbleInfoTrigger title={help.title} description={help.description} /> : null}
+      <VStack pt={help ? 'x10' : undefined}>
+        <ResponsePatternRows scales={pattern.scales} />
+      </VStack>
     </Card>
   );
 }

@@ -1,12 +1,15 @@
+import { useState } from 'react';
 import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { Box, type BoxProps } from '../../design-system/components/Box';
+import { Float } from '../../design-system/components/Float';
 import { VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
 import { resolveColor, type TokenColor } from '../../design-system/components/style-props';
 import { useDesignSystemTheme } from '../../design-system/provider';
 import { Icon } from './Icon';
+import { IconButton } from './IconButton';
 
 export type HelpBubblePlacement =
   | 'top-left'
@@ -31,6 +34,15 @@ export type HelpBubbleProps = Omit<BoxProps, 'children'> & {
   onClose?: () => void;
   closeLabel?: string;
   visible?: boolean;
+};
+
+export type HelpBubbleInfo = {
+  title: string;
+  description: string;
+};
+
+export type HelpBubbleInfoTriggerProps = HelpBubbleInfo & {
+  label?: string;
 };
 
 type ArrowSide = 'top' | 'right' | 'bottom' | 'left';
@@ -153,6 +165,47 @@ function HelpBubbleCloseButton({ label, onClose }: HelpBubbleCloseButtonProps) {
         <Icon name="X" color="fg.neutralInverted" size="small" />
       </Box>
     </Pressable>
+  );
+}
+
+export function HelpBubbleInfoTrigger({
+  title,
+  description,
+  label = '측정 방식 보기',
+}: HelpBubbleInfoTriggerProps) {
+  const [visible, setVisible] = useState(false);
+  const buttonLabel = visible ? '측정 방식 닫기' : label;
+
+  function handlePress() {
+    setVisible((currentVisible) => !currentVisible);
+  }
+
+  function handleClose() {
+    setVisible(false);
+  }
+
+  return (
+    <>
+      <Float placement="top-end" offsetX="x2" offsetY="x2" zIndex={3}>
+        <IconButton
+          name="Info"
+          label={buttonLabel}
+          color={visible ? 'fg.brand' : 'fg.neutralMuted'}
+          onPress={handlePress}
+        />
+      </Float>
+      <Float placement="top-end" offsetX="x2" offsetY="x12" zIndex={4}>
+        <HelpBubble
+          title={title}
+          description={description}
+          placement="bottom-right"
+          showCloseButton
+          visible={visible}
+          width="x60"
+          onClose={handleClose}
+        />
+      </Float>
+    </>
   );
 }
 

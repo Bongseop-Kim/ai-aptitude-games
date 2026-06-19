@@ -5,6 +5,7 @@ import { SubSectionHead } from '../app/SubSectionHead';
 import { RadarChart } from '../reports/ReportCharts';
 import { Badge } from '../ui/Badge';
 import { Card } from '../ui/Card';
+import type { HelpBubbleInfo } from '../ui/HelpBubble';
 import { List } from '../ui/List';
 import { SegmentedControl } from '../ui/SegmentedControl';
 import { INTERVIEW_AXES } from '../../data/interviewFlow';
@@ -23,6 +24,24 @@ export type InterviewAnalysisBodyProps = {
 };
 
 type InterviewChartKey = 'axes' | 'delivery' | 'ncs';
+
+const INTERVIEW_CHART_HELP: Record<InterviewChartKey, HelpBubbleInfo> = {
+  axes: {
+    title: '평가는 이렇게 봤어요',
+    description:
+      '질문별 답변에서 내용 관련성, STAR 구조, 음성, 시선, 전달력을 각각 0~100점으로 봤어요. 또래 평균은 같은 기준으로 분석한 답변과 비교한 값이에요.',
+  },
+  delivery: {
+    title: '전달은 이렇게 봤어요',
+    description:
+      '음성과 영상에서 말 속도, 발음 명료도, 시선 안정처럼 전달에 영향을 주는 신호를 봤어요.',
+  },
+  ncs: {
+    title: 'NCS는 이렇게 봤어요',
+    description:
+      '답변 내용과 사례를 NCS 직업기초능력 단위에 연결해 점수화했어요. 질문 의도와 답변 근거가 얼마나 맞는지 함께 봐요.',
+  },
+};
 
 export function InterviewAnalysisBody({ interview, mockExamId, session = null }: InterviewAnalysisBodyProps) {
   const router = useRouter();
@@ -77,6 +96,7 @@ export function InterviewAnalysisBody({ interview, mockExamId, session = null }:
           {chartKey === 'axes' ? (
             <RadarChart
               comparisonLabel="또래 평균"
+              help={INTERVIEW_CHART_HELP.axes}
               points={INTERVIEW_AXES.map((axis) => {
                 const score = axisScores.get(axis.key) ?? null;
                 return {
@@ -90,6 +110,7 @@ export function InterviewAnalysisBody({ interview, mockExamId, session = null }:
           ) : null}
           {chartKey === 'delivery' && hasDeliveryDetails ? (
             <RadarChart
+              help={INTERVIEW_CHART_HELP.delivery}
               points={(interview.delivery_details ?? []).map((detail) => ({
                 label: detail.label,
                 value: detail.value,
@@ -98,6 +119,7 @@ export function InterviewAnalysisBody({ interview, mockExamId, session = null }:
           ) : null}
           {chartKey === 'ncs' && hasNcsUnits ? (
             <RadarChart
+              help={INTERVIEW_CHART_HELP.ncs}
               points={interview.ncs_units.map((unit) => ({
                 label: unit.label,
                 value: unit.score,

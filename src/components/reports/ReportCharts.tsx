@@ -9,6 +9,7 @@ import { resolveColor } from '../../design-system/components/style-props';
 import { useDesignSystemTheme } from '../../design-system/provider';
 import type { ReportResponsePatternScale } from '../../domain/report';
 import { Card } from '../ui/Card';
+import { HelpBubbleInfoTrigger, type HelpBubbleInfo } from '../ui/HelpBubble';
 import { List } from '../ui/List';
 import {
   Canvas,
@@ -149,6 +150,7 @@ export type RadarChartPoint = {
 
 type RadarChartProps = {
   points: RadarChartPoint[];
+  help?: HelpBubbleInfo;
   valueLabel?: string;
   comparisonLabel?: string;
   unavailableLabel?: string;
@@ -271,6 +273,7 @@ function RadarAxisLabel({ label, x, y }: { label: string; x: number; y: number }
 
 export function RadarChart({
   points,
+  help,
   valueLabel = '내 점수',
   comparisonLabel,
   unavailableLabel = '분석 준비 중',
@@ -378,8 +381,9 @@ export function RadarChart({
   }
 
   return (
-    <Card p="spacingX.globalGutter">
-      <VStack gap="x3">
+    <Card p="spacingX.globalGutter" position="relative">
+      {help ? <HelpBubbleInfoTrigger title={help.title} description={help.description} /> : null}
+      <VStack gap="x3" pt={help ? 'x10' : undefined}>
         <Box
           accessible
           accessibilityLabel={accessibilityLabel}
