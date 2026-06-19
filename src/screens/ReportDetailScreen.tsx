@@ -23,6 +23,7 @@ import { Icon } from '../components/ui/Icon';
 import { List } from '../components/ui/List';
 import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/ui/Skeleton';
+import { SegmentedControl } from '../components/ui/SegmentedControl';
 import { ReadinessGauge } from '../components/readiness/ReadinessGauge';
 import { games } from '../data/games';
 import { reportDetailSections } from '../data/reports';
@@ -94,6 +95,13 @@ function formatDurationLabel(durationMs: number) {
 }
 
 type MockExamGameResults = Partial<Record<GameId, GameResultRecord>> | undefined;
+type DetailChartKey = 'games' | 'competencies' | 'pattern';
+
+const DETAIL_CHART_ITEMS = [
+  { label: '게임', value: 'games' },
+  { label: '역량', value: 'competencies' },
+  { label: '패턴', value: 'pattern' },
+] as const satisfies readonly { label: string; value: DetailChartKey }[];
 
 export function ReportDetailScreen() {
   const router = useRouter();
@@ -470,6 +478,7 @@ function GameDiagnosisSection({
   states,
   onRetry,
 }: GameDiagnosisSectionProps) {
+  const [chartKey, setChartKey] = useState<DetailChartKey>('games');
   const coreStates = [states.resilience, states.coach];
   const hasFailedCore = coreStates.includes('failed');
   const hasPendingCore = coreStates.includes('pending');
@@ -483,20 +492,14 @@ function GameDiagnosisSection({
         state={states.resilience}
       />
 
-      <ReportSubsection title="게임별 결과">
-        <GamesSection record={record} gameInsights={report?.games ?? null} />
-      </ReportSubsection>
-
-      <ReportSubsection
-        title="앱 5대 역량 프로필"
-        caption="NCS 공식 판정이 아니라, 게임 과제를 직업공통능력 관점으로 다시 묶은 참고 지표예요."
-      >
-        <CompetenciesSection competencies={report?.competencies ?? null} state={states.competencies} onRetry={onRetry} />
-      </ReportSubsection>
-
-      <ReportSubsection title="응답 패턴 프로필">
-        <ResponsePatternSection pattern={report?.response_pattern ?? null} state={states.pattern} onRetry={onRetry} />
-      </ReportSubsection>
+      <ReportChartsSwitcher
+        chartKey={chartKey}
+        onChartChange={setChartKey}
+        record={record}
+        report={report}
+        states={states}
+        onRetry={onRetry}
+      />
 
       {hasFailedCore ? (
         <AnalysisStatusCard
@@ -511,6 +514,57 @@ function GameDiagnosisSection({
         <Badge label="추가 분석 준비 중" tone="neutral" size="small" />
       </ReservedSlot>
     </VStack>
+  );
+}
+
+type ReportChartsSwitcherProps = {
+  chartKey: DetailChartKey;
+  onChartChange: (chartKey: DetailChartKey) => void;
+  record: MockExamRecord;
+  report: MockExamReport | null;
+  states: ReportSectionStates;
+  onRetry: () => void;
+};
+
+function ReportChartsSwitcher({
+  chartKey,
+  onChartChange,
+  record,
+  report,
+  states,
+  onRetry,
+}: ReportChartsSwitcherProps) {
+  return (
+    <ReportSubsection title="세부 차트">
+      <VStack gap="x3" minHeight="x60">
+        <SegmentedControl
+          accessibilityLabel="세부 차트 선택"
+          fullWidth
+          items={DETAIL_CHART_ITEMS}
+          onValueChange={onChartChange}
+          size="small"
+          value={chartKey}
+        />
+        {chartKey === 'games' ? (
+          <GamesSection record={record} gameInsights={report?.games ?? null} />
+        ) : null}
+        {chartKey === 'competencies' ? (
+          <VStack gap="x2">
+            <Text color="fg.neutralMuted" textStyle="t3Regular" lineHeight="t4">
+              게임 과제를 직업공통능력 관점으로 다시 묶은 참고 지표예요.
+            </Text>
+            <CompetenciesSection
+              competencies={report?.competencies ?? null}
+              state={states.competencies}
+              onRetry={onRetry}
+            />
+          </VStack>
+        ) : null}
+        {chartKey === 'pattern' ? (
+          <ResponsePatternSection pattern={report?.response_pattern ?? null} state={states.pattern} onRetry={onRetry} />
+        ) : null}
+      </VStack>
+    </ReportSubsection>
   );
 }
 

@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
 import { useRouter } from 'expo-router';
 
 import { SubSectionHead } from '../app/SubSectionHead';
@@ -7,6 +7,7 @@ import { ReportScoreRow } from '../reports/ReportScoreRow';
 import { Badge } from '../ui/Badge';
 import { Card } from '../ui/Card';
 import { List } from '../ui/List';
+import { SegmentedControl } from '../ui/SegmentedControl';
 import { INTERVIEW_AXES } from '../../data/interviewFlow';
 import { Box } from '../../design-system/components/Box';
 import { HStack, VStack } from '../../design-system/components/Stack';
@@ -22,9 +23,19 @@ export type InterviewAnalysisBodyProps = {
   session?: InterviewSessionRecord | null;
 };
 
+type InterviewChartKey = 'axes' | 'delivery' | 'ncs';
+
 export function InterviewAnalysisBody({ interview, mockExamId, session = null }: InterviewAnalysisBodyProps) {
   const router = useRouter();
+  const [chartKey, setChartKey] = useState<InterviewChartKey>('axes');
   const axisScores = new Map(interview.axes.map((axis) => [axis.key, axis]));
+  const hasDeliveryDetails = Boolean(interview.delivery_details && interview.delivery_details.length > 0);
+  const hasNcsUnits = interview.ncs_units.length > 0;
+  const chartItems = [
+    { label: '평가', value: 'axes' },
+    { label: '전달', value: 'delivery', disabled: !hasDeliveryDetails },
+    { label: 'NCS', value: 'ncs', disabled: !hasNcsUnits },
+  ] as const satisfies readonly { disabled?: boolean; label: string; value: InterviewChartKey }[];
 
   return (
     <VStack gap="x4">
@@ -54,60 +65,79 @@ export function InterviewAnalysisBody({ interview, mockExamId, session = null }:
       </Card>
 
       <VStack gap="x2">
-        <SubSectionHead title="평가 축" caption="또래 평균은 같은 조건으로 응시한 집단의 평균이에요." />
-        <ReportScoreListCard markerLegendLabel="또래 평균">
-          {INTERVIEW_AXES.map((axis, index) => {
-            const score = axisScores.get(axis.key) ?? null;
-            return (
-              <Fragment key={axis.key}>
-                {index > 0 ? <List.Divider /> : null}
-                <ReportScoreRow
-                  title={axis.name}
-                  value={score?.score ?? null}
-                  markerValue={score?.peer_avg ?? null}
-                  tagItems={[
-                    { label: axis.sub },
-                    ...(score?.peer_avg != null ? [{ label: `또래 ${score.peer_avg}` }] : []),
-                  ]}
-                  unavailableLabel="영상 분석 준비 중"
-                />
-              </Fragment>
-            );
-          })}
-        </ReportScoreListCard>
+        <SubSectionHead title="면접 차트" />
+        <VStack gap="x3" minHeight="x60">
+          <SegmentedControl
+            accessibilityLabel="면접 차트 선택"
+            fullWidth
+            items={chartItems}
+            onValueChange={setChartKey}
+            size="small"
+            value={chartKey}
+          />
+          {chartKey === 'axes' ? (
+            <VStack gap="x2">
+              <Text color="fg.neutralMuted" textStyle="t3Regular" lineHeight="t4">
+                또래 평균은 같은 조건으로 응시한 집단의 평균이에요.
+              </Text>
+              <ReportScoreListCard markerLegendLabel="또래 평균">
+                {INTERVIEW_AXES.map((axis, index) => {
+                  const score = axisScores.get(axis.key) ?? null;
+                  return (
+                    <Fragment key={axis.key}>
+                      {index > 0 ? <List.Divider /> : null}
+                      <ReportScoreRow
+                        title={axis.name}
+                        value={score?.score ?? null}
+                        markerValue={score?.peer_avg ?? null}
+                        tagItems={[
+                          { label: axis.sub },
+                          ...(score?.peer_avg != null ? [{ label: `또래 ${score.peer_avg}` }] : []),
+                        ]}
+                        unavailableLabel="영상 분석 준비 중"
+                      />
+                    </Fragment>
+                  );
+                })}
+              </ReportScoreListCard>
+            </VStack>
+          ) : null}
+          {chartKey === 'delivery' && hasDeliveryDetails ? (
+            <VStack gap="x2">
+              <Text color="fg.neutralMuted" textStyle="t3Regular" lineHeight="t4">
+                말의 속도와 흐름처럼 전달 방식을 나누어 본 값이에요.
+              </Text>
+              <ReportScoreListCard>
+                {interview.delivery_details?.map((detail, index) => (
+                  <Fragment key={index}>
+                    {index > 0 ? <List.Divider /> : null}
+                    <ReportScoreRow title={detail.label} value={detail.value} />
+                  </Fragment>
+                ))}
+              </ReportScoreListCard>
+            </VStack>
+          ) : null}
+          {chartKey === 'ncs' && hasNcsUnits ? (
+            <VStack gap="x2">
+              <Text color="fg.neutralMuted" textStyle="t3Regular" lineHeight="t4">
+                NCS 직업공통능력 기준으로 답변 행동을 다시 묶어 본 참고 지표예요.
+              </Text>
+              <ReportScoreListCard>
+                {interview.ncs_units.map((unit, index) => (
+                  <Fragment key={unit.label}>
+                    {index > 0 ? <List.Divider /> : null}
+                    <ReportScoreRow
+                      title={unit.label}
+                      value={unit.score}
+                      tagItems={unit.basis ? [{ label: unit.basis }] : []}
+                    />
+                  </Fragment>
+                ))}
+              </ReportScoreListCard>
+            </VStack>
+          ) : null}
+        </VStack>
       </VStack>
-
-      {interview.delivery_details && interview.delivery_details.length > 0 ? (
-        <VStack gap="x2">
-          <SubSectionHead title="전달력 세부" caption="말의 속도와 흐름처럼 전달 방식을 나누어 본 값이에요." />
-          <ReportScoreListCard>
-            {interview.delivery_details.map((detail, index) => (
-              <Fragment key={index}>
-                {index > 0 ? <List.Divider /> : null}
-                <ReportScoreRow title={detail.label} value={detail.value} />
-              </Fragment>
-            ))}
-          </ReportScoreListCard>
-        </VStack>
-      ) : null}
-
-      {interview.ncs_units.length > 0 ? (
-        <VStack gap="x2">
-          <SubSectionHead title="NCS 능력단위" caption="NCS 직업공통능력 기준으로 답변 행동을 다시 묶어 본 참고 지표예요." />
-          <ReportScoreListCard>
-            {interview.ncs_units.map((unit, index) => (
-              <Fragment key={unit.label}>
-                {index > 0 ? <List.Divider /> : null}
-                <ReportScoreRow
-                  title={unit.label}
-                  value={unit.score}
-                  tagItems={unit.basis ? [{ label: unit.basis }] : []}
-                />
-              </Fragment>
-            ))}
-          </ReportScoreListCard>
-        </VStack>
-      ) : null}
 
       {interview.top_fixes.length > 0 ? (
         <VStack gap="x2">
