@@ -12,12 +12,15 @@ import {
   Canvas,
   Easing,
   Group,
+  LinearGradient,
+  Path,
   Rect,
   RoundedRect,
   Skia,
   useDerivedValue,
   useSharedValue,
   withTiming,
+  vec,
 } from '../../lib/native-motion';
 
 type ChartSize = { width: number; height: number };
@@ -27,6 +30,14 @@ const BULLET_BAR_TOKENS = {
   trackHeight: 'x1_5',
   markerHeight: 'x3',
   markerWidth: 'x1',
+  radius: 'r1_5',
+} as const;
+const PATTERN_TRACK_TOKENS = {
+  centerTickWidth: 'x0_5',
+  markerGap: 'x1',
+  markerHeight: 'x3',
+  paddingY: 'x1',
+  trackHeight: 'x1_5',
   radius: 'r1_5',
 } as const;
 
@@ -64,6 +75,26 @@ function useFocusProgress(duration = 600) {
   }, [duration, isFocused, progress]);
 
   return progress;
+}
+
+function createTriangleMarkerPath({
+  centerX,
+  markerTop,
+  markerHeight,
+}: {
+  centerX: number;
+  markerTop: number;
+  markerHeight: number;
+}) {
+  const halfWidth = markerHeight / 2;
+  const path = Skia.Path.Make();
+
+  path.moveTo(centerX, markerTop);
+  path.lineTo(centerX - halfWidth, markerTop + markerHeight);
+  path.lineTo(centerX + halfWidth, markerTop + markerHeight);
+  path.close();
+
+  return path;
 }
 
 export type BulletBarProps = {
@@ -132,36 +163,40 @@ export function BulletBar({ value, peerMedian = null }: BulletBarProps) {
   );
 }
 
-// One bipolar scale: neutral full-width track, a center tick at 50%, and ONE
-// neutral marker positioned at `value`% (성향, not 우열 — never brand/positive/critical).
-// Mirrors BulletBar's clamp/measure/useDerivedValue pattern; only the marker x is
-// animated (transform-safe).
+// One bipolar scale: full-width spectrum, a center tick at 50%, and one marker
+// positioned at `value`% (성향, not 우열).
 function PatternTrack({ value }: { value: number }) {
   const { theme } = useDesignSystemTheme();
   const { size, onLayout } = useMeasuredChart();
-  const progress = useFocusProgress(400);
   const clamped = clamp(value);
-  const trackColor = resolveColor(theme, 'bg.neutralWeak');
-  const tickColor = resolveColor(theme, 'stroke.neutralWeak');
-  const markerColor = resolveColor(theme, 'fg.neutral');
-  const trackHeight = theme.dimension.x[BULLET_BAR_TOKENS.trackHeight];
-  const markerHeight = theme.dimension.x[BULLET_BAR_TOKENS.markerHeight];
-  const markerWidth = theme.dimension.x[BULLET_BAR_TOKENS.markerWidth];
-  const trackRadius = theme.radius[BULLET_BAR_TOKENS.radius];
-  const trackY = (markerHeight - trackHeight) / 2;
-  const markerMax = Math.max(0, size.width - markerWidth);
-  const tickX = Math.max(0, Math.min(markerMax, size.width / 2 - markerWidth / 2));
-  const markerX = useDerivedValue(
-    () => clamp((size.width * clamped) / 100 * progress.value, 0, markerMax),
-    [size.width, clamped, markerMax],
+  const edgeColor = theme.color.mannerTemp.l5Text;
+  const centerColor = theme.color.bg.brandSolid;
+  const markerColor = theme.color.fg.neutral;
+  const tickColor = theme.color.stroke.neutralWeak;
+  const centerTickWidth = theme.dimension.x[PATTERN_TRACK_TOKENS.centerTickWidth];
+  const markerGap = theme.dimension.x[PATTERN_TRACK_TOKENS.markerGap];
+  const markerHeight = theme.dimension.x[PATTERN_TRACK_TOKENS.markerHeight];
+  const paddingY = theme.dimension.x[PATTERN_TRACK_TOKENS.paddingY];
+  const trackHeight = theme.dimension.x[PATTERN_TRACK_TOKENS.trackHeight];
+  const trackRadius = theme.radius[PATTERN_TRACK_TOKENS.radius];
+  const chartHeight = paddingY * 2 + trackHeight + markerGap + markerHeight;
+  const trackY = paddingY;
+  const markerTop = trackY + trackHeight + markerGap;
+  const markerHalfWidth = markerHeight / 2;
+  const markerCenterX = clamp(
+    markerHalfWidth + (Math.max(0, size.width - markerHeight) * clamped) / 100,
+    markerHalfWidth,
+    Math.max(markerHalfWidth, size.width - markerHalfWidth),
   );
+  const markerPath = createTriangleMarkerPath({ centerX: markerCenterX, markerTop, markerHeight });
+  const tickX = Math.max(0, Math.min(size.width - centerTickWidth, size.width / 2 - centerTickWidth / 2));
 
   return (
     <Box
       accessibilityRole="progressbar"
       accessibilityValue={{ min: 0, max: 100, now: clamped, text: `성향 위치 ${clamped}점` }}
       flex={1}
-      height={markerHeight}
+      height={chartHeight}
       onLayout={onLayout}
       width="full"
     >
@@ -174,10 +209,16 @@ function PatternTrack({ value }: { value: number }) {
               width={size.width}
               height={trackHeight}
               r={trackRadius}
-              color={trackColor}
-            />
-            <Rect x={tickX} y={0} width={markerWidth} height={markerHeight} color={tickColor} />
-            <Rect x={markerX} y={0} width={markerWidth} height={markerHeight} color={markerColor} />
+            >
+              <LinearGradient
+                start={vec(0, trackY)}
+                end={vec(size.width, trackY)}
+                colors={[edgeColor, centerColor, edgeColor]}
+                positions={[0, 0.5, 1]}
+              />
+            </RoundedRect>
+            <Rect x={tickX} y={trackY} width={centerTickWidth} height={trackHeight} color={tickColor} />
+            <Path path={markerPath} color={markerColor} />
           </>
         ) : null}
       </Canvas>
@@ -187,25 +228,21 @@ function PatternTrack({ value }: { value: number }) {
 
 export function ResponsePatternRows({ scales }: { scales: ReportResponsePatternScale[] }) {
   return (
-    <VStack gap="x4">
+    <VStack>
       {scales.map((scale) => (
-        <VStack key={scale.key} gap="x1">
-          <HStack align="center" gap="x2">
-            <Box flex={0.4} minWidth="x14">
-              <Text color="fg.neutralSubtle" textStyle="t1Regular" maxLines={2}>
-                {scale.left}
-              </Text>
-            </Box>
-            <PatternTrack value={scale.value} />
-            <Box flex={0.4} minWidth="x14">
-              <Text align="right" color="fg.neutralSubtle" textStyle="t1Regular" maxLines={2}>
-                {scale.right}
-              </Text>
-            </Box>
-          </HStack>
-          {/* Interpretation slot: reserved for a future one-line reading. The
-              payload type carries no such field today, so nothing renders. */}
-        </VStack>
+        <HStack key={scale.key} align="center" gap="x3" py="x3">
+          <Box flex={0.4} minWidth="x14">
+            <Text textStyle="t4Medium" maxLines={2}>
+              {scale.left}
+            </Text>
+          </Box>
+          <PatternTrack value={scale.value} />
+          <Box flex={0.4} minWidth="x14">
+            <Text align="right" textStyle="t4Medium" maxLines={2}>
+              {scale.right}
+            </Text>
+          </Box>
+        </HStack>
       ))}
     </VStack>
   );
