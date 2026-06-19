@@ -1,9 +1,5 @@
-import { Fragment } from 'react';
-
 import type { ReportCompetencyScore } from '../../domain/report';
-import { List } from '../ui/List';
-import { ReportScoreListCard } from './ReportScoreListCard';
-import { ReportScoreRow } from './ReportScoreRow';
+import { RadarChart } from './ReportCharts';
 
 const COMPETENCY_LABELS: Record<ReportCompetencyScore['key'], string> = {
   trust: '신뢰',
@@ -32,27 +28,13 @@ export function CompetencySection({ competencies }: CompetencySectionProps) {
   );
 
   return (
-    <ReportScoreListCard markerLegendLabel="또래 중앙값">
-      {ordered.map((competency, index) => (
-        <Fragment key={competency.key}>
-          {index > 0 ? <List.Divider /> : null}
-          <CompetencyBulletRow competency={competency} />
-        </Fragment>
-      ))}
-    </ReportScoreListCard>
-  );
-}
-
-function CompetencyBulletRow({ competency }: { competency: ReportCompetencyScore }) {
-  return (
-    <ReportScoreRow
-      title={COMPETENCY_LABELS[competency.key]}
-      value={competency.score}
-      markerValue={competency.peer_median}
-      tagItems={[
-        { label: competency.note },
-        ...(competency.percentile != null ? [{ label: `상위 ${competency.percentile}%` }] : []),
-      ]}
+    <RadarChart
+      comparisonLabel="또래 중앙값"
+      points={ordered.map((competency) => ({
+        label: COMPETENCY_LABELS[competency.key],
+        value: competency.score,
+        comparisonValue: competency.peer_median,
+      }))}
     />
   );
 }

@@ -3,13 +3,16 @@ import type { LayoutChangeEvent } from 'react-native';
 import { useIsFocused } from 'expo-router';
 
 import { Box } from '../../design-system/components/Box';
+import { HStack, VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
 import { resolveColor } from '../../design-system/components/style-props';
 import { useDesignSystemTheme } from '../../design-system/provider';
 import type { ReportResponsePatternScale } from '../../domain/report';
+import { Card } from '../ui/Card';
 import { List } from '../ui/List';
 import {
   Canvas,
+  Circle,
   Easing,
   Group,
   LinearGradient,
@@ -40,6 +43,15 @@ const PATTERN_TRACK_TOKENS = {
   trackHeight: 'x1_5',
   radius: 'r1_5',
 } as const;
+const RADAR_GRID_STEPS = [20, 40, 60, 80, 100] as const;
+const RADAR_AXIS_LABEL_WIDTH = 72;
+const RADAR_AXIS_LABEL_HEIGHT = 34;
+const RADAR_HORIZONTAL_INSET = RADAR_AXIS_LABEL_WIDTH / 2 + 18;
+const RADAR_VERTICAL_INSET = RADAR_AXIS_LABEL_HEIGHT / 2 + 22;
+const RADAR_LABEL_GAP = 22;
+const RADAR_VALUE_POINT_RADIUS = 3.5;
+const RADAR_COMPARISON_POINT_RADIUS = 2.5;
+const RADAR_STROKE_WIDTH = 2;
 
 function clamp(value: number, min = 0, max = 100) {
   'worklet';
@@ -60,7 +72,7 @@ function useMeasuredChart() {
   };
 }
 
-function useFocusProgress(duration = 600) {
+function useFocusProgress(duration = 600, resetKey: string | number = '') {
   const isFocused = useIsFocused();
   const progress = useSharedValue(0);
 
@@ -72,7 +84,7 @@ function useFocusProgress(duration = 600) {
       duration,
       easing: Easing.out(Easing.cubic),
     }));
-  }, [duration, isFocused, progress]);
+  }, [duration, isFocused, progress, resetKey]);
 
   return progress;
 }
@@ -112,6 +124,368 @@ function resolvePatternMarkerCenterX({
     markerHalfWidth + (Math.max(0, width - markerHeight) * value) / 100,
     markerHalfWidth,
     Math.max(markerHalfWidth, width - markerHalfWidth),
+  );
+}
+
+type RadarCoordinate = {
+  angle: number;
+  x: number;
+  y: number;
+};
+
+export type RadarChartPoint = {
+  label: string;
+  value: number | null;
+  comparisonValue?: number | null;
+};
+
+type RadarChartProps = {
+  points: RadarChartPoint[];
+  valueLabel?: string;
+  comparisonLabel?: string;
+  unavailableLabel?: string;
+};
+
+function resolveRadarCenter(size: ChartSize) {
+  return {
+    x: size.width / 2,
+    y: size.height / 2,
+  };
+}
+
+function resolveRadarRadius(size: ChartSize) {
+  if (size.width <= 0 || size.height <= 0) {
+    return 0;
+  }
+
+  return Math.max(
+    0,
+    Math.min(
+      size.width - RADAR_HORIZONTAL_INSET * 2,
+      size.height - RADAR_VERTICAL_INSET * 2,
+    ) / 2,
+  );
+}
+
+function resolveRadarAngle(index: number, total: number) {
+  return -Math.PI / 2 + (index * Math.PI * 2) / total;
+}
+
+function resolveRadarCoordinate({
+  angle,
+  center,
+  radius,
+  value,
+}: {
+  angle: number;
+  center: { x: number; y: number };
+  radius: number;
+  value: number;
+}) {
+  const distance = radius * (clamp(value) / 100);
+
+  return {
+    angle,
+    x: center.x + Math.cos(angle) * distance,
+    y: center.y + Math.sin(angle) * distance,
+  };
+}
+
+function buildRadarPath(points: RadarCoordinate[]) {
+  const path = Skia.Path.Make();
+
+  points.forEach((point, index) => {
+    if (index === 0) {
+      path.moveTo(point.x, point.y);
+      return;
+    }
+
+    path.lineTo(point.x, point.y);
+  });
+  path.close();
+
+  return path;
+}
+
+function buildRadarLinePath(start: { x: number; y: number }, end: RadarCoordinate) {
+  const path = Skia.Path.Make();
+
+  path.moveTo(start.x, start.y);
+  path.lineTo(end.x, end.y);
+
+  return path;
+}
+
+function formatRadarValue(point: RadarChartPoint, unavailableLabel: string) {
+  if (point.value == null) {
+    return `${point.label} ${unavailableLabel}`;
+  }
+
+  return `${point.label} ${Math.round(clamp(point.value))}점`;
+}
+
+function RadarAxisLabel({ label, x, y }: { label: string; x: number; y: number }) {
+  return (
+    <Box
+      position="absolute"
+      style={{
+        left: x - RADAR_AXIS_LABEL_WIDTH / 2,
+        top: y - RADAR_AXIS_LABEL_HEIGHT / 2,
+        width: RADAR_AXIS_LABEL_WIDTH,
+      }}
+    >
+      <Text align="center" color="fg.neutralMuted" maxLines={2} textStyle="t1Medium">
+        {label}
+      </Text>
+    </Box>
+  );
+}
+
+export function RadarChart({
+  points,
+  valueLabel = '내 점수',
+  comparisonLabel,
+  unavailableLabel = '분석 준비 중',
+}: RadarChartProps) {
+  const { theme } = useDesignSystemTheme();
+  const { size, onLayout } = useMeasuredChart();
+  const animationKey = points
+    .map((point) => `${point.label}:${point.value ?? 'none'}:${point.comparisonValue ?? 'none'}`)
+    .join('|');
+  const progress = useFocusProgress(700, animationKey);
+  const center = resolveRadarCenter(size);
+  const radius = resolveRadarRadius(size);
+  const labelRadius = radius + RADAR_LABEL_GAP;
+  const canRenderRadar = points.length >= 3;
+  const hasComparison = canRenderRadar && points.every((point) => point.comparisonValue != null);
+  const gridColor = resolveColor(theme, 'stroke.neutralWeak');
+  const axisColor = resolveColor(theme, 'stroke.neutralSubtle');
+  const valueColor = resolveColor(theme, 'bg.brandSolid');
+  const comparisonColor = resolveColor(theme, 'mannerTemp.l5Text');
+  const pointFill = resolveColor(theme, 'bg.layerFloating');
+  const radarTransform = useDerivedValue(
+    () => [
+      { translateX: center.x },
+      { translateY: center.y },
+      { scale: progress.get() },
+      { translateX: -center.x },
+      { translateY: -center.y },
+    ],
+    [center.x, center.y],
+  );
+  const axisCoordinates = canRenderRadar
+    ? points.map((_, index) =>
+        resolveRadarCoordinate({
+          angle: resolveRadarAngle(index, points.length),
+          center,
+          radius,
+          value: 100,
+        }),
+      )
+    : [];
+  const valueCoordinates = canRenderRadar
+    ? points.map((point, index) =>
+        resolveRadarCoordinate({
+          angle: resolveRadarAngle(index, points.length),
+          center,
+          radius,
+          value: point.value ?? 0,
+        }),
+      )
+    : [];
+  const comparisonCoordinates = hasComparison
+    ? points.map((point, index) =>
+        resolveRadarCoordinate({
+          angle: resolveRadarAngle(index, points.length),
+          center,
+          radius,
+          value: point.comparisonValue ?? 0,
+        }),
+      )
+    : [];
+  const labelCoordinates = canRenderRadar
+    ? points.map((point, index) => ({
+        ...resolveRadarCoordinate({
+          angle: resolveRadarAngle(index, points.length),
+          center,
+          radius: labelRadius,
+          value: 100,
+        }),
+        label: point.label,
+      }))
+    : [];
+  const gridPaths = canRenderRadar
+    ? RADAR_GRID_STEPS.map((step) =>
+        buildRadarPath(
+          points.map((_, index) =>
+            resolveRadarCoordinate({
+              angle: resolveRadarAngle(index, points.length),
+              center,
+              radius,
+              value: step,
+            }),
+          ),
+        ),
+      )
+    : [];
+  const axisPaths = canRenderRadar
+    ? axisCoordinates.map((point) => buildRadarLinePath(center, point))
+    : [];
+  const valuePath = buildRadarPath(valueCoordinates);
+  const comparisonPath = buildRadarPath(comparisonCoordinates);
+  const accessibilityLabel = `${valueLabel}: ${points
+    .map((point) => formatRadarValue(point, unavailableLabel))
+    .join(', ')}`;
+
+  if (!canRenderRadar) {
+    return (
+      <Card minHeight="x72" p="spacingX.globalGutter">
+        <VStack align="center" justify="center" minHeight="x72">
+          <Text align="center" color="fg.neutralMuted" textStyle="t3Regular">
+            차트를 표시할 항목이 더 필요해요.
+          </Text>
+        </VStack>
+      </Card>
+    );
+  }
+
+  return (
+    <Card p="spacingX.globalGutter">
+      <VStack gap="x3">
+        <Box
+          accessible
+          accessibilityLabel={accessibilityLabel}
+          accessibilityRole="image"
+          height="x72"
+          onLayout={onLayout}
+          position="relative"
+          width="full"
+        >
+          {size.width > 0 && radius > 0 ? (
+            <>
+              <Canvas style={{ width: '100%', height: '100%' }}>
+                {gridPaths.map((path, index) => (
+                  <Path
+                    key={`grid-${RADAR_GRID_STEPS[index]}`}
+                    color={gridColor}
+                    path={path}
+                    strokeWidth={index === RADAR_GRID_STEPS.length - 1 ? 1.2 : 0.8}
+                    style="stroke"
+                  />
+                ))}
+                {axisPaths.map((path, index) => (
+                  <Path
+                    key={`axis-${points[index].label}`}
+                    color={axisColor}
+                    path={path}
+                    strokeWidth={0.8}
+                    style="stroke"
+                  />
+                ))}
+                {hasComparison ? (
+                  <Group transform={radarTransform}>
+                    <Path color={comparisonColor} opacity={0.18} path={comparisonPath} />
+                    <Path
+                      color={comparisonColor}
+                      end={progress}
+                      path={comparisonPath}
+                      strokeCap="round"
+                      strokeJoin="round"
+                      strokeWidth={RADAR_STROKE_WIDTH}
+                      style="stroke"
+                    />
+                    {comparisonCoordinates.map((point) => (
+                      <Circle
+                        key={`comparison-${point.angle}`}
+                        color={comparisonColor}
+                        cx={point.x}
+                        cy={point.y}
+                        r={RADAR_COMPARISON_POINT_RADIUS}
+                      />
+                    ))}
+                  </Group>
+                ) : null}
+                <Group transform={radarTransform}>
+                  <Path color={valueColor} opacity={0.22} path={valuePath} />
+                  <Path
+                    color={valueColor}
+                    end={progress}
+                    path={valuePath}
+                    strokeCap="round"
+                    strokeJoin="round"
+                    strokeWidth={RADAR_STROKE_WIDTH}
+                    style="stroke"
+                  />
+                  {valueCoordinates.map((point) => (
+                    <Circle
+                      key={`value-fill-${point.angle}`}
+                      color={pointFill}
+                      cx={point.x}
+                      cy={point.y}
+                      r={RADAR_VALUE_POINT_RADIUS}
+                    />
+                  ))}
+                  {valueCoordinates.map((point) => (
+                    <Circle
+                      key={`value-stroke-${point.angle}`}
+                      color={valueColor}
+                      cx={point.x}
+                      cy={point.y}
+                      r={RADAR_VALUE_POINT_RADIUS}
+                      strokeWidth={1.8}
+                      style="stroke"
+                    />
+                  ))}
+                </Group>
+              </Canvas>
+              {labelCoordinates.map((point) => (
+                <RadarAxisLabel key={point.label} label={point.label} x={point.x} y={point.y} />
+              ))}
+              <Box
+                position="absolute"
+                style={{
+                  left: center.x - 20,
+                  top: center.y - radius * 0.5 - 11,
+                  width: 40,
+                }}
+              >
+                <Text align="center" color="fg.neutralSubtle" textStyle="t1Regular">
+                  50
+                </Text>
+              </Box>
+              <Box
+                position="absolute"
+                style={{
+                  left: center.x - 20,
+                  top: center.y - radius - 16,
+                  width: 40,
+                }}
+              >
+                <Text align="center" color="fg.neutralSubtle" textStyle="t1Regular">
+                  100
+                </Text>
+              </Box>
+            </>
+          ) : null}
+        </Box>
+        {hasComparison && comparisonLabel ? (
+          <HStack align="center" columnGap="x2" justify="flexEnd" rowGap="x1" wrap="wrap">
+            <HStack align="center" gap="x1">
+              <Box bg="bg.brandSolid" borderRadius="r1" height="x2" width="x3" />
+              <Text color="fg.neutralMuted" textStyle="t1Regular">
+                {valueLabel}
+              </Text>
+            </HStack>
+            <HStack align="center" gap="x1">
+              <Box bg="mannerTemp.l5Text" borderRadius="r1" height="x2" width="x3" />
+              <Text color="fg.neutralMuted" textStyle="t1Regular">
+                {comparisonLabel}
+              </Text>
+            </HStack>
+          </HStack>
+        ) : null}
+      </VStack>
+    </Card>
   );
 }
 

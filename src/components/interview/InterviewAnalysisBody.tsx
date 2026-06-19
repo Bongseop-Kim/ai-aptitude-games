@@ -2,8 +2,7 @@ import { Fragment, useState } from 'react';
 import { useRouter } from 'expo-router';
 
 import { SubSectionHead } from '../app/SubSectionHead';
-import { ReportScoreListCard } from '../reports/ReportScoreListCard';
-import { ReportScoreRow } from '../reports/ReportScoreRow';
+import { RadarChart } from '../reports/ReportCharts';
 import { Badge } from '../ui/Badge';
 import { Card } from '../ui/Card';
 import { List } from '../ui/List';
@@ -76,56 +75,34 @@ export function InterviewAnalysisBody({ interview, mockExamId, session = null }:
             value={chartKey}
           />
           {chartKey === 'axes' ? (
-            <VStack>
-              <ReportScoreListCard markerLegendLabel="또래 평균">
-                {INTERVIEW_AXES.map((axis, index) => {
-                  const score = axisScores.get(axis.key) ?? null;
-                  return (
-                    <Fragment key={axis.key}>
-                      {index > 0 ? <List.Divider /> : null}
-                      <ReportScoreRow
-                        title={axis.name}
-                        value={score?.score ?? null}
-                        markerValue={score?.peer_avg ?? null}
-                        tagItems={[
-                          { label: axis.sub },
-                          ...(score?.peer_avg != null ? [{ label: `또래 ${score.peer_avg}` }] : []),
-                        ]}
-                        unavailableLabel="영상 분석 준비 중"
-                      />
-                    </Fragment>
-                  );
-                })}
-              </ReportScoreListCard>
-            </VStack>
+            <RadarChart
+              comparisonLabel="또래 평균"
+              points={INTERVIEW_AXES.map((axis) => {
+                const score = axisScores.get(axis.key) ?? null;
+                return {
+                  label: axis.name,
+                  value: score?.score ?? null,
+                  comparisonValue: score?.peer_avg ?? null,
+                };
+              })}
+              unavailableLabel="영상 분석 준비 중"
+            />
           ) : null}
           {chartKey === 'delivery' && hasDeliveryDetails ? (
-            <VStack>
-              <ReportScoreListCard>
-                {interview.delivery_details?.map((detail, index) => (
-                  <Fragment key={index}>
-                    {index > 0 ? <List.Divider /> : null}
-                    <ReportScoreRow title={detail.label} value={detail.value} />
-                  </Fragment>
-                ))}
-              </ReportScoreListCard>
-            </VStack>
+            <RadarChart
+              points={(interview.delivery_details ?? []).map((detail) => ({
+                label: detail.label,
+                value: detail.value,
+              }))}
+            />
           ) : null}
           {chartKey === 'ncs' && hasNcsUnits ? (
-            <VStack>
-              <ReportScoreListCard>
-                {interview.ncs_units.map((unit, index) => (
-                  <Fragment key={unit.label}>
-                    {index > 0 ? <List.Divider /> : null}
-                    <ReportScoreRow
-                      title={unit.label}
-                      value={unit.score}
-                      tagItems={unit.basis ? [{ label: unit.basis }] : []}
-                    />
-                  </Fragment>
-                ))}
-              </ReportScoreListCard>
-            </VStack>
+            <RadarChart
+              points={interview.ncs_units.map((unit) => ({
+                label: unit.label,
+                value: unit.score,
+              }))}
+            />
           ) : null}
         </VStack>
       </VStack>
