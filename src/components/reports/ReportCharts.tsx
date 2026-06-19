@@ -1,13 +1,13 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
 import { useIsFocused } from 'expo-router';
 
 import { Box } from '../../design-system/components/Box';
-import { HStack, VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
 import { resolveColor } from '../../design-system/components/style-props';
 import { useDesignSystemTheme } from '../../design-system/provider';
 import type { ReportResponsePatternScale } from '../../domain/report';
+import { List } from '../ui/List';
 import {
   Canvas,
   Easing,
@@ -97,6 +97,24 @@ function createTriangleMarkerPath({
   return path;
 }
 
+function resolvePatternMarkerCenterX({
+  width,
+  markerHeight,
+  value,
+}: {
+  width: number;
+  markerHeight: number;
+  value: number;
+}) {
+  const markerHalfWidth = markerHeight / 2;
+
+  return clamp(
+    markerHalfWidth + (Math.max(0, width - markerHeight) * value) / 100,
+    markerHalfWidth,
+    Math.max(markerHalfWidth, width - markerHalfWidth),
+  );
+}
+
 export type BulletBarProps = {
   value: number;
   peerMedian?: number | null;
@@ -114,7 +132,7 @@ export function BulletBar({ value, peerMedian = null }: BulletBarProps) {
   const fillColor = resolveColor(theme, 'bg.brandSolid');
   const markerColor = resolveColor(theme, 'fg.neutral');
   const fillWidth = useDerivedValue(
-    () => (size.width * clamped) / 100 * progress.value,
+    () => (size.width * clamped) / 100 * progress.get(),
     [size.width, clamped],
   );
   const trackHeight = theme.dimension.x[BULLET_BAR_TOKENS.trackHeight];
@@ -168,6 +186,7 @@ export function BulletBar({ value, peerMedian = null }: BulletBarProps) {
 function PatternTrack({ value }: { value: number }) {
   const { theme } = useDesignSystemTheme();
   const { size, onLayout } = useMeasuredChart();
+  const progress = useFocusProgress(500);
   const clamped = clamp(value);
   const edgeColor = theme.color.mannerTemp.l5Text;
   const centerColor = theme.color.bg.brandSolid;
@@ -179,16 +198,17 @@ function PatternTrack({ value }: { value: number }) {
   const paddingY = theme.dimension.x[PATTERN_TRACK_TOKENS.paddingY];
   const trackHeight = theme.dimension.x[PATTERN_TRACK_TOKENS.trackHeight];
   const trackRadius = theme.radius[PATTERN_TRACK_TOKENS.radius];
-  const chartHeight = paddingY * 2 + trackHeight + markerGap + markerHeight;
-  const trackY = paddingY;
+  const markerSpace = markerGap + markerHeight;
+  const chartHeight = paddingY * 2 + markerSpace * 2 + trackHeight;
+  const trackY = paddingY + markerSpace;
   const markerTop = trackY + trackHeight + markerGap;
-  const markerHalfWidth = markerHeight / 2;
-  const markerCenterX = clamp(
-    markerHalfWidth + (Math.max(0, size.width - markerHeight) * clamped) / 100,
-    markerHalfWidth,
-    Math.max(markerHalfWidth, size.width - markerHalfWidth),
+  const markerStartX = resolvePatternMarkerCenterX({ width: size.width, markerHeight, value: 50 });
+  const markerEndX = resolvePatternMarkerCenterX({ width: size.width, markerHeight, value: clamped });
+  const markerTranslate = useDerivedValue(
+    () => [{ translateX: (markerEndX - markerStartX) * progress.get() }],
+    [markerEndX, markerStartX],
   );
-  const markerPath = createTriangleMarkerPath({ centerX: markerCenterX, markerTop, markerHeight });
+  const markerPath = createTriangleMarkerPath({ centerX: markerStartX, markerTop, markerHeight });
   const tickX = Math.max(0, Math.min(size.width - centerTickWidth, size.width / 2 - centerTickWidth / 2));
 
   return (
@@ -218,7 +238,9 @@ function PatternTrack({ value }: { value: number }) {
               />
             </RoundedRect>
             <Rect x={tickX} y={trackY} width={centerTickWidth} height={trackHeight} color={tickColor} />
-            <Path path={markerPath} color={markerColor} />
+            <Group transform={markerTranslate}>
+              <Path path={markerPath} color={markerColor} />
+            </Group>
           </>
         ) : null}
       </Canvas>
@@ -228,22 +250,25 @@ function PatternTrack({ value }: { value: number }) {
 
 export function ResponsePatternRows({ scales }: { scales: ReportResponsePatternScale[] }) {
   return (
-    <VStack>
-      {scales.map((scale) => (
-        <HStack key={scale.key} align="center" gap="x3" py="x3">
-          <Box flex={0.4} minWidth="x14">
-            <Text textStyle="t4Medium" maxLines={2}>
-              {scale.left}
-            </Text>
-          </Box>
-          <PatternTrack value={scale.value} />
-          <Box flex={0.4} minWidth="x14">
-            <Text align="right" textStyle="t4Medium" maxLines={2}>
-              {scale.right}
-            </Text>
-          </Box>
-        </HStack>
+    <List.Root>
+      {scales.map((scale, index) => (
+        <Fragment key={scale.key}>
+          {index > 0 ? <List.Divider /> : null}
+          <List.Item>
+            <Box flex={0.4} minWidth="x14">
+              <Text textStyle="t4Medium" maxLines={2}>
+                {scale.left}
+              </Text>
+            </Box>
+            <PatternTrack value={scale.value} />
+            <Box flex={0.4} minWidth="x14">
+              <Text align="right" textStyle="t4Medium" maxLines={2}>
+                {scale.right}
+              </Text>
+            </Box>
+          </List.Item>
+        </Fragment>
       ))}
-    </VStack>
+    </List.Root>
   );
 }
