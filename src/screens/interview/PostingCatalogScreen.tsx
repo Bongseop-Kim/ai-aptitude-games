@@ -9,7 +9,7 @@ import {
   RegisterPostingSheet,
   type RegisterPostingMode,
 } from '../../components/interview/RegisterPostingSheet';
-import { Button } from '../../components/ui/Button';
+import { ActionButton } from '../../components/ui/ActionButton';
 import { Card } from '../../components/ui/Card';
 import { Icon } from '../../components/ui/Icon';
 import { List } from '../../components/ui/List';
@@ -84,7 +84,7 @@ export function PostingCatalogScreen() {
           autoCapitalize="none"
         />
       ) : null}
-      <Button label="공고 등록" iconLeft="Plus" fullWidth onPress={() => openSheet('url')} />
+      <ActionButton label="공고 등록" iconLeft="Plus" onPress={() => openSheet('url')} />
     </VStack>
   );
 

@@ -92,7 +92,7 @@ export function GameResultScreen({
         ) : null}
       </Body>
       <BottomActionBar
-        secondary={onRetry ? { label: '다시', tone: 'neutral', onPress: onRetry } : undefined}
+        secondary={onRetry ? { label: '다시', variant: 'neutralOutline', onPress: onRetry } : undefined}
         primary={{ label: exitLabel, iconRight: 'ArrowRight', onPress: onExit }}
       />
     </Screen>

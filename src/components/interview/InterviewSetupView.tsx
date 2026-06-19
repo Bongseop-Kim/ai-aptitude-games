@@ -6,7 +6,7 @@ import { Body } from '../app/Body';
 import { BottomActionBar } from '../app/BottomActionBar';
 import { Sheet } from '../app/Sheet';
 import { Badge } from '../ui/Badge';
-import { Button } from '../ui/Button';
+import { ActionButton } from '../ui/ActionButton';
 import { Card } from '../ui/Card';
 import { Icon } from '../ui/Icon';
 import { Box } from '../../design-system/components/Box';
@@ -96,9 +96,9 @@ export function InterviewSetupView({
                 <Text color="fg.neutralMuted" textStyle="t3Regular">
                   분석이 끝난 공고가 있어야 시작할 수 있어요.
                 </Text>
-                <Button
+                <ActionButton
                   label="공고 등록하러 가기"
-                  variant="outline"
+                  variant="neutralOutline"
                   iconRight="ArrowRight"
                   onPress={() => router.push('/interview/postings' as never)}
                 />
@@ -135,9 +135,9 @@ export function InterviewSetupView({
                 <Text color="fg.neutralMuted" textStyle="t3Regular">
                   이력서 없이 직무 기반 질문으로 진행해요.
                 </Text>
-                <Button
+                <ActionButton
                   label="이력서 등록하러 가기"
-                  variant="outline"
+                  variant="neutralOutline"
                   iconRight="ArrowRight"
                   onPress={() => router.push('/interview/resumes' as never)}
                 />
@@ -320,17 +320,21 @@ function MicPermissionCard({
       <HStack gap="x2">
         {canAskAgain ? (
           <Box flex={1}>
-            <Button
+            <ActionButton
               label="허용 다시 요청"
-              variant="outline"
+              variant="neutralOutline"
               iconLeft={isVideo ? 'Video' : 'Mic'}
-              fullWidth
               onPress={onRequestAgain}
             />
           </Box>
         ) : (
           <Box flex={1}>
-            <Button label="설정 열기" variant="outline" iconLeft="Settings" fullWidth onPress={() => Linking.openSettings()} />
+            <ActionButton
+              label="설정 열기"
+              variant="neutralOutline"
+              iconLeft="Settings"
+              onPress={() => Linking.openSettings()}
+            />
           </Box>
         )}
       </HStack>

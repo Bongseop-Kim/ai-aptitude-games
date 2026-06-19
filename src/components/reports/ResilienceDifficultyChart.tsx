@@ -7,6 +7,8 @@ import { Text } from '../../design-system/components/Text';
 import { resolveColor } from '../../design-system/components/style-props';
 import { useDesignSystemTheme } from '../../design-system/provider';
 import { Canvas, Circle, Easing, Path, Skia, useSharedValue, withTiming } from '../../lib/native-motion';
+import { Card } from '../ui/Card';
+import { HelpBubbleInfoTrigger, type HelpBubbleInfo } from '../ui/HelpBubble';
 
 export type ResilienceChartPoint = {
   key: string;
@@ -40,7 +42,13 @@ function buildDifficultyPath(points: { x: number; y: number }[]) {
   return builder.detach();
 }
 
-export function ResilienceDifficultyChart({ points }: { points: ResilienceChartPoint[] }) {
+export function ResilienceDifficultyChart({
+  points,
+  help,
+}: {
+  points: ResilienceChartPoint[];
+  help?: HelpBubbleInfo;
+}) {
   const { theme } = useDesignSystemTheme();
   const isFocused = useIsFocused();
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -64,8 +72,9 @@ export function ResilienceDifficultyChart({ points }: { points: ResilienceChartP
   }, [isFocused, progress, points.length]);
 
   return (
-    <Box bg="bg.layerFloating" borderRadius="r3" p="x3">
-      <VStack gap="x2">
+    <Card p="spacingX.globalGutter" position="relative">
+      {help ? <HelpBubbleInfoTrigger title={help.title} description={help.description} /> : null}
+      <VStack gap="x2" pt={help ? 'x10' : undefined}>
         <Box
           height="x23"
           position="relative"
@@ -139,6 +148,6 @@ export function ResilienceDifficultyChart({ points }: { points: ResilienceChartP
           </HStack>
         </HStack>
       </VStack>
-    </Box>
+    </Card>
   );
 }

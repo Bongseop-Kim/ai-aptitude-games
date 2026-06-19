@@ -3,7 +3,7 @@ import { Linking, Pressable } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useVideoPlayer, VideoView } from 'expo-video';
 
-import { Button } from '../ui/Button';
+import { ActionButton } from '../ui/ActionButton';
 import { Card } from '../ui/Card';
 import { Icon } from '../ui/Icon';
 import { Tabs } from '../ui/Tabs';
@@ -98,7 +98,7 @@ export function UploadOrPasteCard({
                     <Text color="fg.brand" textStyle="t2Bold">업로드 완료</Text>
                   </HStack>
                 </VStack>
-                <Button label="삭제" variant="ghost" size="small" iconLeft="X" onPress={onFileClear} />
+                <ActionButton label="삭제" variant="ghost" size="small" iconLeft="X" onPress={onFileClear} />
               </HStack>
             </Card>
           ) : (
@@ -204,9 +204,9 @@ export function InterviewCameraView({
             {kind === 'video' ? '카메라·마이크 권한이 필요해요' : '카메라 권한이 필요해요'}
           </Text>
           {permission?.canAskAgain ? (
-            <Button label="허용" size="small" variant="weak" onPress={requestPermission} />
+            <ActionButton label="허용" size="small" variant="neutralWeak" onPress={requestPermission} />
           ) : (
-            <Button label="설정" size="small" variant="weak" onPress={() => Linking.openSettings()} />
+            <ActionButton label="설정" size="small" variant="neutralWeak" onPress={() => Linking.openSettings()} />
           )}
         </VStack>
       )}
@@ -253,17 +253,17 @@ export function RecordControls({
   if (mode === 'review') {
     return (
       <Grid columns={2} gap="x2">
-        <Button label="다시 답하기" variant="outline" iconLeft="RotateCcw" onPress={onRetake} />
-        <Button label={isLast ? '면접 종료' : '다음 질문'} iconRight="ArrowRight" onPress={onNext} />
+        <ActionButton label="다시 답하기" variant="neutralOutline" iconLeft="RotateCcw" onPress={onRetake} />
+        <ActionButton label={isLast ? '면접 종료' : '다음 질문'} iconRight="ArrowRight" onPress={onNext} />
       </Grid>
     );
   }
 
   if (mode === 'rec') {
-    return <Button label="답변 종료" tone="critical" iconLeft="CircleStop" fullWidth onPress={onStop} />;
+    return <ActionButton label="답변 종료" variant="criticalSolid" iconLeft="CircleStop" onPress={onStop} />;
   }
 
-  return <Button label="답변 시작" iconLeft="Mic" fullWidth onPress={onStart} />;
+  return <ActionButton label="답변 시작" iconLeft="Mic" onPress={onStart} />;
 }
 
 export function QuestionDots({ index, total }: { index: number; total: number }) {

@@ -2,7 +2,7 @@ import { HStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
 import type { JobPostingRow as JobPostingRowData } from '../../data/server/useJobPostings';
 import { jobFamilyLabel } from '../../domain/jobFamily';
-import { Button } from '../ui/Button';
+import { ActionButton } from '../ui/ActionButton';
 import { List } from '../ui/List';
 import { AnalysisStatusChip } from './AnalysisStatusChip';
 
@@ -32,7 +32,13 @@ export function PostingRow({ posting, showStatus, onPress, onPasteFallback }: Po
           </Text>
         ) : null}
         {showPasteFallback ? (
-          <Button label="본문 붙여넣기" variant="outline" size="small" iconLeft="ClipboardPaste" onPress={onPasteFallback} />
+          <ActionButton
+            label="본문 붙여넣기"
+            variant="neutralOutline"
+            size="small"
+            iconLeft="ClipboardPaste"
+            onPress={onPasteFallback}
+          />
         ) : null}
       </List.Content>
     </List.Item>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import * as DocumentPicker from 'expo-document-picker';
 
 import { Sheet } from '../app/Sheet';
-import { Button } from '../ui/Button';
+import { ActionButton } from '../ui/ActionButton';
 import { TextField } from '../ui/TextField';
 import { useUploadResume } from '../../data/server/useResumes';
 import { Box } from '../../design-system/components/Box';
@@ -110,9 +110,8 @@ export function AddResumeSheet({ visible, onClose }: { visible: boolean; onClose
             </Text>
           ) : null}
         </Box>
-        <Button
+        <ActionButton
           label={uploadResume.isPending ? '추가하는 중...' : '이력서 추가'}
-          fullWidth
           disabled={!canSubmit}
           onPress={handleSubmit}
         />

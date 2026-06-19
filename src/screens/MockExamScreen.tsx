@@ -6,7 +6,7 @@ import { Body } from '../components/app/Body';
 import { Header } from '../components/app/Header';
 import { Screen } from '../components/app/Screen';
 import { Badge } from '../components/ui/Badge';
-import { Button } from '../components/ui/Button';
+import { ActionButton } from '../components/ui/ActionButton';
 import { Card } from '../components/ui/Card';
 import { Icon, type IconName } from '../components/ui/Icon';
 import { List } from '../components/ui/List';
@@ -158,7 +158,7 @@ export function MockExamScreen() {
                   </Text>
                 </VStack>
               </HStack>
-              <Button
+              <ActionButton
                 label="모의고사 시작"
                 iconRight="ArrowRight"
                 disabled={startMockExamSession.isPending}

@@ -6,7 +6,7 @@ import { BottomActionBar } from '../components/app/BottomActionBar';
 import { Header } from '../components/app/Header';
 import { Screen } from '../components/app/Screen';
 import { FeedbackReportBody } from '../components/interview/FeedbackReportBody';
-import { Button } from '../components/ui/Button';
+import { ActionButton } from '../components/ui/ActionButton';
 import { Card } from '../components/ui/Card';
 import { Skeleton } from '../components/ui/Skeleton';
 import { useInterviewAnswers } from '../data/local/useInterviewAnswers';
@@ -105,7 +105,7 @@ function MissingInterviewSession({ onBack }: { onBack: () => void }) {
         <Text align="center" color="fg.neutralMuted" textStyle="t3Regular">
           지난 면접 목록에서 다시 열어주세요.
         </Text>
-        <Button label="목록으로 돌아가기" variant="weak" onPress={onBack} />
+        <ActionButton label="목록으로 돌아가기" variant="neutralWeak" onPress={onBack} />
       </VStack>
     </Card>
   );

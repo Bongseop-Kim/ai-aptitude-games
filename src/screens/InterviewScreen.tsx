@@ -6,7 +6,7 @@ import { SectionHead } from '../components/app/SectionHead';
 import { TabScreen } from '../components/app/TabScreen';
 import { JobFamilySheet } from '../components/profile/JobFamilySheet';
 import { ReadinessGauge } from '../components/readiness/ReadinessGauge';
-import { Button } from '../components/ui/Button';
+import { ActionButton } from '../components/ui/ActionButton';
 import { Card } from '../components/ui/Card';
 import { Icon } from '../components/ui/Icon';
 import { IconButton } from '../components/ui/IconButton';
@@ -40,12 +40,10 @@ export function InterviewScreen() {
       }
     >
       <JobFamilyCard />
-      <Button
+      <ActionButton
         label="면접 시작하기"
-        variant="solid"
-        tone="brand"
+        variant="brandSolid"
         iconLeft="Zap"
-        fullWidth
         onPress={() => router.push('/interview/new' as never)}
       />
       <InterviewPrepSection />

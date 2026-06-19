@@ -67,6 +67,7 @@ const dimension = {
     x39: 156,
     x42_5: 170,
     x60: 240,
+    x72: 288,
   },
   spacingX: {
     betweenChips: 8,

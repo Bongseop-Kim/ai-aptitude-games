@@ -3,13 +3,14 @@ import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useVideoPlayer, VideoView } from 'expo-video';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Header } from '../components/app/Header';
 import { Screen } from '../components/app/Screen';
 import { SubSectionHead } from '../components/app/SubSectionHead';
 import { QuestionFeedbackDetails } from '../components/interview/QuestionFeedbackAccordion';
 import { Badge } from '../components/ui/Badge';
-import { Button } from '../components/ui/Button';
+import { ActionButton } from '../components/ui/ActionButton';
 import { Card } from '../components/ui/Card';
 import { Icon } from '../components/ui/Icon';
 import { Skeleton } from '../components/ui/Skeleton';
@@ -77,6 +78,7 @@ function useAnswerVideoUri(answer: InterviewAnswerRow | null) {
 export function ReportInterviewQuestionScreen() {
   const router = useRouter();
   const db = useSQLiteContext();
+  const insets = useSafeAreaInsets();
   const { userId } = useAuth();
   const { id, questionId } = useLocalSearchParams<{ id: string; questionId: string }>();
   const mockExamId = typeof id === 'string' ? id : null;
@@ -98,6 +100,7 @@ export function ReportInterviewQuestionScreen() {
   const question = questionIndex >= 0 ? questions[questionIndex] : null;
   const answer = answers.find((item) => item.questionId === targetQuestionId) ?? null;
   const loading = recordLoading || reportLoading || sessionLoading || answersLoading || answersFetching;
+  const bottomInset = insets.bottom;
 
   function retryUpload() {
     if (userId && answer) {
@@ -106,7 +109,7 @@ export function ReportInterviewQuestionScreen() {
   }
 
   return (
-    <Screen>
+    <Screen contentPb="x0" safeEdges={['top', 'left', 'right']}>
       <Header
         title="질문 상세"
         subtitle={record ? `모의고사 · ${record.round}회차` : '답변 다시보기'}
@@ -114,8 +117,13 @@ export function ReportInterviewQuestionScreen() {
         onBack={() => router.back()}
       />
       <Box flex={1} bleedX="spacingX.globalGutter">
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
-          <Box px="spacingX.globalGutter" py="x3">
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          contentInset={{ bottom: bottomInset }}
+          scrollIndicatorInsets={{ bottom: bottomInset }}
+          showsVerticalScrollIndicator={false}
+        >
+          <Box px="spacingX.globalGutter" pt="x3" pb="spacingY.screenBottom">
             {loading && !question ? <QuestionDetailSkeleton /> : null}
             {!loading && !question ? <MissingQuestion onBack={() => router.back()} /> : null}
             {question ? (
@@ -226,7 +234,7 @@ function AnswerVideoCard({
           {isError ? '답변 영상을 불러오지 못했어요.' : '다시 볼 답변 영상이 없어요.'}
         </Text>
         {answer?.mediaStatus === 'failed' ? (
-          <Button label="업로드 다시 시도" size="small" variant="weak" onPress={onRetryUpload} />
+          <ActionButton label="업로드 다시 시도" size="small" variant="neutralWeak" onPress={onRetryUpload} />
         ) : null}
       </VStack>
     </Card>
@@ -263,7 +271,7 @@ function MissingQuestion({ onBack }: { onBack: () => void }) {
         <Text align="center" color="fg.neutralMuted" textStyle="t3Regular">
           종합 리포트에서 다시 열어주세요.
         </Text>
-        <Button label="리포트로 돌아가기" variant="weak" onPress={onBack} />
+        <ActionButton label="리포트로 돌아가기" variant="neutralWeak" onPress={onBack} />
       </VStack>
     </Card>
   );
