@@ -12,7 +12,7 @@ import {
   MockExamSummaryCard,
   MockExamSummaryCardSkeleton,
 } from '../components/reports/MockExamSummaryCard';
-import { Button } from '../components/ui/Button';
+import { ActionButton } from '../components/ui/ActionButton';
 import { Card } from '../components/ui/Card';
 import { List } from '../components/ui/List';
 import { useMockExamRecords } from '../data/local/useMockExamResults';
@@ -181,21 +181,21 @@ function RecordListHeader({
     return (
       <VStack gap="spacingY.componentDefault">
         <MockExamSummaryCardSkeleton />
-        <Button label={startMockExamLabel} iconLeft="Plus" fullWidth onPress={onStartMockExam} />
+        <ActionButton label={startMockExamLabel} iconLeft="Plus" onPress={onStartMockExam} />
       </VStack>
     );
   }
 
   if (!hasRecords) {
     return (
-      <Button label={startMockExamLabel} iconLeft="Plus" fullWidth onPress={onStartMockExam} />
+      <ActionButton label={startMockExamLabel} iconLeft="Plus" onPress={onStartMockExam} />
     );
   }
 
   return (
     <VStack gap="spacingY.componentDefault">
       <MockExamSummaryCard records={records} />
-      <Button label={startMockExamLabel} iconLeft="Plus" fullWidth onPress={onStartMockExam} />
+      <ActionButton label={startMockExamLabel} iconLeft="Plus" onPress={onStartMockExam} />
     </VStack>
   );
 }

@@ -8,7 +8,7 @@ import { BirthYearBandSheet } from '../components/profile/BirthYearBandSheet';
 import { JobFamilySheet } from '../components/profile/JobFamilySheet';
 import { ProfileSummary } from '../components/profile/ProfileSummary';
 import { StatTile } from '../components/profile/StatTile';
-import { Button } from '../components/ui/Button';
+import { ActionButton } from '../components/ui/ActionButton';
 import { Card } from '../components/ui/Card';
 import { Icon, type IconName } from '../components/ui/Icon';
 import { List } from '../components/ui/List';
@@ -319,18 +319,15 @@ function DevSeedSection() {
             onPress={() => setPro.mutate(!isPro)}
           />
         </HStack>
-        <Button
+        <ActionButton
           label={seedDevData.isPending ? '넣는 중...' : '더미데이터 넣기'}
-          variant="outline"
-          fullWidth
+          variant="neutralOutline"
           disabled={isPending}
           onPress={handleSeedDevData}
         />
-        <Button
+        <ActionButton
           label={clearDevData.isPending ? '초기화 중...' : '데이터 초기화'}
-          variant="weak"
-          tone="critical"
-          fullWidth
+          variant="criticalSolid"
           disabled={isPending}
           onPress={handleClearDevData}
         />

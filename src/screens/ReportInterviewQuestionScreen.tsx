@@ -10,7 +10,7 @@ import { Screen } from '../components/app/Screen';
 import { SubSectionHead } from '../components/app/SubSectionHead';
 import { QuestionFeedbackDetails } from '../components/interview/QuestionFeedbackAccordion';
 import { Badge } from '../components/ui/Badge';
-import { Button } from '../components/ui/Button';
+import { ActionButton } from '../components/ui/ActionButton';
 import { Card } from '../components/ui/Card';
 import { Icon } from '../components/ui/Icon';
 import { Skeleton } from '../components/ui/Skeleton';
@@ -234,7 +234,7 @@ function AnswerVideoCard({
           {isError ? '답변 영상을 불러오지 못했어요.' : '다시 볼 답변 영상이 없어요.'}
         </Text>
         {answer?.mediaStatus === 'failed' ? (
-          <Button label="업로드 다시 시도" size="small" variant="weak" onPress={onRetryUpload} />
+          <ActionButton label="업로드 다시 시도" size="small" variant="neutralWeak" onPress={onRetryUpload} />
         ) : null}
       </VStack>
     </Card>
@@ -271,7 +271,7 @@ function MissingQuestion({ onBack }: { onBack: () => void }) {
         <Text align="center" color="fg.neutralMuted" textStyle="t3Regular">
           종합 리포트에서 다시 열어주세요.
         </Text>
-        <Button label="리포트로 돌아가기" variant="weak" onPress={onBack} />
+        <ActionButton label="리포트로 돌아가기" variant="neutralWeak" onPress={onBack} />
       </VStack>
     </Card>
   );

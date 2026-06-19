@@ -87,7 +87,6 @@ export function InterviewAnalysisBody({ interview, mockExamId, session = null }:
         <VStack gap="x3" minHeight="x60">
           <SegmentedControl
             accessibilityLabel="면접 차트 선택"
-            fullWidth
             items={chartItems}
             onValueChange={setChartKey}
             size="small"

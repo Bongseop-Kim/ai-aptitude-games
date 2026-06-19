@@ -57,8 +57,11 @@ type ActiveSnackbar = SnackbarOptions & {
   id: number;
 };
 
+type SnackbarCommands = Omit<SnackbarContextValue, 'visible'>;
+
 const DEFAULT_SNACKBAR_DURATION = 4000;
-const SnackbarContext = createContext<SnackbarContextValue | null>(null);
+const SnackbarCommandsContext = createContext<SnackbarCommands | null>(null);
+const SnackbarVisibleContext = createContext(false);
 
 export function Snackbar({
   message,
@@ -144,33 +147,33 @@ export function SnackbarProvider({
   const [activeSnackbar, setActiveSnackbar] = useState<ActiveSnackbar | null>(null);
   const nextId = useRef(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [commands] = useState<SnackbarCommands>(() => ({
+    show: (options: SnackbarOptions) => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+      const id = nextId.current + 1;
+      nextId.current = id;
+      setActiveSnackbar({ id, ...options });
+
+      return id;
+    },
+    dismiss: (id?: number) => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+      setActiveSnackbar((currentSnackbar) => {
+        if (id !== undefined && currentSnackbar?.id !== id) return currentSnackbar;
+        return null;
+      });
+    },
+  }));
   const bottomOffset = insets.bottom + theme.dimension.spacingY.screenBottom;
-
-  function show(options: SnackbarOptions) {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-
-    const id = nextId.current + 1;
-    nextId.current = id;
-    setActiveSnackbar({ id, ...options });
-
-    return id;
-  }
-
-  function dismiss(id?: number) {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-
-    setActiveSnackbar((currentSnackbar) => {
-      if (id !== undefined && currentSnackbar?.id !== id) return currentSnackbar;
-      return null;
-    });
-  }
 
   function handleActionPress() {
     const action = activeSnackbar?.action;
     if (!action) return;
 
     action.onPress();
-    if (action.dismissOnPress !== false) dismiss(activeSnackbar.id);
+    if (action.dismissOnPress !== false) commands.dismiss(activeSnackbar.id);
   }
 
   useEffect(() => {
@@ -193,45 +196,51 @@ export function SnackbarProvider({
   }, [activeSnackbar, defaultDuration]);
 
   return (
-    <SnackbarContext value={{ show, dismiss, visible: Boolean(activeSnackbar) }}>
-      {children}
-      <Box bottom={0} left={0} pointerEvents="box-none" position="absolute" right={0} top={0} zIndex={10}>
-        <Box
-          bottom={bottomOffset}
-          left="spacingX.globalGutter"
-          pointerEvents="box-none"
-          position="absolute"
-          right="spacingX.globalGutter"
-        >
-          <Snackbar
-            action={
-              activeSnackbar?.action
-                ? {
-                    accessibilityLabel: activeSnackbar.action.accessibilityLabel,
-                    label: activeSnackbar.action.label,
-                    onPress: handleActionPress,
-                  }
-                : undefined
-            }
-            accessibilityLabel={activeSnackbar?.accessibilityLabel}
-            message={activeSnackbar?.message ?? ''}
-            prefixIcon={activeSnackbar?.prefixIcon}
-            visible={Boolean(activeSnackbar)}
-          />
+    <SnackbarCommandsContext value={commands}>
+      <SnackbarVisibleContext value={Boolean(activeSnackbar)}>
+        {children}
+        <Box bottom={0} left={0} pointerEvents="box-none" position="absolute" right={0} top={0} zIndex={10}>
+          <Box
+            bottom={bottomOffset}
+            left="spacingX.globalGutter"
+            pointerEvents="box-none"
+            position="absolute"
+            right="spacingX.globalGutter"
+          >
+            <Snackbar
+              action={
+                activeSnackbar?.action
+                  ? {
+                      accessibilityLabel: activeSnackbar.action.accessibilityLabel,
+                      label: activeSnackbar.action.label,
+                      onPress: handleActionPress,
+                    }
+                  : undefined
+              }
+              accessibilityLabel={activeSnackbar?.accessibilityLabel}
+              message={activeSnackbar?.message ?? ''}
+              prefixIcon={activeSnackbar?.prefixIcon}
+              visible={Boolean(activeSnackbar)}
+            />
+          </Box>
         </Box>
-      </Box>
-    </SnackbarContext>
+      </SnackbarVisibleContext>
+    </SnackbarCommandsContext>
   );
 }
 
 export function useSnackbar() {
-  const value = use(SnackbarContext);
+  const commands = use(SnackbarCommandsContext);
+  const visible = use(SnackbarVisibleContext);
 
-  if (!value) {
+  if (!commands) {
     throw new Error('useSnackbar must be used within SnackbarProvider.');
   }
 
-  return value;
+  return {
+    ...commands,
+    visible,
+  };
 }
 
 const styles = StyleSheet.create({

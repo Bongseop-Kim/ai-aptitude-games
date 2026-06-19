@@ -18,7 +18,7 @@ import {
   ResilienceDifficultyChart,
   type ResilienceChartPoint,
 } from '../components/reports/ResilienceDifficultyChart';
-import { Button } from '../components/ui/Button';
+import { ActionButton } from '../components/ui/ActionButton';
 import { Card } from '../components/ui/Card';
 import { HelpBubbleInfoTrigger } from '../components/ui/HelpBubble';
 import { Icon } from '../components/ui/Icon';
@@ -342,7 +342,7 @@ function MissingReport({ onBack }: MissingReportProps) {
         <Text align="center" color="fg.neutralMuted" textStyle="t3Regular">
           기록 목록에서 다시 열어주세요.
         </Text>
-        <Button label="기록으로 돌아가기" variant="weak" onPress={onBack} />
+        <ActionButton label="기록으로 돌아가기" variant="neutralWeak" onPress={onBack} />
       </VStack>
     </Card>
   );
@@ -597,7 +597,6 @@ function ReportChartsSwitcher({
       <VStack gap="x3" minHeight="x60">
         <SegmentedControl
           accessibilityLabel="세부 차트 선택"
-          fullWidth
           items={DETAIL_CHART_ITEMS}
           onValueChange={onChartChange}
           size="small"
