@@ -549,10 +549,7 @@ function ReportChartsSwitcher({
           <GamesSection record={record} gameInsights={report?.games ?? null} />
         ) : null}
         {chartKey === 'competencies' ? (
-          <VStack gap="x2">
-            <Text color="fg.neutralMuted" textStyle="t3Regular" lineHeight="t4">
-              게임 과제를 직업공통능력 관점으로 다시 묶은 참고 지표예요.
-            </Text>
+          <VStack>
             <CompetenciesSection
               competencies={report?.competencies ?? null}
               state={states.competencies}

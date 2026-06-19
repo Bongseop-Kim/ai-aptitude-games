@@ -76,10 +76,7 @@ export function InterviewAnalysisBody({ interview, mockExamId, session = null }:
             value={chartKey}
           />
           {chartKey === 'axes' ? (
-            <VStack gap="x2">
-              <Text color="fg.neutralMuted" textStyle="t3Regular" lineHeight="t4">
-                또래 평균은 같은 조건으로 응시한 집단의 평균이에요.
-              </Text>
+            <VStack>
               <ReportScoreListCard markerLegendLabel="또래 평균">
                 {INTERVIEW_AXES.map((axis, index) => {
                   const score = axisScores.get(axis.key) ?? null;
@@ -103,10 +100,7 @@ export function InterviewAnalysisBody({ interview, mockExamId, session = null }:
             </VStack>
           ) : null}
           {chartKey === 'delivery' && hasDeliveryDetails ? (
-            <VStack gap="x2">
-              <Text color="fg.neutralMuted" textStyle="t3Regular" lineHeight="t4">
-                말의 속도와 흐름처럼 전달 방식을 나누어 본 값이에요.
-              </Text>
+            <VStack>
               <ReportScoreListCard>
                 {interview.delivery_details?.map((detail, index) => (
                   <Fragment key={index}>
@@ -118,10 +112,7 @@ export function InterviewAnalysisBody({ interview, mockExamId, session = null }:
             </VStack>
           ) : null}
           {chartKey === 'ncs' && hasNcsUnits ? (
-            <VStack gap="x2">
-              <Text color="fg.neutralMuted" textStyle="t3Regular" lineHeight="t4">
-                NCS 직업공통능력 기준으로 답변 행동을 다시 묶어 본 참고 지표예요.
-              </Text>
+            <VStack>
               <ReportScoreListCard>
                 {interview.ncs_units.map((unit, index) => (
                   <Fragment key={unit.label}>
