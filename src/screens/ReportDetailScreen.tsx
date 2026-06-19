@@ -1,6 +1,7 @@
 import { Fragment, useState, type ReactNode } from 'react';
 import { ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Header } from '../components/app/Header';
 import { SectionHead } from '../components/app/SectionHead';
@@ -130,6 +131,7 @@ const RESILIENCE_DIFFICULTY_HELP: ChartHelpCopy = {
 
 export function ReportDetailScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [proIntroVisible, setProIntroVisible] = useState(false);
   const { id } = useLocalSearchParams<{ id: string }>();
   const recordId = typeof id === 'string' ? id : null;
@@ -137,51 +139,86 @@ export function ReportDetailScreen() {
   const isPro = useIsPro();
   const { isLoading: profileLoading } = useProfile();
   const gateLoading = isLoading || profileLoading;
+  const bottomInset = insets.bottom;
 
   return (
-    <Screen contentPb="x0" safeEdges={['top', 'bottom', 'left', 'right']}>
+    <Screen contentPb="x0" safeEdges={['top', 'left', 'right']}>
       <Header
         title="종합 리포트"
         subtitle={`모의고사 · ${record?.round ?? '-'}회차 리포트`}
         showBack
         onBack={() => router.back()}
       />
-      {gateLoading ? <LoadingBody /> : null}
-      {!gateLoading && !record ? <MissingReportBody onBack={() => router.back()} /> : null}
+      {gateLoading ? <LoadingBody bottomInset={bottomInset} /> : null}
+      {!gateLoading && !record ? (
+        <MissingReportBody
+          bottomInset={bottomInset}
+          onBack={() => router.back()}
+        />
+      ) : null}
       {!gateLoading && record && !isPro ? (
         <ReportPaywall record={record} onUpgrade={() => setProIntroVisible(true)} />
       ) : null}
-      {!gateLoading && record && isPro ? <ReportContent record={record} /> : null}
+      {!gateLoading && record && isPro ? (
+        <ReportContent record={record} bottomInset={bottomInset} />
+      ) : null}
       <ProIntroSheet visible={proIntroVisible} onClose={() => setProIntroVisible(false)} />
     </Screen>
   );
 }
 
-function LoadingBody() {
+function LoadingBody({ bottomInset }: { bottomInset: number }) {
+  return (
+    <ReportScrollBody bottomInset={bottomInset}>
+      <ReportDetailSkeleton />
+    </ReportScrollBody>
+  );
+}
+
+function MissingReportBody({
+  bottomInset,
+  onBack,
+}: {
+  bottomInset: number;
+  onBack: () => void;
+}) {
+  return (
+    <ReportScrollBody bottomInset={bottomInset}>
+      <MissingReport onBack={onBack} />
+    </ReportScrollBody>
+  );
+}
+
+function ReportScrollBody({
+  bottomInset,
+  children,
+}: {
+  bottomInset: number;
+  children: ReactNode;
+}) {
   return (
     <Box flex={1} bleedX="spacingX.globalGutter">
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        contentInset={{ bottom: bottomInset }}
+        scrollIndicatorInsets={{ bottom: bottomInset }}
+        showsVerticalScrollIndicator={false}
+      >
         <Box px="spacingX.globalGutter" pt="x3" pb="x8">
-          <ReportDetailSkeleton />
+          {children}
         </Box>
       </ScrollView>
     </Box>
   );
 }
 
-function MissingReportBody({ onBack }: { onBack: () => void }) {
-  return (
-    <Box flex={1} bleedX="spacingX.globalGutter">
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
-        <Box px="spacingX.globalGutter" pt="x3" pb="x8">
-          <MissingReport onBack={onBack} />
-        </Box>
-      </ScrollView>
-    </Box>
-  );
-}
-
-function ReportContent({ record }: { record: MockExamRecord }) {
+function ReportContent({
+  bottomInset,
+  record,
+}: {
+  bottomInset: number;
+  record: MockExamRecord;
+}) {
   const reportQuery = useMockExamReport(record.id, record.createdAt);
   const row = reportQuery.data ?? null;
   const states = getReportSectionStates(row);
@@ -201,28 +238,24 @@ function ReportContent({ record }: { record: MockExamRecord }) {
   }
 
   return (
-    <Box flex={1} bleedX="spacingX.globalGutter">
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
-        <Box px="spacingX.globalGutter" pt="x3" pb="x8">
-          <VStack gap="x8">
-            {reportDetailSections.map((section) => (
-              <VStack key={section.key} gap="x3">
-                {section.key === 'summary' ? null : <SectionHead title={section.title} />}
-                <ReportSectionBody
-                  sectionKey={section.key}
-                  record={record}
-                  report={readyReport}
-                  gameResults={localResults.data}
-                  gameRounds={localRounds.data}
-                  states={states}
-                  onRetryReport={onRetryReport}
-                />
-              </VStack>
-            ))}
+    <ReportScrollBody bottomInset={bottomInset}>
+      <VStack gap="x8">
+        {reportDetailSections.map((section) => (
+          <VStack key={section.key} gap="x3">
+            {section.key === 'summary' ? null : <SectionHead title={section.title} />}
+            <ReportSectionBody
+              sectionKey={section.key}
+              record={record}
+              report={readyReport}
+              gameResults={localResults.data}
+              gameRounds={localRounds.data}
+              states={states}
+              onRetryReport={onRetryReport}
+            />
           </VStack>
-        </Box>
-      </ScrollView>
-    </Box>
+        ))}
+      </VStack>
+    </ReportScrollBody>
   );
 }
 

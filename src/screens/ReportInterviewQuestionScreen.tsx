@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useVideoPlayer, VideoView } from 'expo-video';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Header } from '../components/app/Header';
 import { Screen } from '../components/app/Screen';
@@ -77,6 +78,7 @@ function useAnswerVideoUri(answer: InterviewAnswerRow | null) {
 export function ReportInterviewQuestionScreen() {
   const router = useRouter();
   const db = useSQLiteContext();
+  const insets = useSafeAreaInsets();
   const { userId } = useAuth();
   const { id, questionId } = useLocalSearchParams<{ id: string; questionId: string }>();
   const mockExamId = typeof id === 'string' ? id : null;
@@ -98,6 +100,7 @@ export function ReportInterviewQuestionScreen() {
   const question = questionIndex >= 0 ? questions[questionIndex] : null;
   const answer = answers.find((item) => item.questionId === targetQuestionId) ?? null;
   const loading = recordLoading || reportLoading || sessionLoading || answersLoading || answersFetching;
+  const bottomInset = insets.bottom;
 
   function retryUpload() {
     if (userId && answer) {
@@ -106,7 +109,7 @@ export function ReportInterviewQuestionScreen() {
   }
 
   return (
-    <Screen>
+    <Screen contentPb="x0" safeEdges={['top', 'left', 'right']}>
       <Header
         title="질문 상세"
         subtitle={record ? `모의고사 · ${record.round}회차` : '답변 다시보기'}
@@ -114,8 +117,13 @@ export function ReportInterviewQuestionScreen() {
         onBack={() => router.back()}
       />
       <Box flex={1} bleedX="spacingX.globalGutter">
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
-          <Box px="spacingX.globalGutter" py="x3">
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          contentInset={{ bottom: bottomInset }}
+          scrollIndicatorInsets={{ bottom: bottomInset }}
+          showsVerticalScrollIndicator={false}
+        >
+          <Box px="spacingX.globalGutter" pt="x3" pb="spacingY.screenBottom">
             {loading && !question ? <QuestionDetailSkeleton /> : null}
             {!loading && !question ? <MissingQuestion onBack={() => router.back()} /> : null}
             {question ? (
