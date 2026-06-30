@@ -4,7 +4,7 @@ import { pickRandom, shuffle } from './random';
 export const CAT_TOTAL_ROUNDS = 6;
 export const CAT_GRID_COLUMNS = 6;
 export const CAT_CELL_COUNT = 36;
-export const CAT_MICE_COUNT = 6;
+const CAT_MICE_COUNT = 6;
 export const CAT_MEMORIZE_MS = 2600;
 export const CAT_FEEDBACK_MS = 900;
 

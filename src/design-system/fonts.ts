@@ -1,7 +1,7 @@
 import { useFonts } from 'expo-font';
 import { type TextStyle } from 'react-native';
 
-export const appFontFamily = {
+const appFontFamily = {
   regular: 'Pretendard-Regular',
   medium: 'Pretendard-Medium',
   bold: 'Pretendard-Bold',

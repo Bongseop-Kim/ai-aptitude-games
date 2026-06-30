@@ -1,22 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useIsFocused } from 'expo-router';
+import { Canvas, Group, Rect, RoundedRect, Skia } from '@shopify/react-native-skia';
+import { Easing, useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { Box } from '../../design-system/components/Box';
 import { resolveColor } from '../../design-system/components/style-props';
 import { useDesignSystemTheme } from '../../design-system/provider';
 import type { Tone } from '../../domain/types';
 import { toneColors } from '../../domain/tone';
-import {
-  Canvas,
-  Easing,
-  Group,
-  Rect,
-  RoundedRect,
-  Skia,
-  useDerivedValue,
-  useSharedValue,
-  withTiming,
-} from '../../lib/native-motion';
 
 export type ProgressBarProps = {
   value: number;

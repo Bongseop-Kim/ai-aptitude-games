@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 import { useIsFocused } from 'expo-router';
+import { Canvas, Path, Skia } from '@shopify/react-native-skia';
+import { Easing, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { Box } from '../../design-system/components/Box';
 import { Float } from '../../design-system/components/Float';
@@ -9,7 +11,6 @@ import { resolveColor, resolveLength, type TokenLength } from '../../design-syst
 import { useDesignSystemTheme } from '../../design-system/provider';
 import { readinessTone } from '../../domain/readiness';
 import { toneColors } from '../../domain/tone';
-import { Canvas, Easing, Path, Skia, useSharedValue, withTiming } from '../../lib/native-motion';
 
 export type ReadinessGaugeProps = {
   score: number;

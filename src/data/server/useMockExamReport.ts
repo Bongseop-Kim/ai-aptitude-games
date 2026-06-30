@@ -14,7 +14,7 @@ function toIsoUtc(sqliteDatetime: string): string {
   return `${sqliteDatetime.replace(' ', 'T')}Z`;
 }
 
-export const mockExamReportKeys = {
+const mockExamReportKeys = {
   all: ['mock-exam-reports'] as const,
   detail: (userId: string | null, mockExamId: string | null) =>
     ['mock-exam-reports', userId, mockExamId] as const,

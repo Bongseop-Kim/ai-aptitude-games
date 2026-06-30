@@ -1,6 +1,18 @@
 import { Fragment, useEffect, useState } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
 import { useIsFocused } from 'expo-router';
+import {
+  Canvas,
+  Circle,
+  Group,
+  LinearGradient,
+  Path,
+  Rect,
+  RoundedRect,
+  Skia,
+  vec,
+} from '@shopify/react-native-skia';
+import { Easing, useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { Box } from '../../design-system/components/Box';
 import { HStack, VStack } from '../../design-system/components/Stack';
@@ -11,21 +23,6 @@ import type { ReportResponsePatternScale } from '../../domain/report';
 import { Card } from '../ui/Card';
 import { HelpBubbleInfoTrigger, type HelpBubbleInfo } from '../ui/HelpBubble';
 import { List } from '../ui/List';
-import {
-  Canvas,
-  Circle,
-  Easing,
-  Group,
-  LinearGradient,
-  Path,
-  Rect,
-  RoundedRect,
-  Skia,
-  useDerivedValue,
-  useSharedValue,
-  withTiming,
-  vec,
-} from '../../lib/native-motion';
 
 type ChartSize = { width: number; height: number };
 type RadarScale = { x: number; y: number };

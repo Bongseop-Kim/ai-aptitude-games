@@ -17,7 +17,7 @@ export type AppThemeOverrides = DeepPartial<Omit<AppTheme, 'mode' | 'reference'>
 };
 export type AppThemeModeOverrides = Partial<Record<AppThemeMode, AppThemeOverrides>>;
 
-export function createAppTheme(mode: AppThemeMode, overrides?: AppThemeOverrides): AppTheme {
+function createAppTheme(mode: AppThemeMode, overrides?: AppThemeOverrides): AppTheme {
   const baseTheme = buildAppTheme(mode);
   const theme = deepMerge(baseTheme, overrides);
 
@@ -31,7 +31,7 @@ export function createAppTheme(mode: AppThemeMode, overrides?: AppThemeOverrides
   };
 }
 
-export function createAppThemes(overrides: AppThemeModeOverrides = {}) {
+function createAppThemes(overrides: AppThemeModeOverrides = {}) {
   return {
     light: createAppTheme('light', overrides.light),
     dark: createAppTheme('dark', overrides.dark),

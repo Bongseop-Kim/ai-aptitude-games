@@ -1,6 +1,6 @@
 import type { ReadinessLevel, Tone } from './types';
 
-export function readinessLevel(score: number): ReadinessLevel {
+function readinessLevel(score: number): ReadinessLevel {
   if (score >= 85) return 'strong';
   if (score >= 75) return 'steady';
   if (score >= 60) return 'sprout';

@@ -6,7 +6,7 @@ import { useAuth } from '../../providers/AuthProvider';
 import { supabase } from '../../lib/supabase';
 import type { QuestionMaterial } from '../../domain/report';
 
-export const resumeKeys = {
+const resumeKeys = {
   all: ['resumes'] as const,
   list: (userId: string | null) => ['resumes', userId, 'list'] as const,
 };

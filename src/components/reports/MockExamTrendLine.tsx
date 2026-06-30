@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useIsFocused } from 'expo-router';
+import { Canvas, Circle, Path, Skia } from '@shopify/react-native-skia';
+import { Easing, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { Box } from '../../design-system/components/Box';
 import { resolveColor } from '../../design-system/components/style-props';
 import { useDesignSystemTheme } from '../../design-system/provider';
-import { Canvas, Circle, Easing, Path, Skia, useSharedValue, withTiming } from '../../lib/native-motion';
 
 export type MockExamTrendLineProps = {
   scores: number[];

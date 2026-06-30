@@ -131,12 +131,3 @@ export async function getInterviewSessionRecords(db: SQLiteDatabase, userId: str
 
   return records.reverse();
 }
-
-export async function getInterviewSessionCount(db: SQLiteDatabase, userId: string) {
-  const row = await db.getFirstAsync<{ count: number }>(
-    'SELECT COUNT(*) AS count FROM interview_sessions WHERE user_id = ?',
-    userId,
-  );
-
-  return row?.count ?? 0;
-}
