@@ -13,7 +13,6 @@ import {
   MockExamSummaryCardSkeleton,
 } from '../components/reports/MockExamSummaryCard';
 import { Card } from '../components/ui/Card';
-import { FloatingActionButton } from '../components/ui/FloatingActionButton';
 import { List } from '../components/ui/List';
 import { useMockExamRecords } from '../data/local/useMockExamResults';
 import { Box } from '../design-system/components/Box';
@@ -84,7 +83,6 @@ function RecordListItemFrame({
 }
 
 export function ReportsScreen() {
-  const router = useRouter();
   const { data, isLoading } = useMockExamRecords();
   const records = data ?? [];
   const latestRound = records[0]?.round;
@@ -101,7 +99,6 @@ export function ReportsScreen() {
   const listData: RecordListItem[] = isLoading
     ? mockExamRecordSkeletonKeys.map((id) => ({ kind: 'skeleton', id }))
     : records.map((record) => ({ kind: 'record', record }));
-  const startMockExam = () => router.push({ pathname: '/mock-exam' } as never);
   const renderRecordItem = ({ index, item }: ListRenderItemInfo<RecordListItem>) => {
     const isFirst = index === 0;
     const isLast = index === listData.length - 1;
@@ -131,14 +128,6 @@ export function ReportsScreen() {
           records={records}
         />
       )}
-      floatingAction={
-        <FloatingActionButton
-          label="시작하기"
-          accessibilityLabel="모의고사 시작하기"
-          icon="Plus"
-          onPress={startMockExam}
-        />
-      }
       data={listData}
       ItemSeparatorComponent={RecordListSeparator}
       keyExtractor={(item) => (item.kind === 'record' ? item.record.id : item.id)}

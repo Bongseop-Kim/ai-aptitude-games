@@ -63,6 +63,10 @@ function placementStyle(
   return style;
 }
 
+function needsMeasurement(placement: FloatPlacement) {
+  return placement.includes('middle') || placement.includes('center');
+}
+
 export function Float({
   children,
   placement,
@@ -75,13 +79,18 @@ export function Float({
   const { theme } = useDesignSystemTheme();
   const [size, setSize] = useState<FloatSize>({ width: 0, height: 0 });
   const [hasMeasured, setHasMeasured] = useState(false);
+  const shouldMeasure = needsMeasurement(placement);
   const resolvedX = resolveLength(theme, offsetX);
   const resolvedY = resolveLength(theme, offsetY);
   const numericX = typeof resolvedX === 'number' ? resolvedX : 0;
   const numericY = typeof resolvedY === 'number' ? resolvedY : 0;
 
   function handleLayout(event: LayoutChangeEvent) {
+    if (!shouldMeasure) return;
+
     const { height, width } = event.nativeEvent.layout;
+    if (hasMeasured && size.width === width && size.height === height) return;
+
     setHasMeasured(true);
     setSize({ width, height });
   }
@@ -92,7 +101,7 @@ export function Float({
       pointerEvents={pointerEvents}
       style={[
         placementStyle(placement, numericX, numericY, size),
-        { opacity: hasMeasured ? 1 : 0, zIndex },
+        { opacity: shouldMeasure && !hasMeasured ? 0 : 1, zIndex },
         style,
       ]}
     >

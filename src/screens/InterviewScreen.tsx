@@ -7,7 +7,6 @@ import { TabScreen } from '../components/app/TabScreen';
 import { JobFamilySheet } from '../components/profile/JobFamilySheet';
 import { ReadinessGauge } from '../components/readiness/ReadinessGauge';
 import { Card } from '../components/ui/Card';
-import { FloatingActionButton } from '../components/ui/FloatingActionButton';
 import { Icon } from '../components/ui/Icon';
 import { IconButton } from '../components/ui/IconButton';
 import { List } from '../components/ui/List';
@@ -31,14 +30,6 @@ export function InterviewScreen() {
     <TabScreen
       header={
         <Header title="면접" />
-      }
-      floatingAction={
-        <FloatingActionButton
-          label="시작하기"
-          accessibilityLabel="면접 시작하기"
-          icon="Plus"
-          onPress={() => router.push('/interview/new' as never)}
-        />
       }
     >
       <JobFamilyCard />
