@@ -45,6 +45,7 @@ export function useProfile() {
       };
     },
     enabled: userId != null,
+    retry: false,
   });
 }
 
