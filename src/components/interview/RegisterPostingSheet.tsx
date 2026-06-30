@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { Sheet } from '../app/Sheet';
-import { Button } from '../ui/Button';
+import { ActionButton } from '../ui/ActionButton';
 import { Tabs } from '../ui/Tabs';
 import { TextArea } from '../ui/TextArea';
 import { TextField } from '../ui/TextField';
@@ -137,9 +137,8 @@ function RegisterPostingSheetContent({ visible, onClose, initialMode = 'url' }: 
             </Text>
           ) : null}
         </Box>
-        <Button
+        <ActionButton
           label={registerPosting.isPending ? '등록하는 중...' : '공고 등록'}
-          fullWidth
           disabled={!canSubmit}
           onPress={handleSubmit}
         />

@@ -5,13 +5,11 @@ import { supabase } from '../../lib/supabase';
 import type { JobFamily, QuestionMaterial } from '../../domain/report';
 import { normalizeJobPostingUrl } from './jobPostingUrl';
 
-export const jobPostingKeys = {
+const jobPostingKeys = {
   all: ['job-postings'] as const,
   catalog: (userId: string | null, search: string) =>
     ['job-postings', userId, 'catalog', search] as const,
   mine: (userId: string | null) => ['job-postings', userId, 'mine'] as const,
-  detail: (userId: string | null, id: string | null) =>
-    ['job-postings', userId, 'detail', id] as const,
 };
 
 export type JobPostingRow = {
@@ -121,35 +119,6 @@ export function useMyJobPostings() {
       const rows = query.state.data;
       if (!rows) return false;
       return hasRecentlyPending(rows) ? 15_000 : false;
-    },
-  });
-}
-
-export function useJobPosting(id: string | null) {
-  const { userId } = useAuth();
-
-  return useQuery({
-    queryKey: jobPostingKeys.detail(userId, id),
-    queryFn: async (): Promise<JobPostingRow | null> => {
-      if (!userId || !id) {
-        throw new Error('Cannot load job posting without an authenticated user and id.');
-      }
-      const { data, error } = await supabase
-        .from('job_postings')
-        .select(FULL_SELECT)
-        .eq('id', id)
-        .maybeSingle();
-      if (error) throw error;
-      if (!data) return null;
-      return mapRow(data as Record<string, unknown>);
-    },
-    enabled: userId != null && id != null,
-    refetchInterval: (query) => {
-      const row = query.state.data;
-      if (!row) return false;
-      if (row.status === 'done' || row.status === 'failed') return false;
-      const tenMinAgo = Date.now() - 10 * 60 * 1_000;
-      return new Date(row.createdAt).getTime() > tenMinAgo ? 15_000 : false;
     },
   });
 }

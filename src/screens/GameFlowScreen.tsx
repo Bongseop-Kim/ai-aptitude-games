@@ -6,7 +6,7 @@ import { Body } from '../components/app/Body';
 import { Header } from '../components/app/Header';
 import { Screen } from '../components/app/Screen';
 import { playComponents } from '../components/games/playComponents';
-import { Button } from '../components/ui/Button';
+import { ActionButton } from '../components/ui/ActionButton';
 import { Card } from '../components/ui/Card';
 import { games } from '../data/games';
 import {
@@ -73,7 +73,7 @@ export function GameFlowScreen() {
             <Text color="fg.neutralMuted" textStyle="t4Regular">
               준비 중인 게임이에요.
             </Text>
-            <Button label="게임 목록으로" variant="weak" onPress={close} />
+            <ActionButton label="게임 목록으로" variant="neutralWeak" onPress={close} />
           </VStack>
         </Body>
       </Screen>
@@ -189,7 +189,7 @@ function MockExamNotice({
               <Text align="center" color="fg.neutralMuted" textStyle="t3Regular">
                 {description}
               </Text>
-              {showAction ? <Button label="모의고사로 돌아가기" variant="weak" onPress={onBack} /> : null}
+              {showAction ? <ActionButton label="모의고사로 돌아가기" variant="neutralWeak" onPress={onBack} /> : null}
             </VStack>
           </Card>
         </VStack>

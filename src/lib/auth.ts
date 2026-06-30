@@ -17,7 +17,7 @@ export class IdentityConflictError extends Error {
 
 // Custom-scheme redirect (e.g. aiaptitudegames://). Must be registered in the
 // Supabase dashboard auth URL configuration and each provider's redirect list.
-export const authRedirectTo = makeRedirectUri();
+const authRedirectTo = makeRedirectUri();
 
 // Turn the redirect URL into a session. Supports both PKCE (?code=) and
 // implicit (access_token/refresh_token) responses.
@@ -50,7 +50,7 @@ export async function createSessionFromUrl(url: string) {
 
 // Opens the provider's OAuth page in an auth session browser and resolves the
 // redirect back into a Supabase session. Returns null if the user cancels.
-export async function signInWithProvider(provider: Provider) {
+async function signInWithProvider(provider: Provider) {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: { redirectTo: authRedirectTo, skipBrowserRedirect: true },
@@ -73,7 +73,7 @@ export function signInWithKakao() {
 // social identity. Keeps the same user id, so rows already synced to the
 // server stay attached. When the identity already belongs to another account,
 // report a conflict instead of replacing the current anonymous user.
-export async function linkWithProvider(provider: Provider) {
+async function linkWithProvider(provider: Provider) {
   const { data, error } = await supabase.auth.linkIdentity({
     provider,
     options: { redirectTo: authRedirectTo, skipBrowserRedirect: true },
@@ -104,9 +104,4 @@ export async function signInAnonymously() {
   const { data, error } = await supabase.auth.signInAnonymously();
   if (error) throw error;
   return data.session;
-}
-
-export async function signOut() {
-  const { error } = await supabase.auth.signOut();
-  if (error) throw error;
 }

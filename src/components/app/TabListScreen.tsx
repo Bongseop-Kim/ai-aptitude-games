@@ -6,12 +6,14 @@ import { Box } from '../../design-system/components/Box';
 import { useDesignSystemTheme } from '../../design-system/provider';
 import { resolveLength, type TokenLength } from '../../design-system/components/style-props';
 import { Screen } from './Screen';
+import { useTabFloatingActionLayout } from './tabsFloatingActionLayout';
 
 export type TabListScreenProps<ItemT> = Omit<
   FlatListProps<ItemT>,
   'contentInset' | 'scrollIndicatorInsets' | 'showsVerticalScrollIndicator'
 > & {
   bottomPad?: TokenLength;
+  floatingAction?: ReactNode;
   header?: ReactNode;
   pinnedContent?: ReactNode;
 };
@@ -19,18 +21,27 @@ export type TabListScreenProps<ItemT> = Omit<
 export function TabListScreen<ItemT>({
   bottomPad = 'spacingY.screenBottom',
   contentContainerStyle,
+  floatingAction,
   header,
   pinnedContent,
   ...listProps
 }: TabListScreenProps<ItemT>) {
   const insets = useSafeAreaInsets();
   const { theme } = useDesignSystemTheme();
+  const { bottomOffset, contentBottomReserve } = useTabFloatingActionLayout(Boolean(floatingAction));
   const resolvedBottomPad = resolveLength(theme, bottomPad);
-  const bottomPadding = typeof resolvedBottomPad === 'number' ? resolvedBottomPad : 0;
+  const bottomPadding = Math.max(
+    typeof resolvedBottomPad === 'number' ? resolvedBottomPad : 0,
+    contentBottomReserve,
+  );
   const bottomPaddingWithInset = bottomPadding + insets.bottom;
 
   return (
-    <Screen safeEdges={['top', 'left', 'right']}>
+    <Screen
+      safeEdges={['top', 'left', 'right']}
+      floatingAction={floatingAction}
+      floatingActionOffsetY={floatingAction ? bottomOffset : undefined}
+    >
       {header}
       {pinnedContent}
       <Box flex={1}>
@@ -44,7 +55,7 @@ export function TabListScreen<ItemT>({
             },
             contentContainerStyle,
           ]}
-          contentInsetAdjustmentBehavior="automatic"
+          contentInsetAdjustmentBehavior="never"
           scrollIndicatorInsets={{ bottom: bottomPaddingWithInset }}
           showsVerticalScrollIndicator={false}
         />

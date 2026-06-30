@@ -1,11 +1,17 @@
 import { Box } from '../../design-system/components/Box';
 import { HStack } from '../../design-system/components/Stack';
-import { Button, type ButtonProps } from '../ui/Button';
+import { ActionButton, type ActionButtonProps } from '../ui/ActionButton';
+import type { IconName } from '../../shared/types';
 
-export type BottomAction = Pick<
-  ButtonProps,
-  'disabled' | 'iconLeft' | 'iconRight' | 'label' | 'onPress' | 'tone'
->;
+export type BottomAction = {
+  disabled?: ActionButtonProps['disabled'];
+  iconLeft?: IconName;
+  iconRight?: IconName;
+  label: string;
+  loading?: ActionButtonProps['loading'];
+  onPress?: ActionButtonProps['onPress'];
+  variant?: ActionButtonProps['variant'];
+};
 
 export type BottomActionBarProps = {
   primary: BottomAction;
@@ -22,11 +28,11 @@ export function BottomActionBar({ primary, secondary }: BottomActionBarProps) {
     >
       {secondary ? (
         <Box flex={1}>
-          <Button {...secondary} variant="outline" fullWidth />
+          <ActionButton variant="neutralOutline" {...secondary} />
         </Box>
       ) : null}
       <Box flex={secondary ? 1.6 : 1}>
-        <Button {...primary} fullWidth />
+        <ActionButton {...primary} />
       </Box>
     </HStack>
   );

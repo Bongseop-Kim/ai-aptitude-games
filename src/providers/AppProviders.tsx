@@ -7,6 +7,7 @@ import { DesignSystemProvider } from '../design-system/provider';
 import { LOCAL_DB_NAME, migrateLocalDb } from '../data/local/database';
 import { GameResultsSyncBridge } from '../data/sync/GameResultsSyncBridge';
 import { queryClient } from '../lib/query-client';
+import { SnackbarProvider } from '../components/ui/Snackbar';
 import { AuthProvider } from './AuthProvider';
 
 export function AppProviders({ children }: PropsWithChildren) {
@@ -15,10 +16,12 @@ export function AppProviders({ children }: PropsWithChildren) {
       <DesignSystemProvider>
         <SQLiteProvider databaseName={LOCAL_DB_NAME} onInit={migrateLocalDb}>
           <QueryClientProvider client={queryClient}>
-            <AuthProvider>
-              <GameResultsSyncBridge />
-              {children}
-            </AuthProvider>
+            <SnackbarProvider>
+              <AuthProvider>
+                <GameResultsSyncBridge />
+                {children}
+              </AuthProvider>
+            </SnackbarProvider>
           </QueryClientProvider>
         </SQLiteProvider>
       </DesignSystemProvider>

@@ -4,7 +4,6 @@ import { HStack, VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
 import { IconButton } from '../ui/IconButton';
 import type { IconName } from '../ui/Icon';
-import { Logo } from './Logo';
 
 export type HeaderAction = {
   icon: IconName;
@@ -27,7 +26,7 @@ export function Header({ title, subtitle, children, showBack = false, onBack, ri
     <VStack gap="x2" py="x2">
       <HStack align="center" gap="x3" justify="spaceBetween">
         <HStack align="center" flex={1} gap="x2">
-          {showBack ? <IconButton name="ArrowLeft" label="뒤로" onPress={onBack} /> : <Logo showText={false} />}
+          {showBack ? <IconButton name="ArrowLeft" label="뒤로" onPress={onBack} /> : null}
           <VStack flex={1} gap="x0_5">
             <Text textStyle="t7Bold" maxLines={1}>
               {title}

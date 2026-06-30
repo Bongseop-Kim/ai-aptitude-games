@@ -1,7 +1,7 @@
 import { Alert } from 'react-native';
 
 import { Sheet } from '../app/Sheet';
-import { Button } from '../ui/Button';
+import { ActionButton } from '../ui/ActionButton';
 import { Icon } from '../ui/Icon';
 import { List } from '../ui/List';
 import { VStack } from '../../design-system/components/Stack';
@@ -45,8 +45,8 @@ export function ProIntroSheet({ visible, onClose }: ProIntroSheetProps) {
           ))}
         </List.Root>
         <VStack gap="x2">
-          <Button label="출시 알림 받기" iconLeft="Bell" onPress={handleNotify} fullWidth />
-          <Button label="나중에" variant="outline" onPress={onClose} fullWidth />
+          <ActionButton label="출시 알림 받기" iconLeft="Bell" onPress={handleNotify} />
+          <ActionButton label="나중에" variant="neutralOutline" onPress={onClose} />
         </VStack>
       </VStack>
     </Sheet>

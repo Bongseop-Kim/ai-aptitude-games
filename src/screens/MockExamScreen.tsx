@@ -6,7 +6,7 @@ import { Body } from '../components/app/Body';
 import { Header } from '../components/app/Header';
 import { Screen } from '../components/app/Screen';
 import { Badge } from '../components/ui/Badge';
-import { Button } from '../components/ui/Button';
+import { ActionButton } from '../components/ui/ActionButton';
 import { Card } from '../components/ui/Card';
 import { Icon, type IconName } from '../components/ui/Icon';
 import { List } from '../components/ui/List';
@@ -130,7 +130,7 @@ export function MockExamScreen() {
   if (activeSession.isLoading) {
     return (
       <Screen>
-        <Header title="모의고사" subtitle="9개 게임 + AI 면접" showBack onBack={close}>
+        <Header title="모의고사" showBack onBack={close}>
           <MockExamProgressStrip completedCount={0} />
         </Header>
         <Body bottomPad="x4">
@@ -143,7 +143,7 @@ export function MockExamScreen() {
   if (!session) {
     return (
       <Screen>
-        <Header title="모의고사" subtitle="9개 게임 + AI 면접" showBack onBack={close} />
+        <Header title="모의고사" showBack onBack={close} />
         <Body bottomPad="x4">
           <Card bg="bg.brandWeak" borderColor="stroke.brandWeak" minHeight="x16">
             <VStack gap="x3">
@@ -158,10 +158,10 @@ export function MockExamScreen() {
                   </Text>
                 </VStack>
               </HStack>
-              <Button
+              <ActionButton
                 label="모의고사 시작"
                 iconRight="ArrowRight"
-                disabled={startMockExamSession.isPending}
+                loading={startMockExamSession.isPending}
                 onPress={startSession}
               />
             </VStack>
@@ -175,7 +175,6 @@ export function MockExamScreen() {
     <Screen>
       <Header
         title="모의고사"
-        subtitle={`${completedCount}/${MOCK_EXAM_ITEM_COUNT} 완료`}
         showBack
         onBack={close}
         rightAction={{

@@ -27,7 +27,7 @@ import {
   type RotateState,
 } from '../../../domain/games/rotate';
 import { toneColors } from '../../../domain/tone';
-import { Button } from '../../ui/Button';
+import { ActionButton } from '../../ui/ActionButton';
 import { Card } from '../../ui/Card';
 import { Icon } from '../../ui/Icon';
 import { Tag } from '../../ui/Tag';
@@ -215,7 +215,7 @@ export function RotatePlay({ game, onFinish, onClose }: GamePlayProps) {
       instruction={
         <Text textStyle="t3Regular">왼쪽(전) 도형을 오른쪽(후) 모양으로 만들어 보세요.</Text>
       }
-      footer={<Button label="답안 제출" fullWidth disabled={isSubmitted} onPress={submit} />}
+      footer={<ActionButton label="답안 제출" disabled={isSubmitted} onPress={submit} />}
     >
       <VStack flex={1} gap="x3" justify="center">
         <Card overflow="hidden" p={0}>
@@ -274,7 +274,7 @@ export function RotatePlay({ game, onFinish, onClose }: GamePlayProps) {
             })
           )}
           {sequence.length > 0 ? (
-            <Button
+            <ActionButton
               label="초기화"
               variant="ghost"
               size="small"

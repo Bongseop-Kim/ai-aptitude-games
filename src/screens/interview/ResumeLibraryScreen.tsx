@@ -6,7 +6,7 @@ import { Header } from '../../components/app/Header';
 import { TabListScreen } from '../../components/app/TabListScreen';
 import { AddResumeSheet } from '../../components/interview/AddResumeSheet';
 import { ResumeRow } from '../../components/interview/ResumeRow';
-import { Button } from '../../components/ui/Button';
+import { ActionButton } from '../../components/ui/ActionButton';
 import { Card } from '../../components/ui/Card';
 import { Icon } from '../../components/ui/Icon';
 import { List } from '../../components/ui/List';
@@ -51,7 +51,7 @@ export function ResumeLibraryScreen() {
       <TabListScreen<ResumeListItem>
         header={<Header title="내 이력서" subtitle="등록한 이력서를 분석해 질문에 반영해요" showBack onBack={() => router.back()} />}
         pinnedContent={
-          <Button label="이력서 추가" iconLeft="Plus" fullWidth onPress={() => setSheetVisible(true)} />
+          <ActionButton label="이력서 추가" iconLeft="Plus" onPress={() => setSheetVisible(true)} />
         }
         data={listData}
         ItemSeparatorComponent={List.Divider}

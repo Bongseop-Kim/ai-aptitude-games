@@ -12,11 +12,9 @@ import {
   MockExamSummaryCard,
   MockExamSummaryCardSkeleton,
 } from '../components/reports/MockExamSummaryCard';
-import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { List } from '../components/ui/List';
 import { useMockExamRecords } from '../data/local/useMockExamResults';
-import { useActiveMockExamSession } from '../data/local/useMockExamSession';
 import { Box } from '../design-system/components/Box';
 import { VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
@@ -85,9 +83,7 @@ function RecordListItemFrame({
 }
 
 export function ReportsScreen() {
-  const router = useRouter();
   const { data, isLoading } = useMockExamRecords();
-  const { data: activeSession } = useActiveMockExamSession();
   const records = data ?? [];
   const latestRound = records[0]?.round;
   const hasRecords = records.length > 0;
@@ -103,8 +99,6 @@ export function ReportsScreen() {
   const listData: RecordListItem[] = isLoading
     ? mockExamRecordSkeletonKeys.map((id) => ({ kind: 'skeleton', id }))
     : records.map((record) => ({ kind: 'record', record }));
-  const startMockExam = () => router.push({ pathname: '/mock-exam' } as never);
-  const mockExamActionLabel = activeSession ? '모의고사 이어하기' : '새 모의고사 시작';
   const renderRecordItem = ({ index, item }: ListRenderItemInfo<RecordListItem>) => {
     const isFirst = index === 0;
     const isLast = index === listData.length - 1;
@@ -126,14 +120,12 @@ export function ReportsScreen() {
 
   return (
     <TabListScreen<RecordListItem>
-      header={<Header title="기록" subtitle="모의고사 회차별 리포트" />}
+      header={<Header title="모의고사" />}
       pinnedContent={(
         <RecordListHeader
           hasRecords={hasRecords}
           isLoading={isLoading}
-          onStartMockExam={startMockExam}
           records={records}
-          startMockExamLabel={mockExamActionLabel}
         />
       )}
       data={listData}
@@ -165,39 +157,23 @@ function RecordListRecordRow({ record, isLatest }: RecordListRecordRowProps) {
 type RecordListHeaderProps = {
   hasRecords: boolean;
   isLoading: boolean;
-  onStartMockExam: () => void;
   records: MockExamRecord[];
-  startMockExamLabel: string;
 };
 
 function RecordListHeader({
   hasRecords,
   isLoading,
-  onStartMockExam,
   records,
-  startMockExamLabel,
 }: RecordListHeaderProps) {
   if (isLoading) {
-    return (
-      <VStack gap="spacingY.componentDefault">
-        <MockExamSummaryCardSkeleton />
-        <Button label={startMockExamLabel} iconLeft="Plus" fullWidth onPress={onStartMockExam} />
-      </VStack>
-    );
+    return <MockExamSummaryCardSkeleton />;
   }
 
   if (!hasRecords) {
-    return (
-      <Button label={startMockExamLabel} iconLeft="Plus" fullWidth onPress={onStartMockExam} />
-    );
+    return null;
   }
 
-  return (
-    <VStack gap="spacingY.componentDefault">
-      <MockExamSummaryCard records={records} />
-      <Button label={startMockExamLabel} iconLeft="Plus" fullWidth onPress={onStartMockExam} />
-    </VStack>
-  );
+  return <MockExamSummaryCard records={records} />;
 }
 
 function EmptyMockExamRecords({ description, title }: RecordEmptyState) {

@@ -1,7 +1,7 @@
 import { Fragment } from 'react';
 
 import { Badge } from '../ui/Badge';
-import { Button } from '../ui/Button';
+import { ActionButton } from '../ui/ActionButton';
 import { Card } from '../ui/Card';
 import { List } from '../ui/List';
 import { QUESTION_CATEGORY_TONE } from '../../data/interviewFlow';
@@ -69,11 +69,11 @@ function MeasuredAnswerRow({
       </Text>
       {answer.mediaStatus === 'failed' && onRetryUpload ? (
         <HStack>
-          <Button
+          <ActionButton
             label="다시 시도"
             iconLeft="RotateCcw"
             size="small"
-            variant="weak"
+            variant="neutralWeak"
             onPress={() => onRetryUpload(answer.id)}
           />
         </HStack>

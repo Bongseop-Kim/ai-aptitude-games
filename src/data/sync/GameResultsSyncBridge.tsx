@@ -24,8 +24,7 @@ async function pushAllUnsynced(db: ReturnType<typeof useSQLiteContext>, userId: 
 /**
  * Mounts the silent background sync triggers: pushes the outbox when the
  * user logs in (or app starts with a session) and when the app returns
- * to the foreground. Per-save pushes happen in useSaveGameResult
- * and useSaveMockExamResult.
+ * to the foreground. Per-save pushes happen in local-first mutation hooks.
  */
 export function GameResultsSyncBridge() {
   const db = useSQLiteContext();

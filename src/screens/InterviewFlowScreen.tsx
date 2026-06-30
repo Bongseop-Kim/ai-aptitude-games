@@ -19,7 +19,7 @@ import { Header } from '../components/app/Header';
 import { Screen } from '../components/app/Screen';
 import { InterviewSetupView } from '../components/interview/InterviewSetupView';
 import { StepProgress, type RecordMode } from '../components/interview/InterviewFlowParts';
-import { Button } from '../components/ui/Button';
+import { ActionButton } from '../components/ui/ActionButton';
 import { Card } from '../components/ui/Card';
 import { composeInterviewQuestions, type InterviewPromptQuestion } from '../domain/composeInterviewQuestions';
 import { jobFamilyLabel } from '../domain/jobFamily';
@@ -510,7 +510,7 @@ export function InterviewFlowScreen() {
                 <Text align="center" color="fg.neutralMuted" textStyle="t4Regular">
                   준비된 질문을 찾지 못했어요.
                 </Text>
-                <Button label="처음으로" variant="weak" onPress={() => setPhase('setup')} />
+                <ActionButton label="처음으로" variant="neutralWeak" onPress={() => setPhase('setup')} />
               </VStack>
             </Card>
           </Box>

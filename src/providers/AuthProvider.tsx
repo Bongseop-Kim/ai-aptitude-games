@@ -10,7 +10,8 @@ import {
 } from 'react';
 
 import { createSessionFromUrl } from '../lib/auth';
-import { supabase } from '../lib/supabase';
+import { secureStoreAuthStorage } from '../lib/secure-store-auth-storage';
+import { supabase, supabaseAuthStorageKey } from '../lib/supabase';
 
 type AuthContextValue = {
   session: Session | null;
@@ -23,28 +24,88 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+function isStoredSession(value: unknown): value is Session {
+  if (!value || typeof value !== 'object') return false;
+  const record = value as Record<string, unknown>;
+  const user = record.user;
+  return (
+    typeof record.access_token === 'string' &&
+    typeof record.refresh_token === 'string' &&
+    Boolean(user) &&
+    typeof user === 'object' &&
+    typeof (user as Record<string, unknown>).id === 'string'
+  );
+}
+
+function isNetworkSessionError(error: unknown) {
+  if (!error || typeof error !== 'object') return false;
+  const record = error as Record<string, unknown>;
+  const message = typeof record.message === 'string' ? record.message : '';
+  return (
+    record.name === 'AuthRetryableFetchError' ||
+    record.status === 0 ||
+    message.includes('fetch failed') ||
+    message.includes('Network request failed')
+  );
+}
+
+async function getStoredSession() {
+  try {
+    const value = await secureStoreAuthStorage.getItem(supabaseAuthStorageKey);
+    if (!value) return null;
+
+    const parsed: unknown = JSON.parse(value);
+    return isStoredSession(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: PropsWithChildren) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth
-      .getSession()
-      .then(({ data }) => {
-        setSession(data.session);
-      })
-      .catch(() => {
-        setSession(null);
-      })
-      .finally(() => {
-        setIsLoading(false);
+    let mounted = true;
+    let unsubscribe: (() => void) | undefined;
+
+    function subscribeAuthChanges() {
+      const { data } = supabase.auth.onAuthStateChange((_event, next) => {
+        if (mounted) {
+          setSession(next);
+        }
       });
+      unsubscribe = () => data.subscription.unsubscribe();
+    }
 
-    const { data } = supabase.auth.onAuthStateChange((_event, next) => {
-      setSession(next);
-    });
+    async function loadSession() {
+      const storedSession = await getStoredSession();
 
-    return () => data.subscription.unsubscribe();
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        const networkError = isNetworkSessionError(error);
+        if (mounted) {
+          setSession(data.session ?? (networkError ? storedSession : null));
+        }
+      } catch (error) {
+        const networkError = isNetworkSessionError(error);
+        if (mounted) {
+          setSession(networkError ? storedSession : null);
+        }
+      } finally {
+        if (mounted) {
+          subscribeAuthChanges();
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadSession();
+
+    return () => {
+      mounted = false;
+      unsubscribe?.();
+    };
   }, []);
 
   // Resolve OAuth redirects (cold start + while running) into a session.

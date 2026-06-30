@@ -16,7 +16,7 @@ export type PotionQuestion = {
 export const POTION_TOTAL_ROUNDS = 5;
 export const POTION_FEEDBACK_MS = 850;
 
-export const potionIngredients: readonly IconName[] = [
+const potionIngredients: readonly IconName[] = [
   'Leaf',
   'Flower',
   'Wheat',

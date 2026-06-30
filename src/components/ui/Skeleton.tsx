@@ -1,5 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useIsFocused } from 'expo-router';
+import { Canvas, Group, LinearGradient, Rect, RoundedRect, Skia, vec } from '@shopify/react-native-skia';
+import {
+  cancelAnimation,
+  Easing,
+  useDerivedValue,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { Box, type BoxProps } from '../../design-system/components/Box';
 import {
@@ -7,21 +16,6 @@ import {
   resolveRadius,
 } from '../../design-system/components/style-props';
 import { useDesignSystemTheme } from '../../design-system/provider';
-import {
-  Canvas,
-  cancelAnimation,
-  Easing,
-  Group,
-  LinearGradient,
-  Rect,
-  RoundedRect,
-  Skia,
-  useDerivedValue,
-  useSharedValue,
-  vec,
-  withRepeat,
-  withTiming,
-} from '../../lib/native-motion';
 
 const SHIMMER_DURATION_MS = 1200;
 const HIGHLIGHT_WIDTH_RATIO = 0.45;

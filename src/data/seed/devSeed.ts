@@ -167,6 +167,7 @@ async function insertSeedExamItems(
   for (const item of items) {
     await db.runAsync(
       `INSERT INTO mock_exam_result_items (
+        id,
         mock_exam_id,
         item_key,
         user_id,
@@ -175,7 +176,8 @@ async function insertSeedExamItems(
         score,
         duration_ms,
         completed_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      Crypto.randomUUID(),
       mockExamId,
       item.itemKey,
       userId,

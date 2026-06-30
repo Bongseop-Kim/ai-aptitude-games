@@ -19,11 +19,14 @@ if (!supabaseUrl || !supabaseKey) {
   );
 }
 
+export const supabaseAuthStorageKey = `sb-${new URL(supabaseUrl).hostname.split('.')[0]}-auth-token`;
+
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     autoRefreshToken: true,
     detectSessionInUrl: false,
     persistSession: true,
+    storageKey: supabaseAuthStorageKey,
     storage: secureStoreAuthStorage,
   },
 });

@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabase';
 import type { BirthYearBand } from '../../domain/birthYearBand';
 import type { JobFamily } from '../../domain/report';
 
-export const profileKeys = {
+const profileKeys = {
   all: ['profiles'] as const,
   own: (userId: string | null) => ['profiles', userId] as const,
 };
@@ -45,6 +45,7 @@ export function useProfile() {
       };
     },
     enabled: userId != null,
+    retry: false,
   });
 }
 

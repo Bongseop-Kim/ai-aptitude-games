@@ -6,7 +6,7 @@ import { HStack, VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
 import { signInAnonymously, signInWithKakao } from '../../lib/auth';
 import { Screen } from '../app/Screen';
-import { Button } from '../ui/Button';
+import { ActionButton } from '../ui/ActionButton';
 import { Icon } from '../ui/Icon';
 
 export function LoginScreen() {
@@ -72,21 +72,19 @@ export function LoginScreen() {
         </VStack>
 
         <VStack gap="x2" pb="x4">
-          <Button
+          <ActionButton
             label="카카오로 시작하기"
-            variant="solid"
-            tone="brand"
+            variant="brandSolid"
             iconRight="ChevronRight"
-            fullWidth
             disabled={isBusy}
+            loading={pending === 'kakao'}
             onPress={() => run('kakao', signInWithKakao)}
           />
-          <Button
+          <ActionButton
             label="나중에 연동하기"
             variant="ghost"
-            tone="neutral"
-            fullWidth
             disabled={isBusy}
+            loading={pending === 'skip'}
             onPress={() => run('skip', signInAnonymously)}
           />
         </VStack>

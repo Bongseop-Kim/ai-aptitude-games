@@ -15,8 +15,8 @@ export type PressureRecoverySummary = {
 };
 
 const EXPECTED_DIFFICULTY_WEIGHT = 0.35;
-export const PRESSURE_SCORE_GAP_THRESHOLD = -15;
-export const DIFFICULTY_JUMP_THRESHOLD = 12;
+const PRESSURE_SCORE_GAP_THRESHOLD = -15;
+const DIFFICULTY_JUMP_THRESHOLD = 12;
 
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, Math.round(value)));

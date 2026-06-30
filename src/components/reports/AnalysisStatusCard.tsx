@@ -2,7 +2,7 @@ import { Box } from '../../design-system/components/Box';
 import { HStack, VStack } from '../../design-system/components/Stack';
 import { Text } from '../../design-system/components/Text';
 import type { TokenSize } from '../../design-system/components/style-props';
-import { Button } from '../ui/Button';
+import { ActionButton } from '../ui/ActionButton';
 import { Card } from '../ui/Card';
 import { Icon } from '../ui/Icon';
 
@@ -52,7 +52,7 @@ export function AnalysisStatusCard({ variant, title, body, minHeight = 'x16', on
           </VStack>
         </HStack>
         {isFailed && onRetry ? (
-          <Button label="다시 시도" iconLeft="RotateCcw" variant="weak" size="small" onPress={onRetry} />
+          <ActionButton label="다시 시도" iconLeft="RotateCcw" variant="neutralWeak" size="small" onPress={onRetry} />
         ) : null}
       </VStack>
     </Card>

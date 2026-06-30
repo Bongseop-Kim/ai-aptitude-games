@@ -1,12 +1,14 @@
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
+import { StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { SubSectionHead } from '../app/SubSectionHead';
-import { ReportScoreListCard } from '../reports/ReportScoreListCard';
-import { ReportScoreRow } from '../reports/ReportScoreRow';
+import { RadarChart } from '../reports/ReportCharts';
 import { Badge } from '../ui/Badge';
 import { Card } from '../ui/Card';
+import type { HelpBubbleInfo } from '../ui/HelpBubble';
 import { List } from '../ui/List';
+import { SegmentedControl } from '../ui/SegmentedControl';
 import { INTERVIEW_AXES } from '../../data/interviewFlow';
 import { Box } from '../../design-system/components/Box';
 import { HStack, VStack } from '../../design-system/components/Stack';
@@ -22,9 +24,37 @@ export type InterviewAnalysisBodyProps = {
   session?: InterviewSessionRecord | null;
 };
 
+type InterviewChartKey = 'axes' | 'delivery' | 'ncs';
+
+const INTERVIEW_CHART_HELP: Record<InterviewChartKey, HelpBubbleInfo> = {
+  axes: {
+    title: '평가는 이렇게 봤어요',
+    description:
+      '질문별 답변에서 내용 관련성, STAR 구조, 음성, 시선, 전달력을 각각 0~100점으로 봤어요. 또래 평균은 같은 기준으로 분석한 답변과 비교한 값이에요.',
+  },
+  delivery: {
+    title: '전달은 이렇게 봤어요',
+    description:
+      '음성과 영상에서 말 속도, 발음 명료도, 시선 안정처럼 전달에 영향을 주는 신호를 봤어요.',
+  },
+  ncs: {
+    title: 'NCS는 이렇게 봤어요',
+    description:
+      '답변 내용과 사례를 NCS 직업기초능력 단위에 연결해 점수화했어요. 질문 의도와 답변 근거가 얼마나 맞는지 함께 봐요.',
+  },
+};
+
 export function InterviewAnalysisBody({ interview, mockExamId, session = null }: InterviewAnalysisBodyProps) {
   const router = useRouter();
+  const [chartKey, setChartKey] = useState<InterviewChartKey>('axes');
   const axisScores = new Map(interview.axes.map((axis) => [axis.key, axis]));
+  const hasDeliveryDetails = Boolean(interview.delivery_details && interview.delivery_details.length > 0);
+  const hasNcsUnits = interview.ncs_units.length > 0;
+  const chartItems = [
+    { label: '평가', value: 'axes' },
+    { label: '전달', value: 'delivery', disabled: !hasDeliveryDetails },
+    { label: 'NCS', value: 'ncs', disabled: !hasNcsUnits },
+  ] as const satisfies readonly { disabled?: boolean; label: string; value: InterviewChartKey }[];
 
   return (
     <VStack gap="x4">
@@ -54,60 +84,67 @@ export function InterviewAnalysisBody({ interview, mockExamId, session = null }:
       </Card>
 
       <VStack gap="x2">
-        <SubSectionHead title="평가 축" caption="또래 평균은 같은 조건으로 응시한 집단의 평균이에요." />
-        <ReportScoreListCard markerLegendLabel="또래 평균">
-          {INTERVIEW_AXES.map((axis, index) => {
-            const score = axisScores.get(axis.key) ?? null;
-            return (
-              <Fragment key={axis.key}>
-                {index > 0 ? <List.Divider /> : null}
-                <ReportScoreRow
-                  title={axis.name}
-                  value={score?.score ?? null}
-                  markerValue={score?.peer_avg ?? null}
-                  tagItems={[
-                    { label: axis.sub },
-                    ...(score?.peer_avg != null ? [{ label: `또래 ${score.peer_avg}` }] : []),
-                  ]}
-                  unavailableLabel="영상 분석 준비 중"
-                />
-              </Fragment>
-            );
-          })}
-        </ReportScoreListCard>
+        <SubSectionHead title="면접 차트" />
+        <VStack gap="x3" minHeight="x60">
+          <SegmentedControl
+            accessibilityLabel="면접 차트 선택"
+            items={chartItems}
+            onValueChange={setChartKey}
+            size="small"
+            value={chartKey}
+          />
+          <Box position="relative">
+            <Box
+              accessibilityElementsHidden={chartKey !== 'axes'}
+              importantForAccessibility={chartKey === 'axes' ? 'auto' : 'no-hide-descendants'}
+              pointerEvents={chartKey === 'axes' ? 'auto' : 'none'}
+              style={chartKey === 'axes' ? styles.visibleChartPane : styles.hiddenChartPane}
+            >
+              <RadarChart
+                comparisonLabel="또래 평균"
+                help={INTERVIEW_CHART_HELP.axes}
+                points={INTERVIEW_AXES.map((axis) => {
+                  const score = axisScores.get(axis.key) ?? null;
+                  return {
+                    label: axis.name,
+                    value: score?.score ?? null,
+                    comparisonValue: score?.peer_avg ?? null,
+                  };
+                })}
+                unavailableLabel="영상 분석 준비 중"
+              />
+            </Box>
+            <Box
+              accessibilityElementsHidden={chartKey !== 'delivery'}
+              importantForAccessibility={chartKey === 'delivery' ? 'auto' : 'no-hide-descendants'}
+              pointerEvents={chartKey === 'delivery' ? 'auto' : 'none'}
+              style={chartKey === 'delivery' ? styles.visibleChartPane : styles.hiddenChartPane}
+            >
+              <RadarChart
+                help={INTERVIEW_CHART_HELP.delivery}
+                points={(interview.delivery_details ?? []).map((detail) => ({
+                  label: detail.label,
+                  value: detail.value,
+                }))}
+              />
+            </Box>
+            <Box
+              accessibilityElementsHidden={chartKey !== 'ncs'}
+              importantForAccessibility={chartKey === 'ncs' ? 'auto' : 'no-hide-descendants'}
+              pointerEvents={chartKey === 'ncs' ? 'auto' : 'none'}
+              style={chartKey === 'ncs' ? styles.visibleChartPane : styles.hiddenChartPane}
+            >
+              <RadarChart
+                help={INTERVIEW_CHART_HELP.ncs}
+                points={interview.ncs_units.map((unit) => ({
+                  label: unit.label,
+                  value: unit.score,
+                }))}
+              />
+            </Box>
+          </Box>
+        </VStack>
       </VStack>
-
-      {interview.delivery_details && interview.delivery_details.length > 0 ? (
-        <VStack gap="x2">
-          <SubSectionHead title="전달력 세부" caption="말의 속도와 흐름처럼 전달 방식을 나누어 본 값이에요." />
-          <ReportScoreListCard>
-            {interview.delivery_details.map((detail, index) => (
-              <Fragment key={index}>
-                {index > 0 ? <List.Divider /> : null}
-                <ReportScoreRow title={detail.label} value={detail.value} />
-              </Fragment>
-            ))}
-          </ReportScoreListCard>
-        </VStack>
-      ) : null}
-
-      {interview.ncs_units.length > 0 ? (
-        <VStack gap="x2">
-          <SubSectionHead title="NCS 능력단위" caption="NCS 직업공통능력 기준으로 답변 행동을 다시 묶어 본 참고 지표예요." />
-          <ReportScoreListCard>
-            {interview.ncs_units.map((unit, index) => (
-              <Fragment key={unit.label}>
-                {index > 0 ? <List.Divider /> : null}
-                <ReportScoreRow
-                  title={unit.label}
-                  value={unit.score}
-                  tagItems={unit.basis ? [{ label: unit.basis }] : []}
-                />
-              </Fragment>
-            ))}
-          </ReportScoreListCard>
-        </VStack>
-      ) : null}
 
       {interview.top_fixes.length > 0 ? (
         <VStack gap="x2">
@@ -152,6 +189,19 @@ export function InterviewAnalysisBody({ interview, mockExamId, session = null }:
     </VStack>
   );
 }
+
+const styles = StyleSheet.create({
+  hiddenChartPane: {
+    left: 0,
+    opacity: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+  visibleChartPane: {
+    opacity: 1,
+  },
+});
 
 function TopFixRow({ fix, index }: { fix: ReportTopFix; index: number }) {
   const axisName = INTERVIEW_AXES.find((axis) => axis.key === fix.axis)?.name ?? fix.axis;

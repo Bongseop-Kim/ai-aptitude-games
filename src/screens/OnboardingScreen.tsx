@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pressable } from 'react-native';
 
 import { Screen } from '../components/app/Screen';
-import { Button } from '../components/ui/Button';
+import { ActionButton } from '../components/ui/ActionButton';
 import { Icon } from '../components/ui/Icon';
 import { Switch } from '../components/ui/Switch';
 import { useUpdateProfile } from '../data/server/useProfile';
@@ -111,41 +111,34 @@ export function OnboardingScreen() {
             ) : null}
           </Box>
           {step === 'field' ? (
-            <Button
+            <ActionButton
               label="다음"
-              variant="solid"
-              tone="brand"
-              fullWidth
+              variant="brandSolid"
               disabled={selected == null}
               onPress={handleNext}
             />
           ) : (
             <VStack gap="x2">
-              <Button
-                label={updateProfile.isPending ? '저장하는 중...' : '시작하기'}
-                variant="solid"
-                tone="brand"
-                fullWidth
-                disabled={!consent || band == null || updateProfile.isPending}
+              <ActionButton
+                label="시작하기"
+                variant="brandSolid"
+                disabled={!consent || band == null}
+                loading={updateProfile.isPending}
                 onPress={() => finish(true)}
               />
               <HStack gap="x2">
                 <Box flex={1}>
-                  <Button
+                  <ActionButton
                     label="이전"
                     variant="ghost"
-                    tone="neutral"
-                    fullWidth
                     disabled={updateProfile.isPending}
                     onPress={() => setStep('field')}
                   />
                 </Box>
                 <Box flex={1}>
-                  <Button
+                  <ActionButton
                     label="건너뛰기"
                     variant="ghost"
-                    tone="neutral"
-                    fullWidth
                     disabled={updateProfile.isPending}
                     onPress={() => finish(false)}
                   />

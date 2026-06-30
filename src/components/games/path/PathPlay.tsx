@@ -23,7 +23,7 @@ import {
 } from '../../../domain/games/results';
 import { toneColors } from '../../../domain/tone';
 import type { ColorToken } from '../../../design-system/components/style-props';
-import { Button } from '../../ui/Button';
+import { ActionButton } from '../../ui/ActionButton';
 import { Card } from '../../ui/Card';
 import { Icon } from '../../ui/Icon';
 import { GameStageShell } from '../GameStageShell';
@@ -206,9 +206,8 @@ export function PathPlay({ game, onFinish, onClose }: GamePlayProps) {
         <Text textStyle="t3Regular">울타리를 놓아 사람과 자동차의 길을 분리하세요.</Text>
       }
       footer={
-        <Button
+        <ActionButton
           label={`제출 (${fences.size}/${puzzle.fenceLimit})`}
-          fullWidth
           disabled={fences.size === 0 || isSubmitted}
           onPress={submit}
         />

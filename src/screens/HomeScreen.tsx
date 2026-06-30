@@ -1,7 +1,6 @@
 import { Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { Logo } from '../components/app/Logo';
 import { SectionHead } from '../components/app/SectionHead';
 import { TabScreen } from '../components/app/TabScreen';
 import { GameTile } from '../components/games/GameTile';
@@ -46,7 +45,9 @@ export function HomeScreen() {
 function HomeHeader() {
   return (
     <HStack align="center" gap="x2" justify="spaceBetween">
-      <Logo />
+      <Text textStyle="t7Bold" maxLines={1}>
+        홈
+      </Text>
       <HStack align="center" gap="x1">
         <HeaderChip
           accessibilityLabel={`스트릭 ${user.streakDays}일`}

@@ -6,7 +6,6 @@ import { SectionHead } from '../components/app/SectionHead';
 import { TabScreen } from '../components/app/TabScreen';
 import { JobFamilySheet } from '../components/profile/JobFamilySheet';
 import { ReadinessGauge } from '../components/readiness/ReadinessGauge';
-import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Icon } from '../components/ui/Icon';
 import { IconButton } from '../components/ui/IconButton';
@@ -25,29 +24,15 @@ import type { InterviewSessionRecord } from '../domain/types';
 export function InterviewScreen() {
   const router = useRouter();
   const { data: sessions = [], isLoading } = useInterviewSessions();
+  const hasNoSessions = !isLoading && sessions.length === 0;
 
   return (
     <TabScreen
       header={
-        <Header
-          title="실전 면접"
-          subtitle="이력서·채용공고로 맞춤 영상 면접"
-          rightAction={{
-            icon: 'Info',
-            label: '면접 정보',
-          }}
-        />
+        <Header title="면접" />
       }
     >
       <JobFamilyCard />
-      <Button
-        label="면접 시작하기"
-        variant="solid"
-        tone="brand"
-        iconLeft="Zap"
-        fullWidth
-        onPress={() => router.push('/interview/new' as never)}
-      />
       <InterviewPrepSection />
       <VStack gap="x2">
         <SectionHead
@@ -62,7 +47,7 @@ export function InterviewScreen() {
               <InterviewSessionSkeletonList />
             </Card>
           ) : null}
-          {!isLoading && sessions.length === 0 ? <EmptyInterviewSessions /> : null}
+          {hasNoSessions ? <EmptyInterviewSessions /> : null}
           {!isLoading && sessions.length > 0 ? (
             <Card bg="bg.layerDefault" overflow="hidden" py="x1">
               <List.Root>

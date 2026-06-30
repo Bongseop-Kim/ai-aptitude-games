@@ -24,7 +24,7 @@ import {
 import type { InterviewAnswerInput } from './interviewAnswers';
 import type { InterviewSessionInput } from './interviewSessions';
 
-export const mockExamSessionKeys = {
+const mockExamSessionKeys = {
   all: ['mock-exam-session'] as const,
   active: (userId: string | null) => ['mock-exam-session', userId, 'active'] as const,
 };
