@@ -25,6 +25,7 @@ import type { InterviewSessionRecord } from '../domain/types';
 export function InterviewScreen() {
   const router = useRouter();
   const { data: sessions = [], isLoading } = useInterviewSessions();
+  const hasNoSessions = !isLoading && sessions.length === 0;
 
   return (
     <TabScreen
@@ -61,7 +62,7 @@ export function InterviewScreen() {
               <InterviewSessionSkeletonList />
             </Card>
           ) : null}
-          {!isLoading && sessions.length === 0 ? <EmptyInterviewSessions /> : null}
+          {hasNoSessions ? <EmptyInterviewSessions /> : null}
           {!isLoading && sessions.length > 0 ? (
             <Card bg="bg.layerDefault" overflow="hidden" py="x1">
               <List.Root>
