@@ -4,9 +4,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Float } from '../../design-system/components/Float';
 import { useDesignSystemTheme } from '../../design-system/provider';
 import { FloatingActionButton } from '../ui/FloatingActionButton';
-
-const nativeTabBarReserveToken = 'x14';
-const floatingActionLiftToken = 'x4';
+import {
+  getTabsFloatingActionBottomOffset,
+  getTabsFloatingActionRoute,
+  type TabsFloatingActionRoute,
+} from './tabsFloatingActionLayout';
 
 type FloatingActionRoute = {
   accessibilityLabel: string;
@@ -18,10 +20,9 @@ export function TabsFloatingAction() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { theme } = useDesignSystemTheme();
-  const action = floatingActionRoute(pathname, router);
-  const bottomOffset = theme.dimension.x[nativeTabBarReserveToken]
-    + theme.dimension.x[floatingActionLiftToken]
-    + theme.dimension.spacingY.screenBottom;
+  const route = getTabsFloatingActionRoute(pathname);
+  const action = route ? floatingActionRoute(route, router) : null;
+  const bottomOffset = getTabsFloatingActionBottomOffset(theme);
 
   if (!action) return null;
 
@@ -44,17 +45,17 @@ export function TabsFloatingAction() {
 }
 
 function floatingActionRoute(
-  pathname: string,
+  route: TabsFloatingActionRoute,
   router: ReturnType<typeof useRouter>,
 ): FloatingActionRoute | null {
-  if (pathname === '/interview') {
+  if (route === 'interview') {
     return {
       accessibilityLabel: '면접 시작하기',
       onPress: () => router.push('/interview/new' as never),
     };
   }
 
-  if (pathname === '/reports') {
+  if (route === 'reports') {
     return {
       accessibilityLabel: '모의고사 시작하기',
       onPress: () => router.push({ pathname: '/mock-exam' } as never),

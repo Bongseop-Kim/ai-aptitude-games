@@ -80,26 +80,21 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     async function loadSession() {
       const storedSession = await getStoredSession();
-      let shouldSubscribe = true;
 
       try {
         const { data, error } = await supabase.auth.getSession();
         const networkError = isNetworkSessionError(error);
-        shouldSubscribe = !networkError;
         if (mounted) {
           setSession(data.session ?? (networkError ? storedSession : null));
         }
       } catch (error) {
         const networkError = isNetworkSessionError(error);
-        shouldSubscribe = !networkError;
         if (mounted) {
           setSession(networkError ? storedSession : null);
         }
       } finally {
         if (mounted) {
-          if (shouldSubscribe) {
-            subscribeAuthChanges();
-          }
+          subscribeAuthChanges();
           setIsLoading(false);
         }
       }

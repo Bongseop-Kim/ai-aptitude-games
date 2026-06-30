@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Float } from '../../design-system/components/Float';
 import { VStack } from '../../design-system/components/Stack';
 import { useDesignSystemTheme } from '../../design-system/provider';
-import type { ColorToken, TokenLength } from '../../design-system/components/style-props';
+import type { ColorToken, DimensionToken, TokenLength } from '../../design-system/components/style-props';
 
 export type ScreenSafeEdge = 'top' | 'bottom' | 'left' | 'right';
 
@@ -14,6 +14,7 @@ export type ScreenProps = {
   children: ReactNode;
   contentPb?: TokenLength;
   floatingAction?: ReactNode;
+  floatingActionOffsetY?: 0 | number | DimensionToken;
   safeEdges?: readonly ScreenSafeEdge[];
 };
 
@@ -24,13 +25,15 @@ export function Screen({
   children,
   contentPb = 'spacingY.componentDefault',
   floatingAction,
+  floatingActionOffsetY,
   safeEdges = defaultSafeEdges,
 }: ScreenProps) {
   const insets = useSafeAreaInsets();
   const { theme } = useDesignSystemTheme();
   const safeEdgeSet = new Set(safeEdges);
   const floatingActionOffsetX = (safeEdgeSet.has('right') ? insets.right : 0) + theme.dimension.spacingX.globalGutter;
-  const floatingActionOffsetY = insets.bottom + theme.dimension.spacingY.screenBottom;
+  const resolvedFloatingActionOffsetY = floatingActionOffsetY
+    ?? (insets.bottom + theme.dimension.spacingY.screenBottom);
   const safeAreaStyle: ViewStyle = {
     paddingTop: safeEdgeSet.has('top') ? insets.top : 0,
     paddingRight: safeEdgeSet.has('right') ? insets.right : 0,
@@ -47,7 +50,7 @@ export function Screen({
         <Float
           placement="bottom-end"
           offsetX={floatingActionOffsetX}
-          offsetY={floatingActionOffsetY}
+          offsetY={resolvedFloatingActionOffsetY}
           zIndex={2}
         >
           {floatingAction}

@@ -43,12 +43,19 @@ export function createQueuedOutboxPush<Row>({
 }: PushOutboxConfig<Row>) {
   let pushInFlight = false;
   let pushQueuedUserId: string | null = null;
+  let pushCompletion: Promise<void> = Promise.resolve();
 
-  return async function pushQueuedOutbox(db: SQLiteDatabase, userId: string) {
+  return function pushQueuedOutbox(db: SQLiteDatabase, userId: string) {
     if (pushInFlight) {
       pushQueuedUserId = userId;
-      return;
+      return pushCompletion;
     }
+
+    pushCompletion = runPush(db, userId);
+    return pushCompletion;
+  };
+
+  async function runPush(db: SQLiteDatabase, userId: string) {
     pushInFlight = true;
 
     try {
@@ -60,7 +67,7 @@ export function createQueuedOutboxPush<Row>({
       const payload = rows.map(toPayload);
       const { error } = await supabase
         .from(table)
-        .upsert(payload, { onConflict, ignoreDuplicates: true });
+        .upsert(payload, { onConflict });
       if (error) {
         if (__DEV__) {
           console.warn(`[${debugTag}] push failed:`, error.message);
@@ -71,7 +78,7 @@ export function createQueuedOutboxPush<Row>({
           const sourceRow = rows[index];
           const { error: rowError } = await supabase
             .from(table)
-            .upsert(rowPayload, { onConflict, ignoreDuplicates: true });
+            .upsert(rowPayload, { onConflict });
           if (rowError) {
             if (__DEV__) {
               console.warn(
@@ -98,8 +105,8 @@ export function createQueuedOutboxPush<Row>({
       if (pushQueuedUserId) {
         const queuedUserId = pushQueuedUserId;
         pushQueuedUserId = null;
-        void pushQueuedOutbox(db, queuedUserId);
+        await runPush(db, queuedUserId);
       }
     }
-  };
+  }
 }

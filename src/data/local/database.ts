@@ -6,20 +6,7 @@ type SchemaVersionRow = {
   version: number;
 };
 
-const CURRENT_LOCAL_SCHEMA_REVISION = 14;
-
-const localDataTables = [
-  'dev_mock_exam_reports',
-  'interview_answers',
-  'mock_exam_result_items',
-  'mock_exam_result_items_legacy',
-  'game_result_rounds',
-  'mock_exam_session_items',
-  'mock_exam_sessions',
-  'interview_sessions',
-  'mock_exam_results',
-  'game_results',
-] as const;
+const CURRENT_LOCAL_SCHEMA_REVISION = 15;
 
 const currentSchemaSql = `
   CREATE TABLE game_results (
@@ -96,6 +83,7 @@ const currentSchemaSql = `
   CREATE INDEX idx_game_result_rounds_unsynced ON game_result_rounds (user_id) WHERE synced = 0;
 
   CREATE TABLE mock_exam_result_items (
+    id TEXT PRIMARY KEY NOT NULL,
     mock_exam_id TEXT NOT NULL,
     item_key TEXT NOT NULL,
     user_id TEXT NOT NULL,
@@ -105,9 +93,9 @@ const currentSchemaSql = `
     duration_ms INTEGER NOT NULL,
     completed_at TEXT NOT NULL,
     synced INTEGER NOT NULL DEFAULT 0,
-    PRIMARY KEY (mock_exam_id, item_key),
     CHECK ((game_result_id IS NOT NULL) != (interview_session_id IS NOT NULL))
   );
+  CREATE UNIQUE INDEX idx_mock_exam_result_items_exam_item ON mock_exam_result_items (mock_exam_id, item_key);
   CREATE INDEX idx_mock_exam_result_items_unsynced ON mock_exam_result_items (user_id) WHERE synced = 0;
 
   CREATE TABLE interview_answers (
@@ -148,9 +136,21 @@ async function readCurrentSchemaRevision(db: SQLiteDatabase) {
   return latest?.version ?? 0;
 }
 
+function quoteSqliteIdentifier(identifier: string) {
+  return `"${identifier.replaceAll('"', '""')}"`;
+}
+
 async function resetLocalSchema(db: SQLiteDatabase) {
-  for (const table of localDataTables) {
-    await db.execAsync(`DROP TABLE IF EXISTS ${table};`);
+  const tables = await db.getAllAsync<{ name: string }>(
+    `SELECT name
+     FROM sqlite_master
+     WHERE type = 'table'
+       AND name NOT LIKE 'sqlite_%'
+       AND name != 'schema_migrations'`,
+  );
+
+  for (const { name } of tables) {
+    await db.execAsync(`DROP TABLE IF EXISTS ${quoteSqliteIdentifier(name)};`);
   }
 
   await db.execAsync(currentSchemaSql);

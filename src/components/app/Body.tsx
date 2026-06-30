@@ -9,14 +9,18 @@ import { resolveLength, type TokenLength } from '../../design-system/components/
 
 export type BodyProps = {
   bottomPad?: TokenLength;
+  bottomReserve?: number;
   children: ReactNode;
 };
 
-export function Body({ bottomPad = 0, children }: BodyProps) {
+export function Body({ bottomPad = 0, bottomReserve = 0, children }: BodyProps) {
   const { theme } = useDesignSystemTheme();
   const insets = useSafeAreaInsets();
   const bottomPadding = resolveLength(theme, bottomPad);
-  const insetBottom = typeof bottomPadding === 'number' ? bottomPadding : 0;
+  const insetBottom = Math.max(
+    typeof bottomPadding === 'number' ? bottomPadding : 0,
+    bottomReserve,
+  );
 
   return (
     <Box flex={1}>

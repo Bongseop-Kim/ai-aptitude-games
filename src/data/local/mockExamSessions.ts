@@ -34,6 +34,7 @@ type MockExamSessionItemRow = {
   result_id: string;
   score: number;
   duration_ms: number;
+  created_at: string;
 };
 
 function toSessionItem(row: MockExamSessionItemRow): MockExamSessionItem {
@@ -56,7 +57,7 @@ export async function getActiveMockExamSession(db: SQLiteDatabase, userId: strin
   }
 
   const rows = await db.getAllAsync<MockExamSessionItemRow>(
-    'SELECT item_key, result_id, score, duration_ms FROM mock_exam_session_items WHERE session_id = ? ORDER BY created_at ASC',
+    'SELECT item_key, result_id, score, duration_ms, created_at FROM mock_exam_session_items WHERE session_id = ? ORDER BY created_at ASC',
     session.id,
   );
 
@@ -159,8 +160,8 @@ export async function finalizeMockExamSessionIfComplete(
       return;
     }
 
-    const rows = await db.getAllAsync<{ score: number; duration_ms: number }>(
-      'SELECT score, duration_ms FROM mock_exam_session_items WHERE session_id = ?',
+    const rows = await db.getAllAsync<MockExamSessionItemRow>(
+      'SELECT item_key, result_id, score, duration_ms, created_at FROM mock_exam_session_items WHERE session_id = ?',
       sessionId,
     );
 
@@ -175,31 +176,30 @@ export async function finalizeMockExamSessionIfComplete(
       score: Math.round(totalScore / MOCK_EXAM_ITEM_COUNT),
       durationMs: totalDurationMs,
     }, { id: sessionId });
-    await db.runAsync(
-      `INSERT INTO mock_exam_result_items (
-        mock_exam_id,
-        item_key,
-        user_id,
-        game_result_id,
-        interview_session_id,
-        score,
-        duration_ms,
-        completed_at
-      )
-      SELECT
-        session_id,
-        item_key,
-        ?,
-        CASE WHEN item_key = 'interview' THEN NULL ELSE result_id END,
-        CASE WHEN item_key = 'interview' THEN result_id ELSE NULL END,
-        score,
-        duration_ms,
-        created_at
-      FROM mock_exam_session_items
-      WHERE session_id = ?`,
-      userId,
-      sessionId,
-    );
+    for (const row of rows) {
+      await db.runAsync(
+        `INSERT INTO mock_exam_result_items (
+          id,
+          mock_exam_id,
+          item_key,
+          user_id,
+          game_result_id,
+          interview_session_id,
+          score,
+          duration_ms,
+          completed_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        Crypto.randomUUID(),
+        sessionId,
+        row.item_key,
+        userId,
+        row.item_key === 'interview' ? null : row.result_id,
+        row.item_key === 'interview' ? row.result_id : null,
+        row.score,
+        row.duration_ms,
+        row.created_at,
+      );
+    }
     await db.runAsync('DELETE FROM mock_exam_session_items WHERE session_id = ?', sessionId);
     await db.runAsync('DELETE FROM mock_exam_sessions WHERE id = ?', sessionId);
     finalizedId = sessionId;

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import type { TokenLength } from '../../design-system/components/style-props';
 import { Body } from './Body';
 import { Screen } from './Screen';
+import { useTabFloatingActionLayout } from './tabsFloatingActionLayout';
 
 export type TabScreenProps = {
   bottomPad?: TokenLength;
@@ -19,11 +20,17 @@ export function TabScreen({
   pinnedContent,
   children,
 }: TabScreenProps) {
+  const { bottomOffset, contentBottomReserve } = useTabFloatingActionLayout(Boolean(floatingAction));
+
   return (
-    <Screen safeEdges={['top', 'left', 'right']} floatingAction={floatingAction}>
+    <Screen
+      safeEdges={['top', 'left', 'right']}
+      floatingAction={floatingAction}
+      floatingActionOffsetY={floatingAction ? bottomOffset : undefined}
+    >
       {header}
       {pinnedContent}
-      <Body bottomPad={bottomPad}>{children}</Body>
+      <Body bottomPad={bottomPad} bottomReserve={contentBottomReserve}>{children}</Body>
     </Screen>
   );
 }
