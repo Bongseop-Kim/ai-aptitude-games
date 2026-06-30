@@ -199,8 +199,7 @@ function ReportScrollBody({
   return (
     <Box flex={1} bleedX="spacingX.globalGutter">
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
-        contentInset={{ bottom: bottomInset }}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: bottomInset }}
         scrollIndicatorInsets={{ bottom: bottomInset }}
         showsVerticalScrollIndicator={false}
       >

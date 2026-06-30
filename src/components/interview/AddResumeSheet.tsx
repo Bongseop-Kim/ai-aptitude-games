@@ -113,6 +113,7 @@ export function AddResumeSheet({ visible, onClose }: { visible: boolean; onClose
         <ActionButton
           label={uploadResume.isPending ? '추가하는 중...' : '이력서 추가'}
           disabled={!canSubmit}
+          loading={uploadResume.isPending}
           onPress={handleSubmit}
         />
       </VStack>

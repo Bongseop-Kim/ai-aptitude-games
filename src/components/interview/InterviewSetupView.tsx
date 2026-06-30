@@ -217,7 +217,8 @@ export function InterviewSetupView({
         primary={{
           label: '면접 시작',
           iconLeft: 'Video',
-          disabled: selectedPosting == null || starting,
+          disabled: selectedPosting == null,
+          loading: starting,
           onPress: onStart,
         }}
       />

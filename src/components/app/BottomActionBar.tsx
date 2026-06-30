@@ -8,6 +8,7 @@ export type BottomAction = {
   iconLeft?: IconName;
   iconRight?: IconName;
   label: string;
+  loading?: ActionButtonProps['loading'];
   onPress?: ActionButtonProps['onPress'];
   variant?: ActionButtonProps['variant'];
 };

@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
+import { type LayoutChangeEvent, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 
 import { useDesignSystemTheme } from '../provider';
 import { resolveLength, type DimensionToken } from './style-props';
@@ -21,6 +21,7 @@ export type FloatProps = {
   placement: FloatPlacement;
   offsetX?: 0 | number | DimensionToken;
   offsetY?: 0 | number | DimensionToken;
+  pointerEvents?: ViewProps['pointerEvents'];
   zIndex?: number;
   style?: StyleProp<ViewStyle>;
 };
@@ -67,6 +68,7 @@ export function Float({
   placement,
   offsetX = 0,
   offsetY = 0,
+  pointerEvents,
   zIndex,
   style,
 }: FloatProps) {
@@ -87,6 +89,7 @@ export function Float({
   return (
     <Box
       onLayout={handleLayout}
+      pointerEvents={pointerEvents}
       style={[
         placementStyle(placement, numericX, numericY, size),
         { opacity: hasMeasured ? 1 : 0, zIndex },

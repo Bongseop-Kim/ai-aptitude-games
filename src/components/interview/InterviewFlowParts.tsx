@@ -254,7 +254,7 @@ export function RecordControls({
     return (
       <Grid columns={2} gap="x2">
         <ActionButton label="다시 답하기" variant="neutralOutline" iconLeft="RotateCcw" onPress={onRetake} />
-        <ActionButton label={isLast ? '면접 종료' : '다음 질문'} iconRight="ArrowRight" onPress={onNext} />
+        <ActionButton label={isLast ? '면접 종료' : '다음 질문'} iconRight={isLast ? undefined : 'ArrowRight'} onPress={onNext} />
       </Grid>
     );
   }

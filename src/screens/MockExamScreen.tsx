@@ -161,7 +161,7 @@ export function MockExamScreen() {
               <ActionButton
                 label="모의고사 시작"
                 iconRight="ArrowRight"
-                disabled={startMockExamSession.isPending}
+                loading={startMockExamSession.isPending}
                 onPress={startSession}
               />
             </VStack>

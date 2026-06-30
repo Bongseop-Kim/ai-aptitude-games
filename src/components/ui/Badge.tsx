@@ -93,7 +93,7 @@ function normalizeBadgeTone(
 
 function normalizeBadgeSize(size: BadgeSize): keyof typeof badgeSizeStyles {
   if (size === 'xs') return 'medium';
-  if (size === 'small') return 'large';
+  if (size === 'small') return 'medium';
 
   return size;
 }

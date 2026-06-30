@@ -120,9 +120,10 @@ export function OnboardingScreen() {
           ) : (
             <VStack gap="x2">
               <ActionButton
-                label={updateProfile.isPending ? '저장하는 중...' : '시작하기'}
+                label="시작하기"
                 variant="brandSolid"
-                disabled={!consent || band == null || updateProfile.isPending}
+                disabled={!consent || band == null}
+                loading={updateProfile.isPending}
                 onPress={() => finish(true)}
               />
               <HStack gap="x2">

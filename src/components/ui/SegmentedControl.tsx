@@ -198,13 +198,16 @@ export function SegmentedControl<Value extends string>({
       {items.map((item) => {
         const selected = item.value === value;
         const itemDisabled = disabled || Boolean(item.disabled);
+        const accessibilityState = itemRole === 'radio'
+          ? { checked: selected, disabled: itemDisabled }
+          : { disabled: itemDisabled, selected };
 
         return (
           <Pressable
             key={item.value}
             accessibilityLabel={item.accessibilityLabel ?? item.label}
             accessibilityRole={itemRole}
-            accessibilityState={{ disabled: itemDisabled, selected }}
+            accessibilityState={accessibilityState}
             disabled={itemDisabled}
             onLayout={(event) => handleItemLayout(item.value, event)}
             onPress={() => onValueChange(item.value)}

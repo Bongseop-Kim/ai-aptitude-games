@@ -1,4 +1,5 @@
 import { Fragment, useState } from 'react';
+import { StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { SubSectionHead } from '../app/SubSectionHead';
@@ -92,39 +93,56 @@ export function InterviewAnalysisBody({ interview, mockExamId, session = null }:
             size="small"
             value={chartKey}
           />
-          {chartKey === 'axes' ? (
-            <RadarChart
-              comparisonLabel="또래 평균"
-              help={INTERVIEW_CHART_HELP.axes}
-              points={INTERVIEW_AXES.map((axis) => {
-                const score = axisScores.get(axis.key) ?? null;
-                return {
-                  label: axis.name,
-                  value: score?.score ?? null,
-                  comparisonValue: score?.peer_avg ?? null,
-                };
-              })}
-              unavailableLabel="영상 분석 준비 중"
-            />
-          ) : null}
-          {chartKey === 'delivery' && hasDeliveryDetails ? (
-            <RadarChart
-              help={INTERVIEW_CHART_HELP.delivery}
-              points={(interview.delivery_details ?? []).map((detail) => ({
-                label: detail.label,
-                value: detail.value,
-              }))}
-            />
-          ) : null}
-          {chartKey === 'ncs' && hasNcsUnits ? (
-            <RadarChart
-              help={INTERVIEW_CHART_HELP.ncs}
-              points={interview.ncs_units.map((unit) => ({
-                label: unit.label,
-                value: unit.score,
-              }))}
-            />
-          ) : null}
+          <Box position="relative">
+            <Box
+              accessibilityElementsHidden={chartKey !== 'axes'}
+              importantForAccessibility={chartKey === 'axes' ? 'auto' : 'no-hide-descendants'}
+              pointerEvents={chartKey === 'axes' ? 'auto' : 'none'}
+              style={chartKey === 'axes' ? styles.visibleChartPane : styles.hiddenChartPane}
+            >
+              <RadarChart
+                comparisonLabel="또래 평균"
+                help={INTERVIEW_CHART_HELP.axes}
+                points={INTERVIEW_AXES.map((axis) => {
+                  const score = axisScores.get(axis.key) ?? null;
+                  return {
+                    label: axis.name,
+                    value: score?.score ?? null,
+                    comparisonValue: score?.peer_avg ?? null,
+                  };
+                })}
+                unavailableLabel="영상 분석 준비 중"
+              />
+            </Box>
+            <Box
+              accessibilityElementsHidden={chartKey !== 'delivery'}
+              importantForAccessibility={chartKey === 'delivery' ? 'auto' : 'no-hide-descendants'}
+              pointerEvents={chartKey === 'delivery' ? 'auto' : 'none'}
+              style={chartKey === 'delivery' ? styles.visibleChartPane : styles.hiddenChartPane}
+            >
+              <RadarChart
+                help={INTERVIEW_CHART_HELP.delivery}
+                points={(interview.delivery_details ?? []).map((detail) => ({
+                  label: detail.label,
+                  value: detail.value,
+                }))}
+              />
+            </Box>
+            <Box
+              accessibilityElementsHidden={chartKey !== 'ncs'}
+              importantForAccessibility={chartKey === 'ncs' ? 'auto' : 'no-hide-descendants'}
+              pointerEvents={chartKey === 'ncs' ? 'auto' : 'none'}
+              style={chartKey === 'ncs' ? styles.visibleChartPane : styles.hiddenChartPane}
+            >
+              <RadarChart
+                help={INTERVIEW_CHART_HELP.ncs}
+                points={interview.ncs_units.map((unit) => ({
+                  label: unit.label,
+                  value: unit.score,
+                }))}
+              />
+            </Box>
+          </Box>
         </VStack>
       </VStack>
 
@@ -171,6 +189,19 @@ export function InterviewAnalysisBody({ interview, mockExamId, session = null }:
     </VStack>
   );
 }
+
+const styles = StyleSheet.create({
+  hiddenChartPane: {
+    left: 0,
+    opacity: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+  visibleChartPane: {
+    opacity: 1,
+  },
+});
 
 function TopFixRow({ fix, index }: { fix: ReportTopFix; index: number }) {
   const axisName = INTERVIEW_AXES.find((axis) => axis.key === fix.axis)?.name ?? fix.axis;

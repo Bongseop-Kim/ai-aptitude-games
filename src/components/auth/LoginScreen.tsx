@@ -77,12 +77,14 @@ export function LoginScreen() {
             variant="brandSolid"
             iconRight="ChevronRight"
             disabled={isBusy}
+            loading={pending === 'kakao'}
             onPress={() => run('kakao', signInWithKakao)}
           />
           <ActionButton
             label="나중에 연동하기"
             variant="ghost"
             disabled={isBusy}
+            loading={pending === 'skip'}
             onPress={() => run('skip', signInAnonymously)}
           />
         </VStack>

@@ -194,7 +194,7 @@ export function HelpBubbleInfoTrigger({
           onPress={handlePress}
         />
       </Float>
-      <Float placement="top-end" offsetX="x2" offsetY="x12" zIndex={4}>
+      <Float placement="top-end" offsetX="x2" offsetY="x12" pointerEvents={visible ? 'auto' : 'none'} zIndex={4}>
         <HelpBubble
           title={title}
           description={description}

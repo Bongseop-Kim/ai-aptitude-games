@@ -221,6 +221,26 @@ function resolveRadarCoordinate({
   };
 }
 
+function resolveOptionalRadarCoordinate({
+  angle,
+  center,
+  scale,
+  value,
+}: {
+  angle: number;
+  center: { x: number; y: number };
+  scale: RadarScale;
+  value: number | null | undefined;
+}) {
+  if (value == null) return null;
+
+  return resolveRadarCoordinate({ angle, center, scale, value });
+}
+
+function isRadarCoordinate(point: RadarCoordinate | null): point is RadarCoordinate {
+  return point != null;
+}
+
 function buildRadarPath(points: RadarCoordinate[]) {
   const path = Skia.Path.Make();
 
@@ -246,12 +266,16 @@ function buildRadarLinePath(start: { x: number; y: number }, end: RadarCoordinat
   return path;
 }
 
-function formatRadarValue(point: RadarChartPoint, unavailableLabel: string) {
-  if (point.value == null) {
+function formatRadarValue(
+  point: RadarChartPoint,
+  unavailableLabel: string,
+  value: number | null | undefined = point.value,
+) {
+  if (value == null) {
     return `${point.label} ${unavailableLabel}`;
   }
 
-  return `${point.label} ${Math.round(clamp(point.value))}점`;
+  return `${point.label} ${Math.round(clamp(value))}점`;
 }
 
 function RadarAxisLabel({ label, x, y }: { label: string; x: number; y: number }) {
@@ -316,24 +340,27 @@ export function RadarChart({
     : [];
   const valueCoordinates = canRenderRadar
     ? points.map((point, index) =>
-        resolveRadarCoordinate({
+        resolveOptionalRadarCoordinate({
           angle: resolveRadarAngle(index, points.length),
           center,
           scale: radarScale,
-          value: point.value ?? 0,
+          value: point.value,
         }),
       )
     : [];
+  const renderedValueCoordinates = valueCoordinates.filter(isRadarCoordinate);
+  const canRenderValue = renderedValueCoordinates.length >= 3;
   const comparisonCoordinates = hasComparison
     ? points.map((point, index) =>
-        resolveRadarCoordinate({
+        resolveOptionalRadarCoordinate({
           angle: resolveRadarAngle(index, points.length),
           center,
           scale: radarScale,
-          value: point.comparisonValue ?? 0,
+          value: point.comparisonValue,
         }),
-      )
+      ).filter(isRadarCoordinate)
     : [];
+  const canRenderComparison = comparisonCoordinates.length >= 3;
   const labelCoordinates = canRenderRadar
     ? points.map((point, index) => ({
         ...resolveRadarCoordinate({
@@ -362,11 +389,17 @@ export function RadarChart({
   const axisPaths = canRenderRadar
     ? axisCoordinates.map((point) => buildRadarLinePath(center, point))
     : [];
-  const valuePath = buildRadarPath(valueCoordinates);
+  const valuePath = buildRadarPath(renderedValueCoordinates);
   const comparisonPath = buildRadarPath(comparisonCoordinates);
-  const accessibilityLabel = `${valueLabel}: ${points
-    .map((point) => formatRadarValue(point, unavailableLabel))
-    .join(', ')}`;
+  const comparisonAccessibilityLabel = canRenderComparison
+    ? `${comparisonLabel ?? '비교 점수'}: ${points
+        .map((point) => formatRadarValue(point, unavailableLabel, point.comparisonValue))
+        .join(', ')}`
+    : null;
+  const accessibilityLabel = [
+    `${valueLabel}: ${points.map((point) => formatRadarValue(point, unavailableLabel)).join(', ')}`,
+    comparisonAccessibilityLabel,
+  ].filter(Boolean).join('. ');
 
   if (!canRenderRadar) {
     return (
@@ -414,7 +447,7 @@ export function RadarChart({
                     style="stroke"
                   />
                 ))}
-                {hasComparison ? (
+                {canRenderComparison ? (
                   <Group>
                     <Path
                       color={comparisonColor}
@@ -438,40 +471,42 @@ export function RadarChart({
                     ))}
                   </Group>
                 ) : null}
-                <Group>
-                  <Path
-                    color={valueColor}
-                    end={lineProgress}
-                    path={valuePath}
-                    strokeCap="round"
-                    strokeJoin="round"
-                    strokeWidth={RADAR_STROKE_WIDTH}
-                    style="stroke"
-                  />
-                  <Path color={valueColor} opacity={valueFillOpacity} path={valuePath} />
-                  {valueCoordinates.map((point) => (
-                    <Circle
-                      key={`value-fill-${point.angle}`}
-                      color={pointFill}
-                      cx={point.x}
-                      cy={point.y}
-                      opacity={fillProgress}
-                      r={RADAR_VALUE_POINT_RADIUS}
-                    />
-                  ))}
-                  {valueCoordinates.map((point) => (
-                    <Circle
-                      key={`value-stroke-${point.angle}`}
+                {canRenderValue ? (
+                  <Group>
+                    <Path
                       color={valueColor}
-                      cx={point.x}
-                      cy={point.y}
-                      opacity={fillProgress}
-                      r={RADAR_VALUE_POINT_RADIUS}
-                      strokeWidth={1.8}
+                      end={lineProgress}
+                      path={valuePath}
+                      strokeCap="round"
+                      strokeJoin="round"
+                      strokeWidth={RADAR_STROKE_WIDTH}
                       style="stroke"
                     />
-                  ))}
-                </Group>
+                    <Path color={valueColor} opacity={valueFillOpacity} path={valuePath} />
+                    {renderedValueCoordinates.map((point) => (
+                      <Circle
+                        key={`value-fill-${point.angle}`}
+                        color={pointFill}
+                        cx={point.x}
+                        cy={point.y}
+                        opacity={fillProgress}
+                        r={RADAR_VALUE_POINT_RADIUS}
+                      />
+                    ))}
+                    {renderedValueCoordinates.map((point) => (
+                      <Circle
+                        key={`value-stroke-${point.angle}`}
+                        color={valueColor}
+                        cx={point.x}
+                        cy={point.y}
+                        opacity={fillProgress}
+                        r={RADAR_VALUE_POINT_RADIUS}
+                        strokeWidth={1.8}
+                        style="stroke"
+                      />
+                    ))}
+                  </Group>
+                ) : null}
               </Canvas>
               {labelCoordinates.map((point) => (
                 <RadarAxisLabel key={point.label} label={point.label} x={point.x} y={point.y} />
@@ -503,7 +538,7 @@ export function RadarChart({
             </>
           ) : null}
         </Box>
-        {hasComparison && comparisonLabel ? (
+        {canRenderComparison && comparisonLabel ? (
           <HStack align="center" columnGap="x2" justify="flexEnd" rowGap="x1" wrap="wrap">
             <HStack align="center" gap="x1">
               <Box bg="bg.brandSolid" borderRadius="r1" height="x2" width="x3" />
