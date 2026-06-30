@@ -6,8 +6,8 @@ import { SectionHead } from '../components/app/SectionHead';
 import { TabScreen } from '../components/app/TabScreen';
 import { JobFamilySheet } from '../components/profile/JobFamilySheet';
 import { ReadinessGauge } from '../components/readiness/ReadinessGauge';
-import { ActionButton } from '../components/ui/ActionButton';
 import { Card } from '../components/ui/Card';
+import { FloatingActionButton } from '../components/ui/FloatingActionButton';
 import { Icon } from '../components/ui/Icon';
 import { IconButton } from '../components/ui/IconButton';
 import { List } from '../components/ui/List';
@@ -38,14 +38,15 @@ export function InterviewScreen() {
           }}
         />
       }
+      floatingAction={
+        <FloatingActionButton
+          label="면접 시작하기"
+          icon="Zap"
+          onPress={() => router.push('/interview/new' as never)}
+        />
+      }
     >
       <JobFamilyCard />
-      <ActionButton
-        label="면접 시작하기"
-        variant="brandSolid"
-        iconLeft="Zap"
-        onPress={() => router.push('/interview/new' as never)}
-      />
       <InterviewPrepSection />
       <VStack gap="x2">
         <SectionHead

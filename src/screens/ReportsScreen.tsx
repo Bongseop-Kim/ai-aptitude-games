@@ -12,8 +12,8 @@ import {
   MockExamSummaryCard,
   MockExamSummaryCardSkeleton,
 } from '../components/reports/MockExamSummaryCard';
-import { ActionButton } from '../components/ui/ActionButton';
 import { Card } from '../components/ui/Card';
+import { FloatingActionButton } from '../components/ui/FloatingActionButton';
 import { List } from '../components/ui/List';
 import { useMockExamRecords } from '../data/local/useMockExamResults';
 import { useActiveMockExamSession } from '../data/local/useMockExamSession';
@@ -131,11 +131,16 @@ export function ReportsScreen() {
         <RecordListHeader
           hasRecords={hasRecords}
           isLoading={isLoading}
-          onStartMockExam={startMockExam}
           records={records}
-          startMockExamLabel={mockExamActionLabel}
         />
       )}
+      floatingAction={
+        <FloatingActionButton
+          label={mockExamActionLabel}
+          icon="Plus"
+          onPress={startMockExam}
+        />
+      }
       data={listData}
       ItemSeparatorComponent={RecordListSeparator}
       keyExtractor={(item) => (item.kind === 'record' ? item.record.id : item.id)}
@@ -165,39 +170,23 @@ function RecordListRecordRow({ record, isLatest }: RecordListRecordRowProps) {
 type RecordListHeaderProps = {
   hasRecords: boolean;
   isLoading: boolean;
-  onStartMockExam: () => void;
   records: MockExamRecord[];
-  startMockExamLabel: string;
 };
 
 function RecordListHeader({
   hasRecords,
   isLoading,
-  onStartMockExam,
   records,
-  startMockExamLabel,
 }: RecordListHeaderProps) {
   if (isLoading) {
-    return (
-      <VStack gap="spacingY.componentDefault">
-        <MockExamSummaryCardSkeleton />
-        <ActionButton label={startMockExamLabel} iconLeft="Plus" onPress={onStartMockExam} />
-      </VStack>
-    );
+    return <MockExamSummaryCardSkeleton />;
   }
 
   if (!hasRecords) {
-    return (
-      <ActionButton label={startMockExamLabel} iconLeft="Plus" onPress={onStartMockExam} />
-    );
+    return null;
   }
 
-  return (
-    <VStack gap="spacingY.componentDefault">
-      <MockExamSummaryCard records={records} />
-      <ActionButton label={startMockExamLabel} iconLeft="Plus" onPress={onStartMockExam} />
-    </VStack>
-  );
+  return <MockExamSummaryCard records={records} />;
 }
 
 function EmptyMockExamRecords({ description, title }: RecordEmptyState) {

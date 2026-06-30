@@ -6,13 +6,10 @@ import { Header } from '../components/app/Header';
 import { TabScreen } from '../components/app/TabScreen';
 import { GameListRow } from '../components/games/GameListRow';
 import { Card } from '../components/ui/Card';
-import { Icon } from '../components/ui/Icon';
 import { List } from '../components/ui/List';
 import { Tag } from '../components/ui/Tag';
 import { useGamesWithProgress } from '../data/local/useGameResults';
-import { useActiveMockExamSession } from '../data/local/useMockExamSession';
-import { HStack, VStack } from '../design-system/components/Stack';
-import { Text } from '../design-system/components/Text';
+import { HStack } from '../design-system/components/Stack';
 import type { GameWithProgress } from '../domain/types';
 
 type GameFilter = 'all' | 'done' | 'todo';
@@ -36,20 +33,23 @@ export function GamesScreen() {
   const filtered = gamesWithProgress.filter((game) => matchesFilter(game, filter));
 
   return (
-    <TabScreen header={<Header title="게임" subtitle="9개 역량 게임 · 매일 새 문항" />}>
-      <MockExamBanner />
-      <HStack align="center" gap="x2">
-        {gameFilters.map(({ value, label }) => (
-          <Pressable
-            key={value}
-            accessibilityRole="button"
-            accessibilityState={{ selected: filter === value }}
-            onPress={() => setFilter(value)}
-          >
-            <Tag label={label} selected={filter === value} />
-          </Pressable>
-        ))}
-      </HStack>
+    <TabScreen
+      header={<Header title="게임" subtitle="9개 역량 게임 · 매일 새 문항" />}
+      pinnedContent={
+        <HStack align="center" gap="x2" pt="spacingY.componentDefault" pb="x2">
+          {gameFilters.map(({ value, label }) => (
+            <Pressable
+              key={value}
+              accessibilityRole="button"
+              accessibilityState={{ selected: filter === value }}
+              onPress={() => setFilter(value)}
+            >
+              <Tag label={label} selected={filter === value} />
+            </Pressable>
+          ))}
+        </HStack>
+      }
+    >
       <Card bg="bg.layerDefault" overflow="hidden" py="x1">
         <List.Root>
           {filtered.map((game, index) => (
@@ -64,34 +64,5 @@ export function GamesScreen() {
         </List.Root>
       </Card>
     </TabScreen>
-  );
-}
-
-function MockExamBanner() {
-  const router = useRouter();
-  const { data: session } = useActiveMockExamSession();
-  const completedCount = session?.items.length ?? 0;
-
-  return (
-    <Pressable
-      accessibilityLabel={session ? '모의고사 이어하기' : '모의고사 시작'}
-      accessibilityRole="button"
-      onPress={() => router.push({ pathname: '/mock-exam' } as never)}
-    >
-      <Card bg="bg.neutralSolid" borderColor="stroke.neutralContrast" borderRadius="r5" p="x4">
-        <HStack align="center" gap="x3">
-          <Icon name="Trophy" color="fg.brand" size="large" />
-          <VStack flex={1} gap="x0_5">
-            <Text color="fg.neutralInverted" textStyle="t4Bold" maxLines={1}>
-              {session ? `모의고사 이어하기 · ${completedCount}/10 완료` : '모의고사 한 번에 9게임 + AI 면접'}
-            </Text>
-            <Text color="fg.neutralSubtle" textStyle="t2Regular" maxLines={1}>
-              {session ? '완료한 항목은 다시 응시할 수 없어요' : '완주하면 종합 리포트가 열려요'}
-            </Text>
-          </VStack>
-          <Icon name="ChevronRight" color="fg.neutralInverted" />
-        </HStack>
-      </Card>
-    </Pressable>
   );
 }

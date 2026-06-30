@@ -5,14 +5,17 @@ import { Screen } from './Screen';
 
 export type TabScreenProps = {
   header?: ReactNode;
+  floatingAction?: ReactNode;
+  pinnedContent?: ReactNode;
   children: ReactNode;
 };
 
-export function TabScreen({ header, children }: TabScreenProps) {
+export function TabScreen({ header, floatingAction, pinnedContent, children }: TabScreenProps) {
   return (
-    <Screen safeEdges={['top', 'left', 'right']}>
+    <Screen safeEdges={['top', 'left', 'right']} floatingAction={floatingAction}>
       {header}
-      <Body bottomPad="spacingY.screenBottom">{children}</Body>
+      {pinnedContent}
+      <Body bottomPad={floatingAction ? 'x23' : 'spacingY.screenBottom'}>{children}</Body>
     </Screen>
   );
 }

@@ -12,25 +12,28 @@ export type TabListScreenProps<ItemT> = Omit<
   'contentInset' | 'scrollIndicatorInsets' | 'showsVerticalScrollIndicator'
 > & {
   bottomPad?: TokenLength;
+  floatingAction?: ReactNode;
   header?: ReactNode;
   pinnedContent?: ReactNode;
 };
 
 export function TabListScreen<ItemT>({
-  bottomPad = 'spacingY.screenBottom',
+  bottomPad,
   contentContainerStyle,
+  floatingAction,
   header,
   pinnedContent,
   ...listProps
 }: TabListScreenProps<ItemT>) {
   const insets = useSafeAreaInsets();
   const { theme } = useDesignSystemTheme();
-  const resolvedBottomPad = resolveLength(theme, bottomPad);
+  const effectiveBottomPad = bottomPad ?? (floatingAction ? 'x23' : 'spacingY.screenBottom');
+  const resolvedBottomPad = resolveLength(theme, effectiveBottomPad);
   const bottomPadding = typeof resolvedBottomPad === 'number' ? resolvedBottomPad : 0;
   const bottomPaddingWithInset = bottomPadding + insets.bottom;
 
   return (
-    <Screen safeEdges={['top', 'left', 'right']}>
+    <Screen safeEdges={['top', 'left', 'right']} floatingAction={floatingAction}>
       {header}
       {pinnedContent}
       <Box flex={1}>
