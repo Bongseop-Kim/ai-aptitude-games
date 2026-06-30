@@ -123,7 +123,7 @@ export function ReportsScreen() {
 
   return (
     <TabListScreen<RecordListItem>
-      header={<Header title="모의고사" subtitle="회차별 리포트" />}
+      header={<Header title="모의고사" />}
       pinnedContent={(
         <RecordListHeader
           hasRecords={hasRecords}

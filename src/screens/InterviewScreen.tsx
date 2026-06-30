@@ -30,14 +30,7 @@ export function InterviewScreen() {
   return (
     <TabScreen
       header={
-        <Header
-          title="실전 면접"
-          subtitle="이력서·채용공고로 맞춤 영상 면접"
-          rightAction={{
-            icon: 'Info',
-            label: '면접 정보',
-          }}
-        />
+        <Header title="면접" />
       }
       floatingAction={
         <FloatingActionButton

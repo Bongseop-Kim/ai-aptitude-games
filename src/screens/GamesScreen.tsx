@@ -34,7 +34,7 @@ export function GamesScreen() {
 
   return (
     <TabScreen
-      header={<Header title="게임" subtitle="9개 역량 게임 · 매일 새 문항" />}
+      header={<Header title="게임" />}
       pinnedContent={
         <HStack align="center" gap="x2" pt="spacingY.componentDefault" pb="x2">
           {gameFilters.map(({ value, label }) => (
