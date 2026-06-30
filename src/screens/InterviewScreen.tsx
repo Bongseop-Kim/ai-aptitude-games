@@ -41,8 +41,9 @@ export function InterviewScreen() {
       }
       floatingAction={
         <FloatingActionButton
-          label="면접 시작하기"
-          icon="Zap"
+          label="시작하기"
+          accessibilityLabel="면접 시작하기"
+          icon="Plus"
           onPress={() => router.push('/interview/new' as never)}
         />
       }

@@ -339,9 +339,9 @@ function MissingReport({ onBack }: MissingReportProps) {
           리포트를 찾지 못했어요
         </Text>
         <Text align="center" color="fg.neutralMuted" textStyle="t3Regular">
-          기록 목록에서 다시 열어주세요.
+          모의고사 목록에서 다시 열어주세요.
         </Text>
-        <ActionButton label="기록으로 돌아가기" variant="neutralWeak" onPress={onBack} />
+        <ActionButton label="모의고사로 돌아가기" variant="neutralWeak" onPress={onBack} />
       </VStack>
     </Card>
   );

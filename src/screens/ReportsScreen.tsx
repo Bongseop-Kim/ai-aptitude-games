@@ -16,7 +16,6 @@ import { Card } from '../components/ui/Card';
 import { FloatingActionButton } from '../components/ui/FloatingActionButton';
 import { List } from '../components/ui/List';
 import { useMockExamRecords } from '../data/local/useMockExamResults';
-import { useActiveMockExamSession } from '../data/local/useMockExamSession';
 import { Box } from '../design-system/components/Box';
 import { VStack } from '../design-system/components/Stack';
 import { Text } from '../design-system/components/Text';
@@ -87,7 +86,6 @@ function RecordListItemFrame({
 export function ReportsScreen() {
   const router = useRouter();
   const { data, isLoading } = useMockExamRecords();
-  const { data: activeSession } = useActiveMockExamSession();
   const records = data ?? [];
   const latestRound = records[0]?.round;
   const hasRecords = records.length > 0;
@@ -104,7 +102,6 @@ export function ReportsScreen() {
     ? mockExamRecordSkeletonKeys.map((id) => ({ kind: 'skeleton', id }))
     : records.map((record) => ({ kind: 'record', record }));
   const startMockExam = () => router.push({ pathname: '/mock-exam' } as never);
-  const mockExamActionLabel = activeSession ? '모의고사 이어하기' : '새 모의고사 시작';
   const renderRecordItem = ({ index, item }: ListRenderItemInfo<RecordListItem>) => {
     const isFirst = index === 0;
     const isLast = index === listData.length - 1;
@@ -126,7 +123,7 @@ export function ReportsScreen() {
 
   return (
     <TabListScreen<RecordListItem>
-      header={<Header title="기록" subtitle="모의고사 회차별 리포트" />}
+      header={<Header title="모의고사" subtitle="회차별 리포트" />}
       pinnedContent={(
         <RecordListHeader
           hasRecords={hasRecords}
@@ -136,7 +133,8 @@ export function ReportsScreen() {
       )}
       floatingAction={
         <FloatingActionButton
-          label={mockExamActionLabel}
+          label="시작하기"
+          accessibilityLabel="모의고사 시작하기"
           icon="Plus"
           onPress={startMockExam}
         />

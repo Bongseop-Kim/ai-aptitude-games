@@ -50,7 +50,7 @@ export default function TabsLayout() {
             selected: require('../../../assets/tab-icons/reports-fill.png'),
           }}
         />
-        <NativeTabs.Trigger.Label>기록</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>모의고사</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="me">
         <NativeTabs.Trigger.Icon
