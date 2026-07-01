@@ -89,16 +89,10 @@ export type UserProfile = {
   jobLabel: string;
   streakDays: number;
   mockExamCount: number;
-  gems: number;
   readiness: {
     score: number;
     percentileLabel: string;
     strength: string;
     weakness: string;
-  };
-  ranking: {
-    rivalInitial: string;
-    message: string;
-    detail: string;
   };
 };

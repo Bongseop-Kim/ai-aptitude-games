@@ -36,7 +36,6 @@ export type IconName =
   | 'Flower2'
   | 'Footprints'
   | 'Gamepad2'
-  | 'Gem'
   | 'Grid3x3'
   | 'Hand'
   | 'HandFist'

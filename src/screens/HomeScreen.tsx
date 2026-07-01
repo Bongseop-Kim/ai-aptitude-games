@@ -7,7 +7,7 @@ import { GameTile } from '../components/games/GameTile';
 import { ReadinessGauge } from '../components/readiness/ReadinessGauge';
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
-import { Icon, type IconName } from '../components/ui/Icon';
+import { Icon } from '../components/ui/Icon';
 import { Tag } from '../components/ui/Tag';
 import { Box } from '../design-system/components/Box';
 import { Grid } from '../design-system/components/Grid';
@@ -22,7 +22,6 @@ import { user } from '../data/user';
 import { jobFamilyLabel } from '../domain/jobFamily';
 import { toneColors } from '../domain/tone';
 import type { GameId } from '../domain/types';
-import type { BadgeTone } from '../shared/types';
 
 const challengeGame = games.find((game) => game.id === 'potion') ?? games[0];
 
@@ -37,7 +36,6 @@ export function HomeScreen() {
         <InterviewHero />
       </Grid>
       <AllGamesSection />
-      <RankingTeaser />
     </TabScreen>
   );
 }
@@ -48,52 +46,13 @@ function HomeHeader() {
       <Text textStyle="t7Bold" maxLines={1}>
         홈
       </Text>
-      <HStack align="center" gap="x1">
-        <HeaderChip
-          accessibilityLabel={`스트릭 ${user.streakDays}일`}
-          icon="Flame"
-          label={String(user.streakDays)}
-          tone="critical"
-        />
-        <HeaderChip
-          accessibilityLabel={`보석 ${user.gems}개`}
-          icon="Gem"
-          label={String(user.gems)}
-          tone="informative"
-        />
-        <Pressable accessibilityLabel="알림" accessibilityRole="button">
-          <Box alignItems="center" height="x10" justifyContent="center" position="relative" width="x10">
-            <Icon name="Bell" color="fg.neutral" />
-            <Box bg="palette.red700" borderRadius="full" height="x1_5" position="absolute" right="x1_5" top="x1" width="x1_5" />
-          </Box>
-        </Pressable>
-      </HStack>
+      <Pressable accessibilityLabel="알림" accessibilityRole="button">
+        <Box alignItems="center" height="x10" justifyContent="center" position="relative" width="x10">
+          <Icon name="Bell" color="fg.neutral" />
+          <Box bg="palette.red700" borderRadius="full" height="x1_5" position="absolute" right="x1_5" top="x1" width="x1_5" />
+        </Box>
+      </Pressable>
     </HStack>
-  );
-}
-
-function HeaderChip({
-  accessibilityLabel,
-  icon,
-  label,
-  tone,
-}: {
-  accessibilityLabel: string;
-  icon: IconName;
-  label: string;
-  tone: BadgeTone;
-}) {
-  const colors = toneColors[tone];
-
-  return (
-    <Pressable accessibilityLabel={accessibilityLabel} accessibilityRole="button">
-      <HStack align="center" bg="bg.neutralWeak" borderRadius="full" gap="x1" px="x2_5" py="x1_5">
-        <Icon name={icon} color={colors.fg} size="small" />
-        <Text textStyle="t4Bold" maxLines={1}>
-          {label}
-        </Text>
-      </HStack>
-    </Pressable>
   );
 }
 
@@ -297,31 +256,6 @@ function MockExamCard() {
             </Text>
           </VStack>
           <Icon name="ChevronRight" color="fg.neutralInverted" />
-        </HStack>
-      </Card>
-    </Pressable>
-  );
-}
-
-function RankingTeaser() {
-  return (
-    <Pressable accessibilityLabel="주간 랭킹 보기" accessibilityRole="button">
-      <Card p="x3">
-        <HStack align="center" gap="x3">
-          <Box alignItems="center" bg="bg.neutralWeak" borderRadius="full" height="x10" justifyContent="center" width="x10">
-            <Text color="fg.neutralMuted" textStyle="t4Bold">
-              {user.ranking.rivalInitial}
-            </Text>
-          </Box>
-          <VStack flex={1} gap="x0_5">
-            <Text textStyle="t3Regular" maxLines={1}>
-              {user.ranking.message}
-            </Text>
-            <Text color="fg.neutralSubtle" textStyle="t2Regular" maxLines={1}>
-              {user.ranking.detail}
-            </Text>
-          </VStack>
-          <Badge label="반격" tone="critical" size="small" />
         </HStack>
       </Card>
     </Pressable>
